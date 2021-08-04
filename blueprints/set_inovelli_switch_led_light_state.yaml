@@ -12,7 +12,7 @@ blueprint:
       name: Inovelli Dimmer/Switch LED
       selector:
         entity:
-          domain: switch
+          domain: sensor
     switch_model:
       name: Model of Inovelli device
       selector:
