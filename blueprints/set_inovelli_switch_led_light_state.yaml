@@ -7,15 +7,24 @@ blueprint:
       name: Light Device
       selector:
         entity:
-          domain: switch
+          domain: light
     switch_led:
       name: Inovelli Dimmer/Switch LED
       selector:
         entity:
-          domain: service
+          domain: switch
+    switch_model:
+      name: Model of Inovelli device
+      selector:
+        select:
+          options:
+            - switch
+            - dimmer
+            - combo_light
 variables:
   light_device: !input light_device
   switch_led: !input switch_led
+  switch_model: !input switch_model
 trigger:
   - platform: state
     entity_id: !input light_device
@@ -31,6 +40,7 @@ action:
           - service: script.set_inovelli_dimmer_switch_led
             data:
               entity_id: switch_led
+              model: switch_model
               color: Green
               duration: Indefinitely
               effect: Solid
@@ -38,4 +48,5 @@ action:
       - service: script.set_inovelli_dimmer_switch_led
         data:
           entity_id: switch_led
+          model: switch_model
           effect: 'Off'
