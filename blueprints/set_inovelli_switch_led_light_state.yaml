@@ -3,13 +3,12 @@ blueprint:
   description: Calls script.set_inovelli_dimmer_switch_led for state matching with specified light.
   domain: automation
   input:
-    target_light:
+    light_dev:
       name: Light
       description: Lights to which switch LED should be set.
       selector: 
-        target: 
-          entity: 
-            domain: light
+        entity: 
+          domain: light
     switch_led: 
       name: Inovelli Dimmer/Switch LED
       description: Inovelli switch device with customizable LED.
@@ -26,19 +25,19 @@ blueprint:
             - dimmer
             - combo_light
 variables:
-  target_light: !input target_light
+  light_dev: !input light_dev
   switch_led: !input switch_led
   switch_model: !input switch_model
 trigger:
   - platform: state
-    entity_id: '{{ target_light }}'
+    target: '{{ light_dev }}'
 mode: parallel
 max: 10
 action:
   - choose:
       - conditions:
           - condition: state
-            entity_id: '{{ target_light }}'
+            entity_id: '{{ light_dev }}'
             state: 'on'
         sequence:
           - service: script.set_inovelli_dimmer_switch_led
