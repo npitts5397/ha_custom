@@ -30,7 +30,7 @@ variables:
   switch_model: !input switch_model
 trigger:
   - platform: state
-    target: '{{ light_dev }}'
+    entity_id: '{{ light_dev }}'
 mode: parallel
 max: 10
 action:
