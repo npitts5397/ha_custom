@@ -28,26 +28,26 @@ variables:
   switch_model: !input switch_model
 trigger:
   - platform: state
-    entity_id: "{{ light_device }}"
+    entity_id: '{{ light_device }}'
 mode: parallel
 max: 10
 action:
   - choose:
       - conditions:
           - condition: state
-            entity_id: "{{ light_device }}"
+            entity_id: '{{ light_device }}'
             state: 'on'
         sequence:
           - service: script.set_inovelli_dimmer_switch_led
             data:
-              entity_id: "{{ switch_led }}"
-              model: "{{ switch_model }}"
+              entity_id: '{{ switch_led }}'
+              model: '{{ switch_model }}'
               color: Green
               duration: Indefinitely
               effect: Solid
     default:
       - service: script.set_inovelli_dimmer_switch_led
         data:
-          entity_id: "{{ switch_led }}"
-          model: "{{ switch_model }}"
+          entity_id: '{{ switch_led }}'
+          model: '{{ switch_model }}'
           effect: 'Off'
