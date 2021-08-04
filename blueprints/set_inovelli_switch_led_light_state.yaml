@@ -3,7 +3,7 @@ blueprint:
   description: Calls script.set_inovelli_dimmer_switch_led for state matching with specified light.
   domain: automation
   input:
-    light_device:
+    light_dev:
       name: Light Device
       selector:
         entity:
@@ -23,19 +23,19 @@ blueprint:
             - dimmer
             - combo_light
 variables:
-  light_device: !input light_device
+  light_dev: !input light_dev
   switch_led: !input switch_led
   switch_model: !input switch_model
 trigger:
   - platform: state
-    entity_id: '{{ light_device }}'
+    entity_id: '{{ light_dev }}'
 mode: parallel
 max: 10
 action:
   - choose:
       - conditions:
           - condition: state
-            entity_id: '{{ light_device }}'
+            entity_id: '{{ light_dev }}'
             state: 'on'
         sequence:
           - service: script.set_inovelli_dimmer_switch_led
