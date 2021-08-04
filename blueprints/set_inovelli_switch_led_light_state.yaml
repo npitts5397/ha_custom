@@ -1,0 +1,41 @@
+blueprint:
+  name: Synchronize Inovelli Switch LED to Light State
+  description: Calls script.set_inovelli_dimmer_switch_led for state matching with specified light.
+  domain: automation
+  input:
+    light_device:
+      name: Light Device
+      selector:
+        entity:
+          domain: switch
+    switch_led:
+      name: Inovelli Dimmer/Switch LED
+      selector:
+        entity:
+          domain: service
+variables:
+  light_device: !input light_device
+  switch_led: !input switch_led
+trigger:
+  - platform: state
+    entity_id: !input light_device
+mode: parallel
+max: 10
+action:
+  - choose:
+      - conditions:
+          - condition: state
+            entity_id: light_device
+            state: 'on'
+        sequence:
+          - service: script.set_inovelli_dimmer_switch_led
+            data:
+              entity_id: switch_led
+              color: Green
+              duration: Indefinitely
+              effect: Solid
+    default:
+      - service: script.set_inovelli_dimmer_switch_led
+        data:
+          entity_id: switch_led
+          effect: 'Off'
