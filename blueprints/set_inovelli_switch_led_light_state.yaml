@@ -28,7 +28,6 @@ trigger:
   - platform: state
     entity_id: !input 'light_dev'
 variables:
-  light_dev: !input 'light_dev'
   switch_led: !input 'switch_led'
   switch_model: !input 'switch_model'
 mode: parallel
