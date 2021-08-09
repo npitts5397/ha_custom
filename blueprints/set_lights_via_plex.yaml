@@ -1,0 +1,107 @@
+# This blueprint will create an automation to set lights via Plex playback status.
+# Version 1.0
+# Improvement_to_do:
+# - be able to specify which scenes when building automation
+# - will need ability to return to "default" scene at time of playback stop
+# INCOMPLETE
+blueprint:
+  name: Set Hue Scenes to Media Player Playback Status
+  descrition: Automation calls Hue service to set scenes based on media player playback status.
+  domain: automation
+  input:
+    media_device:
+      name: Media Player
+      description: Media player device used to set lights scene.
+      selector:
+        entity:
+          domain: media_player
+    light_device:
+      name: Hue Light
+      description: Hue light to set scene.
+      selector:
+        entity:
+          domain: light
+    phase_entity:
+      name: Phase Entity
+      description: Entity used for tracking home phases. Must use 'Day' as standard.
+      selector:
+        entity:
+          domain: input_select
+    defaults_script:
+      name: Hue Defaults Script
+      description: Script used to set Hue lights to default state based on home_phase.
+      
+trigger:
+  - platform: state
+    entity_id: !input light_device
+  - platform: state
+    entity_id: !input media_device
+mode: parallel
+max: 5
+conditions:
+  - condition: state
+    entity_id: !input light_device
+    state: 'on'
+action:
+  - choose:
+    - conditions:
+      - condition: state
+        entity_id: !input media_device.media_content_type
+        state: 'movie'
+      - condition: state
+        entity_id: !input media_device
+        state: playing
+      sequence:
+        - service: hue.hue_activate_scene
+          data:
+            scene_name: Movie
+            group_name: light_device
+    - conditions:
+      - condition: state
+        entity_id: !input media_device.media_content_type
+        state: 'episode'
+      - condition: state
+        entity_id: !input media_device
+        state: playing
+      sequence:
+        - service: hue.hue_activate_scene
+          data:
+            scene_name: 'TV Day'
+            group_name: light_device.name
+  
+    - conditions:
+      - condition: state
+        entity_id: !input media_device.media_content_type
+        state: 'movie'
+      - condition: state
+        entity_id: !input light_device
+        state: 'on'
+      - condition: state
+        entity_id: !input media_device
+        state: playing
+      sequence:
+        - service: hue.hue_activate_scene
+          data:
+            scene_name: 'TV Day'
+            group_name: light_device
+# - plex_device playback state changes
+# - light_device playback state changes
+# conditions:
+# - light_device.state: on
+# actions:
+# - condition:
+#   - plex_device.status: playing
+#   - plex_device.media_type: movie
+#   - light_device: on
+#   - home_phase: day
+#   action:
+#   - service.hue(Set light_device to 'movie')
+# - condition:
+#   - plex_device.status: paused
+#   - plex_device.media_type: movie
+#   - light_device: on
+#   - home_phase: day
+#   action:
+#   - service.hue(Set light_device to 'relax') #maybe a diff scene?
+# 
+}

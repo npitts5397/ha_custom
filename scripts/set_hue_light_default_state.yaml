@@ -1,0 +1,29 @@
+# this script will call the Hue service to set the default state of lights based on home phase
+#INCOMPLETE
+script:
+  mode: parallel
+  variables:
+
+  input:
+    light_device:
+      name: Hue Light
+      description: Hue light for which a scene should be set.
+      selector:
+        entity:
+          domain: light
+    phase_entity:
+      name: Phase Entity
+      description: Entity for tracking home phases.
+      selector:
+        entity:
+          domain: input_selector
+    day_scene:
+      name: Day Scene
+      description: Name of the Hue scene to be used as default for the 'Day' & 'Morning' phases.
+      text:
+        initial: Concentrate
+    evening_scene:
+      name: Evening Scene
+      description: Name of the Hue scene to be used as default for the 'Evening' and 'Night' phases.
+      text:
+        initial: Relax
