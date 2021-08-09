@@ -30,7 +30,9 @@ blueprint:
     defaults_script:
       name: Hue Defaults Script
       description: Script used to set Hue lights to default state based on home_phase.
-      
+      selector:
+        entity:
+          domain: script
 trigger:
   - platform: state
     entity_id: !input light_device
