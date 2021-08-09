@@ -1,0 +1,54 @@
+blueprint:
+  name: Set Inovelli Switch LED to Light State
+  description: Calls script.set_inovelli_dimmer_switch_led for state matching with specified light.
+  domain: automation
+  input:
+    switch_dev:
+      name: Switch
+      description: Switch state to which switch LED should be set.
+      selector: 
+        entity: 
+          domain: switch
+    switch_led: 
+      name: Inovelli Dimmer/Switch LED
+      description: Inovelli switch device with customizable LED.
+      selector: 
+        entity: 
+          domain: sensor
+          integration: zwave_js
+    switch_model: 
+      name: Model of Inovelli device
+      selector: 
+        select: 
+          options: 
+            - switch
+            - dimmer
+            - combo_light
+trigger:
+  - platform: state
+    entity_id: !input 'switch_dev'
+variables:
+  switch_led: !input 'switch_led'
+  switch_model: !input 'switch_model'
+mode: parallel
+max: 10
+action:
+  - choose:
+      - conditions:
+          - condition: state
+            entity_id: !input 'switch_dev'
+            state: 'on'
+        sequence:
+          - service: script.set_inovelli_dimmer_switch_led
+            data:
+              entity_id: '{{ switch_led }}'
+              model: '{{ switch_model }}'
+              color: Green
+              duration: Indefinitely
+              effect: Solid
+    default:
+      - service: script.set_inovelli_dimmer_switch_led
+        data:
+          entity_id: '{{ switch_led }}'
+          model: '{{ switch_model }}'
+          effect: 'Off'
