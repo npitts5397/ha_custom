@@ -1,5 +1,5 @@
 blueprint:
-  name: Set Inovelli Switch LED to Light State
+  name: Set Inovelli Switch LED to Switch State
   description: Calls script.set_inovelli_dimmer_switch_led for state matching with specified light.
   domain: automation
   input:
