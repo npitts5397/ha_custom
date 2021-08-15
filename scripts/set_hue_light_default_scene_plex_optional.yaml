@@ -1,0 +1,168 @@
+alias: Set Hue Light Default Scene (Plex Optional)
+sequence:
+  - choose:
+      - conditions:
+          - condition: template
+            value_template: '{{ states("input_select.home_phase") in ["Evening","Night"] }}'
+        sequence:
+          - choose:
+              - conditions:
+                  - condition: template
+                    value_template: '{{ states(plex_entity) == "playing" }}'
+                sequence:
+                  - choose:
+                      - conditions:
+                          - condition: template
+                            value_template: >-
+                              {{ state_attr(plex_entity,"media_content_type") ==
+                              "movie" }}
+                        sequence:
+                          - service: hue.hue_activate_scene
+                            data:
+                              group_name: '{{ state_attr(light_entity,"friendly_name") }}'
+                              scene_name: '{{ hue_scene_night_movie_playing }}'
+                    default:
+                      - service: hue.hue_activate_scene
+                        data:
+                          group_name: '{{ state_attr(light_entity,"friendly_name") }}'
+                          scene_name: '{{ hue_scene_night_tvshow_playing }}'
+              - conditions:
+                  - condition: template
+                    value_template: '{{ states(plex_entity) == "paused" }}'
+                sequence:
+                  - choose:
+                      - conditions:
+                          - condition: template
+                            value_template: >-
+                              {{ state_attr(plex_entity,"media_content_type") ==
+                              "movie" }}
+                        sequence:
+                          - service: hue.hue_activate_scene
+                            data:
+                              group_name: '{{ state_attr(light_entity,"friendly_name") }}'
+                              scene_name: '{{ hue_scene_night_movie_paused }}'
+                    default:
+                      - service: hue.hue_activate_scene
+                        data:
+                          group_name: '{{ state_attr(light_entity,"friendly_name") }}'
+                          scene_name: '{{ hue_scene_night_tvshow_paused }}'
+            default:
+              - service: hue.hue_activate_scene
+                data:
+                  group_name: '{{ state_attr(light_entity,"friendly_name") }}'
+                  scene_name: '{{ hue_scene_night }}'
+    default:
+      - choose:
+          - conditions:
+              - condition: template
+                value_template: '{{ states(plex_entity) == "playing" }}'
+            sequence:
+              - choose:
+                  - conditions:
+                      - condition: template
+                        value_template: >-
+                          {{ state_attr(plex_entity,"media_content_type") ==
+                          "movie" }}
+                    sequence:
+                      - service: hue.hue_activate_scene
+                        data:
+                          group_name: '{{ state_attr(light_entity,"friendly_name") }}'
+                          scene_name: '{{ hue_scene_day_movie_playing }}'
+                default:
+                  - service: hue.hue_activate_scene
+                    data:
+                      group_name: '{{ state_attr(light_entity,"friendly_name") }}'
+                      scene_name: '{{ hue_scene_day_tvshow_playing }}'
+          - conditions:
+              - condition: template
+                value_template: '{{ states(plex_entity) == "paused" }}'
+            sequence:
+              - choose:
+                  - conditions:
+                      - condition: template
+                        value_template: >-
+                          {{ state_attr(plex_entity,"media_content_type") ==
+                          "movie" }}
+                    sequence:
+                      - service: hue.hue_activate_scene
+                        data:
+                          group_name: '{{ state_attr(light_entity,"friendly_name") }}'
+                          scene_name: '{{ hue_scene_day_movie_paused }}'
+                default:
+                  - service: hue.hue_activate_scene
+                    data:
+                      group_name: '{{ state_attr(light_entity,"friendly_name") }}'
+                      scene_name: '{{ hue_scene_day_tvshow_paused }}'
+        default:
+          - service: hue.hue_activate_scene
+            data:
+              group_name: '{{ state_attr(light_entity,"friendly_name") }}'
+              scene_name: '{{ hue_scene_day }}'
+description: Sets Hue lights to provided scenes based on home_phase state.
+mode: parallel
+fields:
+  light_entity:
+    description: Hue light or group.
+    required: true
+    selector:
+      entity:
+        domain: light
+  plex_entity:
+    description: Plex device for playback status.
+    selector:
+      entity:
+        domain: media_player
+  hue_scene_day:
+    description: Default Hue scene for day time.
+    default: Concentrate
+    required: true
+    selector:
+      text: null
+  hue_scene_day_movie_playing:
+    description: Hue scene for movie playing in day time.
+    default: Movie
+    selector:
+      text: null
+  hue_scene_day_movie_paused:
+    description: Hue scene for movie paused in day time.
+    default: Concentrate
+    selector:
+      text: null
+  hue_scene_day_tvshow_playing:
+    description: Hue scene for episode playing in day time.
+    default: Concentrate
+    selector:
+      text: null
+  hue_scene_day_tvshow_paused:
+    description: Hue scene for episode paused day time.
+    default: Concentrate
+    selector:
+      text: null
+  hue_scene_night:
+    description: Default Hue scene for night time.
+    default: Relax
+    required: true
+    selector:
+      text: null
+  hue_scene_night_movie_playing:
+    description: Hue scene for movie playing in night time.
+    default: Relax
+    selector:
+      text: null
+  hue_scene_night_movie_paused:
+    description: Hue scene for movie paused night time.
+    default: Relax
+    selector:
+      text: null
+  hue_scene_night_tvshow_playing:
+    description: Hue scene for episode playing in night time.
+    default: Relax
+    selector:
+      text: null
+  hue_scene_night_tvshow_paused:
+    description: Hue scene for episode paused in night time.
+    default: Relax
+    selector:
+      text: null
+max: 10
+icon: mdi:plex
