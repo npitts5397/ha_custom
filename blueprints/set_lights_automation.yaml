@@ -5,7 +5,7 @@
 # - will need ability to return to "default" scene at time of playback stop
 # INCOMPLETE
 blueprint:
-  name: Set Lights 
+  name: Set Lights on Home Phase, Media Device, etc.
   description: Automation calls Hue service to set scenes based on media player playback status.
   domain: automation
   input:
