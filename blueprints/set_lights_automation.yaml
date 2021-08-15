@@ -97,6 +97,8 @@ trigger:
     entity_id: !input media_entity
   - platform: state
     entity_id: !input light_entity
+    from: off
+    to: on    
 mode: parallel
 max: 5
 condition:
