@@ -39,7 +39,7 @@ blueprint:
           min: 0
           max: 30000
           step: 100
-          unit: lux
+          unit_of_measurement: lux
           mode: slider
     defaults_script:
       name: Hue Default Scene Script
