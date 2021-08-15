@@ -8,7 +8,7 @@ sequence:
           - choose:
               - conditions:
                   - condition: template
-                    value_template: '{{ states(plex_entity) == "playing" }}'
+                    value_template: '{{ states(plex_entity) == "playing" if plex_entity is defined }}'
                 sequence:
                   - choose:
                       - conditions:
@@ -28,7 +28,7 @@ sequence:
                           scene_name: '{{ hue_scene_night_tvshow_playing }}'
               - conditions:
                   - condition: template
-                    value_template: '{{ states(plex_entity) == "paused" }}'
+                    value_template: '{{ states(plex_entity) == "paused" if plex_entity is defined }}'
                 sequence:
                   - choose:
                       - conditions:
@@ -55,7 +55,7 @@ sequence:
       - choose:
           - conditions:
               - condition: template
-                value_template: '{{ states(plex_entity) == "playing" }}'
+                value_template: '{{ states(plex_entity) == "playing"  if plex_entity is defined }}'
             sequence:
               - choose:
                   - conditions:
@@ -75,7 +75,7 @@ sequence:
                       scene_name: '{{ hue_scene_day_tvshow_playing }}'
           - conditions:
               - condition: template
-                value_template: '{{ states(plex_entity) == "paused" }}'
+                value_template: '{{ states(plex_entity) == "paused"  if plex_entity is defined }}'
             sequence:
               - choose:
                   - conditions:
