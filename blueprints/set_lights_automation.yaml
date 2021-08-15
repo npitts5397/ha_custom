@@ -48,7 +48,7 @@ blueprint:
         text: null
     hue_scene_day_tvshow_playing:
       description: Hue scene for episode playing in day time.
-      default: TV Show
+      default: TV Show Day
       selector:
         text: null
     hue_scene_day_tvshow_paused:
@@ -68,7 +68,7 @@ blueprint:
         text: null
     hue_scene_night_tvshow_playing:
       description: Hue scene for episode playing in night time.
-      default: TV Show
+      default: TV Show Night
       selector:
         text: null
     hue_scene_night_tvshow_paused:
