@@ -30,20 +30,6 @@ blueprint:
       selector:
         entity:
           domain: light
-    illuminance_entity:
-      description: "NOT YET SUPPORTED: Device used to determine illuminance."
-      required: false
-      selector:
-        entity:
-          domain: sensor
-    illuminance_threshold:
-      description: "NOT YET SUPPORTED: Illunimance value at which lights will turn of/off automatically."
-      required: false
-      number:
-        min: 0
-        max: 30000
-        step: 100
-        mode: slider
     defaults_script:
       name: Hue Default Scene Script
       description: Script used to set Hue lights to default state based on home_phase.
