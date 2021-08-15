@@ -94,7 +94,6 @@ blueprint:
       selector:
         entity:
           domain: script
-    
 trigger:
   - platform: state
     entity_id: !input phase_entity
