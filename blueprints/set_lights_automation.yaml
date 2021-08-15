@@ -12,16 +12,19 @@ blueprint:
     phase_entity:
       name: Phase Entity
       description: Entity used for tracking home phases.
+      required: true
       selector:
         entity:
           domain: input_select
     media_entity:
       name: Media Player
       description: Media player entity that will trigger execution.
+      required: true
       selector:
         entity:
           domain: media_player
     light_entity:
+      name: Light group for conditionally executing script.
       description: Hue light or group.
       required: true
       selector:
