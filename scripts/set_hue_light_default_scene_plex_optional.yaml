@@ -125,12 +125,12 @@ fields:
       text: null
   hue_scene_day_movie_paused:
     description: Hue scene for movie paused in day time.
-    default: Concentrate
+    default: Relax
     selector:
       text: null
   hue_scene_day_tvshow_playing:
     description: Hue scene for episode playing in day time.
-    default: Concentrate
+    default: TV Show Day
     selector:
       text: null
   hue_scene_day_tvshow_paused:
@@ -146,7 +146,7 @@ fields:
       text: null
   hue_scene_night_movie_playing:
     description: Hue scene for movie playing in night time.
-    default: Relax
+    default: Movie
     selector:
       text: null
   hue_scene_night_movie_paused:
@@ -156,7 +156,7 @@ fields:
       text: null
   hue_scene_night_tvshow_playing:
     description: Hue scene for episode playing in night time.
-    default: Relax
+    default: TV Show Night
     selector:
       text: null
   hue_scene_night_tvshow_paused:
