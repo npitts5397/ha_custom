@@ -8,9 +8,6 @@ blueprint:
       description: The entity to which switch LED should be set (must report as on/off).
       selector: 
         entity: 
-          domain: 
-            - light
-            - switch
     switch_led: 
       name: Inovelli Dimmer/Switch LED
       description: Inovelli switch device with customizable LED.
