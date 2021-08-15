@@ -8,13 +8,13 @@ sequence:
           - choose:
               - conditions:
                   - condition: template
-                    value_template: '{{ states(plex_entity) == "playing" if plex_entity is defined }}'
+                    value_template: '{{ states(media_entity) == "playing" if media_entity is defined }}'
                 sequence:
                   - choose:
                       - conditions:
                           - condition: template
                             value_template: >-
-                              {{ state_attr(plex_entity,"media_content_type") ==
+                              {{ state_attr(media_entity,"media_content_type") ==
                               "movie" }}
                         sequence:
                           - service: hue.hue_activate_scene
@@ -28,13 +28,13 @@ sequence:
                           scene_name: '{{ hue_scene_night_tvshow_playing }}'
               - conditions:
                   - condition: template
-                    value_template: '{{ states(plex_entity) == "paused" if plex_entity is defined }}'
+                    value_template: '{{ states(media_entity) == "paused" if media_entity is defined }}'
                 sequence:
                   - choose:
                       - conditions:
                           - condition: template
                             value_template: >-
-                              {{ state_attr(plex_entity,"media_content_type") ==
+                              {{ state_attr(media_entity,"media_content_type") ==
                               "movie" }}
                         sequence:
                           - service: hue.hue_activate_scene
@@ -55,13 +55,13 @@ sequence:
       - choose:
           - conditions:
               - condition: template
-                value_template: '{{ states(plex_entity) == "playing"  if plex_entity is defined }}'
+                value_template: '{{ states(media_entity) == "playing"  if media_entity is defined }}'
             sequence:
               - choose:
                   - conditions:
                       - condition: template
                         value_template: >-
-                          {{ state_attr(plex_entity,"media_content_type") ==
+                          {{ state_attr(media_entity,"media_content_type") ==
                           "movie" }}
                     sequence:
                       - service: hue.hue_activate_scene
@@ -75,13 +75,13 @@ sequence:
                       scene_name: '{{ hue_scene_day_tvshow_playing }}'
           - conditions:
               - condition: template
-                value_template: '{{ states(plex_entity) == "paused"  if plex_entity is defined }}'
+                value_template: '{{ states(media_entity) == "paused"  if media_entity is defined }}'
             sequence:
               - choose:
                   - conditions:
                       - condition: template
                         value_template: >-
-                          {{ state_attr(plex_entity,"media_content_type") ==
+                          {{ state_attr(media_entity,"media_content_type") ==
                           "movie" }}
                     sequence:
                       - service: hue.hue_activate_scene
@@ -107,8 +107,8 @@ fields:
     selector:
       entity:
         domain: light
-  plex_entity:
-    description: Plex device for playback status.
+  media_entity:
+    description: Media player entity for playback status (only tested with Plex).
     selector:
       entity:
         domain: media_player
