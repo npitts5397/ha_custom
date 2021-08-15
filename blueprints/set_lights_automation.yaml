@@ -1,0 +1,62 @@
+# This blueprint will create an automation to set lights via Plex playback status.
+# Version 1.0
+# Improvement_to_do:
+# - be able to specify which scenes when building automation
+# - will need ability to return to "default" scene at time of playback stop
+# INCOMPLETE
+blueprint:
+  name: Set Lights 
+  description: Automation calls Hue service to set scenes based on media player playback status.
+  domain: automation
+  input:
+    phase_entity:
+      name: Phase Entity
+      description: Entity used for tracking home phases.
+      selector:
+        entity:
+          domain: input_select
+    media_entity:
+      name: Media Player
+      description: Media player entity that will trigger execution.
+      selector:
+        entity:
+          domain: media_player
+    light_entity:
+      description: Hue light or group.
+      required: true
+      selector:
+        entity:
+          domain: light
+    illuminance_entity:
+      description: "NOT YET SUPPORTED: Device used to determine illuminance."
+      required: false
+      selector:
+        entity:
+          domain: sensor
+    illuminance_threshold:
+      description: "NOT YET SUPPORTED: Illunimance value at which lights will turn of/off automatically."
+      required: false
+      number:
+        min: 0
+        max: 30000
+        step: 100
+        mode: slider
+    defaults_script:
+      name: Hue Default Scene Script
+      description: Script used to set Hue lights to default state based on home_phase.
+      selector:
+        entity:
+          domain: script
+trigger:
+  - platform: state
+    entity_id: !input phase_entity
+  - platform: state
+    entity_id: !input media_entity
+mode: parallel
+max: 5
+conditions:
+  - condition: state
+    entity_id: !input light_entity
+    state: 'on'
+action:
+  - service: script.set_hue_light_default_scene_plex_optional
