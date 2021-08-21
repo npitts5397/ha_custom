@@ -1,7 +1,7 @@
 # This blueprint will create an automation to set lights via Phase change and Plex playback status.
 blueprint:
-  name: Update Lights on Home Phase, Media Device, etc. Changes (Media Player)
-  description: Automation calls Hue service to set scenes based on media player playback status.
+  name: Update Lights on Home Phase, Entity State, and Media Player Changes
+  description: Automation calls Hue service to set scenes based on home_phase, entity state, and media player changes.
   domain: automation
   input:
     light_entity:
