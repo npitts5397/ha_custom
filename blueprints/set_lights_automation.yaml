@@ -21,11 +21,6 @@ blueprint:
       selector:
         entity:
           domain: script
-    media_entity:
-      description: Media player entity that will trigger execution.
-      selector:
-        entity:
-          domain: media_player
     hue_scene_day:
       description: Default Hue scene for day time.
       default: Concentrate
@@ -36,65 +31,14 @@ blueprint:
       default: Relax
       selector:
         text: null
-    hue_scene_day_movie_playing:
-      description: Hue scene for movie playing in day time.
-      default: Movie
-      selector:
-        text: null
-    hue_scene_day_movie_paused:
-      description: Hue scene for movie paused in day time.
-      default: Relax
-      selector:
-        text: null
-    hue_scene_day_tvshow_playing:
-      description: Hue scene for episode playing in day time.
-      default: TV Show Day
-      selector:
-        text: null
-    hue_scene_day_tvshow_paused:
-      description: Hue scene for episode paused day time.
-      default: Concentrate
-      selector:
-        text: null
-    hue_scene_night_movie_playing:
-      description: Hue scene for movie playing in night time.
-      default: Movie
-      selector:
-        text: null
-    hue_scene_night_movie_paused:
-      description: Hue scene for movie paused night time.
-      default: Relax
-      selector:
-        text: null
-    hue_scene_night_tvshow_playing:
-      description: Hue scene for episode playing in night time.
-      default: TV Show Night
-      selector:
-        text: null
-    hue_scene_night_tvshow_paused:
-      description: Hue scene for episode paused in night time.
-      default: Relax
-      selector:
-        text: null
 variables:
       light_entity: !input 'light_entity'
-      media_entity: !input 'media_entity'
-      hue_scene_night_movie_playing: !input 'hue_scene_night_movie_playing'
-      hue_scene_night_tvshow_playing: !input 'hue_scene_night_tvshow_playing'
-      hue_scene_day_tvshow_playing: !input 'hue_scene_day_tvshow_playing'
-      hue_scene_day_movie_paused: !input 'hue_scene_day_movie_paused'
-      hue_scene_day_movie_playing: !input 'hue_scene_day_movie_playing'
-      hue_scene_day_tvshow_paused: !input 'hue_scene_day_tvshow_paused'
-      hue_scene_night_movie_paused: !input 'hue_scene_night_movie_paused'
-      hue_scene_night_tvshow_paused: !input 'hue_scene_night_tvshow_paused'
       hue_scene_day: !input 'hue_scene_day'
       hue_scene_night: !input 'hue_scene_night'
       hue_defaults_script: !input 'hue_defaults_script'
 trigger:
   - platform: state
     entity_id: !input phase_entity
-  - platform: state
-    entity_id: !input media_entity
   - platform: state
     entity_id: !input light_entity
     from: 'off'
@@ -106,17 +50,16 @@ condition:
   entity_id: !input light_entity
   state: 'on'
 action:
+  - delay:
+      hours: 0
+      minutes: 0
+      seconds: 1
+      milliseconds: 0
+  - condition: state
+    entity_id: '{{ light_entity }}'
+    state: 'on'
   - service: '{{ hue_defaults_script }}'
     data:
       light_entity: '{{ light_entity }}'
-      media_entity: '{{ media_entity }}'
-      hue_scene_night_movie_playing: '{{ hue_scene_night_movie_playing }}'
-      hue_scene_night_tvshow_playing: '{{ hue_scene_night_tvshow_playing }}'
-      hue_scene_day_tvshow_playing: '{{ hue_scene_day_tvshow_playing }}'
-      hue_scene_day_movie_paused: '{{ hue_scene_day_movie_paused }}'
-      hue_scene_day_movie_playing: '{{ hue_scene_day_movie_playing }}'
-      hue_scene_day_tvshow_paused: '{{ hue_scene_day_tvshow_paused }}'
-      hue_scene_night_movie_paused: '{{ hue_scene_night_movie_paused }}'
-      hue_scene_night_tvshow_paused: '{{ hue_scene_night_tvshow_paused }}'
       hue_scene_day: '{{ hue_scene_day }}'
       hue_scene_night: '{{ hue_scene_night }}'
