@@ -106,6 +106,14 @@ condition:
   entity_id: !input light_entity
   state: 'on'
 action:
+  - delay:
+      hours: 0
+      minutes: 0
+      seconds: 0
+      milliseconds: 500
+  - condition: state
+    entity_id: '{{ light_entity }}'
+    state: 'on'
   - service: '{{ hue_defaults_script }}'
     data:
       light_entity: '{{ light_entity }}'
