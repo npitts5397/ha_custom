@@ -112,7 +112,7 @@ action:
       seconds: 0
       milliseconds: 500
   - condition: state
-    entity_id: '{{ light_entity }}'
+    entity_id: !input light_entity
     state: 'on'
   - service: '{{ hue_defaults_script }}'
     data:
