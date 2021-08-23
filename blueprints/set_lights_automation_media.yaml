@@ -115,7 +115,7 @@ action:
     state: 'on'
   - service: '{{ hue_defaults_script }}'
     data:
-      light_entity: '{{ light_entity }}'
+      light_entity: !input light_entity
       media_entity: '{{ media_entity }}'
       hue_scene_night_movie_playing: '{{ hue_scene_night_movie_playing }}'
       hue_scene_night_tvshow_playing: '{{ hue_scene_night_tvshow_playing }}'

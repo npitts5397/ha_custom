@@ -55,10 +55,10 @@ action:
       seconds: 0
       milliseconds: 500
   - condition: state
-    entity_id: '{{ light_entity }}'
+    entity_id:  !input light_entity
     state: 'on'
   - service: '{{ hue_defaults_script }}'
     data:
-      light_entity: '{{ light_entity }}'
+      light_entity:  !input light_entity
       hue_scene_day: '{{ hue_scene_day }}'
       hue_scene_night: '{{ hue_scene_night }}'
