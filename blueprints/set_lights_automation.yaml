@@ -43,8 +43,7 @@ trigger:
     entity_id: !input light_entity
     from: 'off'
     to: 'on'
-mode: parallel
-max: 5
+mode: restart
 condition:
   condition: state
   entity_id: !input light_entity
