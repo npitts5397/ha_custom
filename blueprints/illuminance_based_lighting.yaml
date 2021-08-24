@@ -1,0 +1,87 @@
+blueprint:
+  name: 'Illuminance Controlled Lighting'
+  description: 'Switched lighting based on illuminance only.'
+  domain: automation
+  input:
+    light_entity:
+      description: Hue light or group.
+      selector:
+        entity:
+          domain: light
+    light_boolean:
+      description: Boolean helper for determining if lights should be on or not.
+      selector:
+        entity:
+          domain: input_boolean
+    phase_entity:
+      description: Entity used for tracking home phases.
+      selector:
+        entity:
+          domain: input_select
+    shifting_mode_entity:
+      description: Entity used for tracking the home phase shifting mode.
+      selector:
+        entity:
+          domain: input_select
+    hue_defaults_script:
+      name: Hue Default Scene Script
+      description: Script used to set Hue lights to default state based on home_phase.
+      default: script.set_hue_light_default_scene_plex_optional
+      selector:
+        entity:
+          domain: script
+    hue_scene_day:
+      description: Default Hue scene for day time.
+      default: Concentrate
+      selector:
+        text: null
+    hue_scene_night:
+      description: Default Hue scene for night time.
+      default: Relax
+      selector:
+        text: null
+variables:
+  light_entity: !input 'light_entity'
+  light_boolean: !input 'light_boolean'
+  phase_entity: !input 'phase_entity'
+  shifting_mode_entity: !input 'shifting_mode_entity'
+  hue_scene_day: !input 'hue_scene_day'
+  hue_scene_night: !input 'hue_scene_night'
+  hue_defaults_script: !input 'hue_defaults_script'
+trigger:
+  - platform: state
+    entity_id: !input 'light_boolean'
+condition:
+  - condition: not
+    conditions:
+      - condition: state
+        entity_id: '{{ phase_entity }}'
+        state: Night
+      - condition: state
+        entity_id: '{{ shifting_mode_entity }}'
+        state: Away
+action:
+  - choose:
+      - conditions:
+          - condition: state
+            entity_id: '{{ light_boolean }}'
+            state: 'on'
+        sequence:
+          - service: '{{ hue_defaults_script }}'
+            data:
+              light_entity: '{{ light_entity }}'
+              hue_scene_day: '{{ hue_scene_day }}'
+              hue_scene_night: '{{ hue_scene_night }}'
+    default:
+      - delay:
+          hours: 0
+          minutes: 10
+          seconds: 0
+          milliseconds: 0
+      - condition: state
+        entity_id: '{{ light_boolean }}'
+        state: 'off'
+      - service: light.turn_off
+        target:
+          entity_id: '{{ light_entity }}'
+mode: restart
