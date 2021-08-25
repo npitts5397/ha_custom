@@ -51,6 +51,10 @@ variables:
 trigger:
   - platform: state
     entity_id: !input 'light_boolean'
+  - platform: state
+    entity_id: !input 'phase_entity'
+  - platform: state
+    entity_id: !input 'shifting_mode_entity'
 condition:
   - condition: not
     conditions:
