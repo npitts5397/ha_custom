@@ -1,0 +1,95 @@
+alias: Set Hue Scene on Media Playback State Scene
+description: Sets a Hue scene based on the playback state of a media entity. If media_content_type attribute is used by the entity, specific 'movie' scenes can also be used.
+sequence:
+  - choose:
+    - conditions:
+        - condition: template
+          value_template: '{{ states(media_entity) == "playing" }}'
+      sequence:
+        - choose:
+            - conditions:
+                - condition: template
+                  value_template: >-
+                    {{ state_attr(media_entity,"media_content_type") ==
+                    "movie" }}
+              sequence:
+                - service: hue.hue_activate_scene
+                  data:
+                    group_name: '{{ state_attr(light_entity,"friendly_name") }}'
+                    scene_name: '{{ hue_scene_playing_movie }}'
+          default:
+            - service: hue.hue_activate_scene
+              data:
+                group_name: '{{ state_attr(light_entity,"friendly_name") }}'
+                scene_name: '{{ hue_scene_playing }}'
+    - conditions:
+        - condition: template
+          value_template: '{{ states(media_entity) == "paused" }}'
+      sequence:
+        - choose:
+            - conditions:
+                - condition: template
+                  value_template: >-
+                    {{ state_attr(media_entity,"media_content_type") ==
+                    "movie" }}
+              sequence:
+                - service: hue.hue_activate_scene
+                  data:
+                    group_name: '{{ state_attr(light_entity,"friendly_name") }}'
+                    scene_name: '{{ hue_scene_paused_movie }}'
+          default:
+            - service: hue.hue_activate_scene
+              data:
+                group_name: '{{ state_attr(light_entity,"friendly_name") }}'
+                scene_name: '{{ hue_scene_paused }}'
+    default:
+      - service: hue.hue_activate_scene
+        data:
+          group_name: '{{ state_attr(light_entity,"friendly_name") }}'
+          scene_name: '{{ hue_scene_default }}'
+mode: parallel
+fields:
+  light_entity:
+    description: Hue light or group to be adjusted by media playback state.
+    required: true
+    selector:
+      entity:
+        domain: light
+  media_entity:
+    description: Media player entity for getting playback state.
+    required: true
+    selector:
+      entity:
+        domain: media_player
+  hue_scene_default:
+    description: Hue scene to set when playback is stopped.
+    default: Concentrate
+    required: true
+    selector:
+      text: null
+  hue_scene_playing:
+    description: Hue scene to set when media is playing.
+    default: TV Show Day
+    required: true
+    selector:
+      text: null
+  hue_scene_paused:
+    description: Hue scene to set when media is paused.
+    default: Concentrate
+    required: true
+    selector:
+      text: null
+  hue_scene_playing_movie:
+    description: Hue scene to set when a movie is playing. Only for use with media player entities with media_content_type attribute that report 'movie' (example- Plex).
+    default: Movie
+    required: false
+    selector:
+      text: null
+  hue_scene_paused_movie:
+    description: Hue scene to set when a movie is paused. Only for use with media player entities with media_content_type attribute that report 'movie' (example- Plex).
+    default: Relax
+    required: false
+    selector:
+      text: null
+max: 10
+icon: mdi:play-pause
