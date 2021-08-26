@@ -1,5 +1,5 @@
-alias: Set Hue Scene on Media Playback State Scene
-description: Sets a Hue scene based on the playback state of a media entity. If media_content_type attribute is used by the entity, specific 'movie' scenes can also be used.
+alias: Set Hue Scene on Media Playback State
+description: Sets a Hue scene based on the playback state of a media entity. If media_content_type attribute is used by the entity, specific _movie_ scenes can also be used.
 sequence:
   - choose:
     - conditions:
