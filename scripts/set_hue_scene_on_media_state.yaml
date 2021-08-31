@@ -42,6 +42,11 @@ sequence:
               data:
                 group_name: '{{ state_attr(light_entity,"friendly_name") }}'
                 scene_name: '{{ hue_scene_paused }}'
+    default:
+      - service: hue.hue_activate_scene
+        data:
+          group_name: '{{ state_attr(light_entity,"friendly_name") }}'
+          scene_name: '{{ hue_scene_default }}'
 mode: parallel
 fields:
   light_entity:
@@ -56,6 +61,12 @@ fields:
     selector:
       entity:
         domain: media_player
+  hue_scene_default:
+    description: Hue scene to set when playback is stopped.
+    default: Concentrate
+    required: true
+    selector:
+      text: null
   hue_scene_playing:
     description: Hue scene to set when media is playing.
     default: TV Show Day
