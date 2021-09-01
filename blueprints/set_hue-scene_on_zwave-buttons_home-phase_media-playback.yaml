@@ -23,6 +23,8 @@ blueprint:
       description: Node ID of the Z-Wave switch used for button input. Note- Only been tested with Inovelli Red Series On/Off switches.
       selector:
         number:
+          min: 0
+          max: 231
           mode: box
     media_script:
       name: Hue Scene / Media Playback Script
