@@ -89,9 +89,11 @@ blueprint:
 trigger:
   - platform: state
     entity_id: !input 'toggle_entity'
+    state: 'off'
     id: Toggle-Off
   - platform: state
     entity_id: !input 'toggle_entity'
+    state: 'on'
     id: Toggle-On
   - platform: state
     entity_id: !input 'media_entity'
