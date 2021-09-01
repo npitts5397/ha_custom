@@ -1,0 +1,154 @@
+blueprint:
+  name: 'Set Hue Scene on Z-wave Buttons, Home Phase, and Media Playback'
+  description: 'Blueprint to set a Hue scene based on Z-wave button pushes, home phase, and media playback states.'
+  domain: automation
+  input:
+    light_entity:
+      description: Hue light or group.
+      selector:
+        entity:
+          domain: light
+    phase_entity:
+      description: Entity used for tracking home phases. Must include 'Night' and 'Evening' phases.
+      selector:
+        entity:
+          domain: input_select
+    media_entity:
+      description: Entity used for tracking playback state. Note- Only tested with Plex media players.
+      selector:
+        entity:
+          domain: media_player
+    zwave_switch_node_id:
+      name: Z-Wave Switch Node ID
+      description: Node ID of the Z-Wave switch used for button input. Note- Only been tested with Inovelli Red Series On/Off switches.
+      selector:
+        entity:
+          text: null
+    media_script:
+      name: Hue Scene / Media Playback Script
+      description: Script used to set Hue lights based on media playback state.
+      default: script.set_hue_scene_on_media_state
+      selector:
+        entity:
+          domain: script
+    day_hue_scene:
+      description: Default Hue scene for day time.
+      default: Concentrate
+      selector:
+        text: null
+    day_hue_scene_playing:
+      description: Hue scene for episode playing in day time.
+      default: TV Show Day
+      selector:
+        text: null
+    day_hue_scene__paused:
+      description: Hue scene for episode paused day time.
+      default: Concentrate
+      selector:
+        text: null
+    day_hue_scene_movie_playing:
+      description: Hue scene for movie playing in day time.
+      default: Movie
+      selector:
+        text: null
+    day_hue_scene_movie_paused:
+      description: Hue scene for movie paused in day time.
+      default: Relax
+      selector:
+        text: null
+    night_hue_scene:
+      description: Default Hue scene for night time.
+      default: Relax
+      selector:
+        text: null
+    night_hue_scene_playing:
+      description: Hue scene for episode playing in night time.
+      default: TV Show Night
+      selector:
+        text: null
+    night_hue_scene_paused:
+      description: Hue scene for episode paused in night time.
+      default: Relax
+      selector:
+        text: null
+    night_hue_scene_movie_playing:
+      description: Hue scene for movie playing in night time.
+      default: Movie
+      selector:
+        text: null
+    night_hue_scene_movie_paused:
+      description: Hue scene for movie paused night time.
+      default: Relax
+      selector:
+        text: null
+trigger:
+  - platform: event
+    event_type: zwave_js_value_notification
+    event_data:
+      property_key: '002'
+      value: KeyPressed
+      node_id: !input 'zwave_switch_node_id'
+    id: SwitchButton-Up
+  - platform: event
+    event_type: zwave_js_value_notification
+    id: SwitchButton-Down
+    event_data:
+      property_key: '001'
+      value: KeyPressed
+      node_id: !input 'zwave_switch_node_id'
+  - platform: state
+    entity_id: !input 'media_entity'
+    id: Media-State-Change
+  - platform: state
+    entity_id: !input 'phase_entity'
+    id: Home-Phase-Change
+condition: []
+action:
+  - choose:
+      - conditions:
+          - condition: trigger
+            id: SwitchButton-Down
+        sequence:
+          - service: light.turn_off
+            target:
+              entity_id: !input 'light_entity'
+      - conditions:
+          - condition: or
+            conditions:
+              - condition: trigger
+                id: SwitchButton-Up
+              - condition: state
+                entity_id: !input 'light_entity'
+                state: 'on'
+        sequence:
+          - choose:
+              conditions:
+                - condition: or
+                  conditions:
+                    - condition: state
+                      entity_id: input_select.home_phase
+                      state: Evening
+                    - condition: state
+                      entity_id: input_select.home_phase
+                      state: Night
+              sequence:
+                - service: !input 'media_script'
+                  data:
+                    light_entity: !input 'light_entity'
+                    media_entity: !input 'media_entity'
+                    hue_scene_default: !input 'night_hue_scene'
+                    hue_scene_playing: !input 'night_hue_scene_playing'
+                    hue_scene_paused: !input 'night_hue_scene_paused'
+                    hue_scene_playing_movie: !input 'night_hue_scene_movie_playing'
+                    hue_scene_paused_movie: !input 'night_hue_scene_movie_paused'
+            default:
+              - service: !input 'media_script'
+                data:
+                  light_entity: !input 'light_entity'
+                  media_entity: !input 'media_entity'
+                  hue_scene_default: !input 'day_hue_scene'
+                  hue_scene_playing: !input 'day_hue_scene_playing'
+                  hue_scene_paused: !input 'day_hue_scene_paused'
+                  hue_scene_playing_movie: !input 'day_hue_scene_movie_playing'
+                  hue_scene_paused_movie: !input 'day_hue_scene_movie_paused'
+mode: restart
