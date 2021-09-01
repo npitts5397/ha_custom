@@ -22,7 +22,8 @@ blueprint:
       name: Z-Wave Switch Node ID
       description: Node ID of the Z-Wave switch used for button input. Note- Only been tested with Inovelli Red Series On/Off switches.
       selector:
-        number: null
+        number:
+          mode: box
     media_script:
       name: Hue Scene / Media Playback Script
       description: Script used to set Hue lights based on media playback state.
