@@ -40,7 +40,7 @@ blueprint:
       default: TV Show Day
       selector:
         text: null
-    day_hue_scene__paused:
+    day_hue_scene_paused:
       description: Hue scene for episode paused day time.
       default: Concentrate
       selector:
