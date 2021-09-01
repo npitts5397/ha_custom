@@ -18,12 +18,11 @@ blueprint:
       selector:
         entity:
           domain: media_player
-    zwave_switch_node_id:
+    zwave_node_id:
       name: Z-Wave Switch Node ID
       description: Node ID of the Z-Wave switch used for button input. Note- Only been tested with Inovelli Red Series On/Off switches.
       selector:
-        entity:
-          text: null
+        text: null
     media_script:
       name: Hue Scene / Media Playback Script
       description: Script used to set Hue lights based on media playback state.
@@ -87,7 +86,7 @@ trigger:
     event_data:
       property_key: '002'
       value: KeyPressed
-      node_id: !input 'zwave_switch_node_id'
+      node_id: !input 'zwave_node_id'
     id: SwitchButton-Up
   - platform: event
     event_type: zwave_js_value_notification
@@ -95,7 +94,7 @@ trigger:
     event_data:
       property_key: '001'
       value: KeyPressed
-      node_id: !input 'zwave_switch_node_id'
+      node_id: !input 'zwave_node_id'
   - platform: state
     entity_id: !input 'media_entity'
     id: Media-State-Change
