@@ -31,6 +31,8 @@ blueprint:
           min: 0
           max: 60
           mode: box
+          step: 1
+          unit_of_measurement: minutes
     media_entity:
       description: Entity used for tracking playback state. Note- Only tested with Plex media players.
       selector:
@@ -129,10 +131,7 @@ action:
             id: Toggle-Off
         sequence:
           - delay:
-            hours: 0
-            minutes: !input 'off_delay_minutes'
-            seconds: 0
-            milliseconds: 0
+              minutes: !input 'off_delay_minutes'
           - condition: state
             entity_id: !input 'toggle_entity'
             state: 'off'
