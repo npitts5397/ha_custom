@@ -24,6 +24,13 @@ blueprint:
       selector:
         entity:
           domain: input_boolean
+    off_delay_minutes:
+      description: Number of minutes to wait before turning off lights after toggle switches to Off state.
+      selector:
+        number:
+          min: 0
+          max: 60
+          mode: box
     media_entity:
       description: Entity used for tracking playback state. Note- Only tested with Plex media players.
       selector:
@@ -121,6 +128,14 @@ action:
           - condition: trigger
             id: Toggle-Off
         sequence:
+          - delay:
+            hours: 0
+            minutes: !input off_delay_minutes
+            seconds: 0
+            milliseconds: 0
+          - condition: state
+            entity_id: !input 'toggle_entity'
+            state: 'off'
           - service: light.turn_off
             target:
               entity_id: !input 'light_entity'
