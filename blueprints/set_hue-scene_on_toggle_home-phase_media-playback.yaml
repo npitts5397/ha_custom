@@ -130,7 +130,7 @@ action:
         sequence:
           - delay:
             hours: 0
-            minutes: !input off_delay_minutes
+            minutes: !input 'off_delay_minutes'
             seconds: 0
             milliseconds: 0
           - condition: state
