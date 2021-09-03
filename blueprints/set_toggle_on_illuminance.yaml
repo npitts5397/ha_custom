@@ -72,8 +72,8 @@ variables:
 action: 
   - choose:
       - conditions:
-          - condition: template
-            value_template: {{ states(toggle_on_high_illuminance) == true }}
+          - condition: 
+              - {{ states(toggle_on_high_illuminance) == true }}
           - condition: or
             conditions:
               - condition: template
