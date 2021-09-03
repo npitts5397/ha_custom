@@ -18,6 +18,11 @@ blueprint:
       selector:
         entity:
           domain: input_select
+    allow_on_night_away:
+      description: Allow lights to turn on during 'Night' phase or 'Away' mode.
+      default: false
+      selector:
+        boolean:
     toggle_entity:
       name: Toggle Switch
       description: Entity used for determing if lights should be on or off. Only tested with 
@@ -121,17 +126,24 @@ trigger:
       - Home
       - Manual
       - Vacation
+  - platform: event
+    event_type: automation_reloaded
 condition:
-  - condition: not
+  - condition: or
     conditions:
-      - condition: or
+      - condition: state
+        entity_id: !input 'allow_on_night_away'
+        state: 'on'
+      - condition: not
         conditions:
-          - condition: state
-            entity_id: !input 'phase_entity'
-            state: 'Night'
-          - condition: state
-            entity_id: !input 'shifting_mode_entity'
-            state: 'Away'
+          - condition: or
+            conditions:
+              - condition: state
+                entity_id: !input 'phase_entity'
+                state: 'Night'
+              - condition: state
+                entity_id: !input 'shifting_mode_entity'
+                state: 'Away'
 action:
   - choose:
       - conditions:
