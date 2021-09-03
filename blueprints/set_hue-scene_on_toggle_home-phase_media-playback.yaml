@@ -131,7 +131,7 @@ condition:
             state: 'Night'
           - condition: state
             entity_id: !input 'shifting_mode_entity'
-            to: 'Away'
+            state: 'Away'
 action:
   - choose:
       - conditions:
@@ -146,15 +146,6 @@ action:
           - service: light.turn_off
             target:
               entity_id: !input 'light_entity'
-      # - conditions:
-      #     - condition: or
-      #       conditions:
-      #         - condition: trigger
-      #           id: Toggle-On
-      #         - condition: state
-      #           entity_id: !input 'light_entity'
-      #           state: 'on'
-      #   sequence:
     default:
       - choose:
           conditions:
