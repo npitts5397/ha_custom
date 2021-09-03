@@ -116,14 +116,9 @@ trigger:
 condition:
   - condition: not
     conditions:
-      - condition: or
-        conditions:
-          - condition: state
-            entity_id: !input 'shifting_mode_entity'
-            state: 'Away'
-          - condition: state
-            entity_id: !input 'phase_entity'
-            state: 'Night'
+      - condition: state
+        entity_id: !input 'phase_entity'
+        state: 'Night'
 action:
   - choose:
       - conditions:
@@ -146,6 +141,11 @@ action:
               - condition: state
                 entity_id: !input 'light_entity'
                 state: 'on'
+              - condition: not
+                conditions:
+                  - condition: state
+                    entity_id: !input 'shifting_mode_entity'
+                    state: 'Away'
         sequence:
           - choose:
               conditions:
