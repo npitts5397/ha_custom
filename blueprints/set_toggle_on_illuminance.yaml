@@ -1,0 +1,144 @@
+blueprint:
+  name: 'Set Toggle on Illuminance'
+  description: 'Blueprint to set toggle on illuminance values.'
+  domain: automation
+  input:
+    toggle_entity:
+      description: Toggle to set. 
+      selector:
+        entity:
+          domain: input_boolean
+    illuminance_entity:
+      description: Sensor entity which reports illuminance.
+      selector:
+        entity:
+          domain: sensor
+          device_class: illuminance
+    illuminance_value:
+      description: Illunimance value to trigger toggling between ON and OFF state.
+      default: 1000
+      selector:
+        number: 
+          min: 0
+          max: 30000
+          mode: box
+          step: 1
+          unit_of_measurement: lux
+    toggle_on_high_illuminance:
+      description: By default (off/false), set toggle-ON when _below_ illuminance_value (darker). When on/true, set toggle-ON when _above_ illuminance_value (brighter).
+      default: false
+      selector:
+        boolean:
+    off_delay_seconds:
+      description: Seconds to delay before changing to toggle-OFF. Illuminance will be re-evaluated before setting toggle-OFF.
+      default: 0
+      selector:
+        number:
+          min: 0
+          max: 86399
+          mode: box
+          step: 1
+          unit_of_measurement: seconds
+    allow_on_night_away:
+      description: Allow toggle-ON during 'Night' phase or 'Away' mode.
+      default: false
+      selector:
+        boolean:
+    phase_entity:
+      description: Required when allow_on_night_away is set to true.
+      default: {}
+      selector:
+        entity:
+          domain: input_select
+    shifting_mode_entity:
+      description: Required when allow_on_night_away is set to true.
+      default: {}
+      selector:
+        entity:
+          domain: input_select
+trigger:
+  - platform: event
+    id: Automation-Reloaded
+    event_type: automation_reloaded
+  - platform: numeric_state
+    id: Illuminance-BelowThreshold
+    entity_id: !input 'illuminance_entity'
+    below: !input 'illuminance_value'
+  - platform: numeric_state
+    id: Illuminance-AboveThreshold
+    entity_id: !input 'illuminance_entity'
+    above: !input 'illuminance_value'
+action: 
+  - choose:
+      - conditions:
+          - condition: state
+            entity_id: !input 'toggle_on_high_illuminance'
+            state: 'on'
+          - condition: or
+            conditions:
+              - condition: state
+                entity_id: !input 'allow_on_night_away'
+                state: 'on'
+              - condition: not
+                conditions:
+                  - condition: or
+                    conditions:
+                      - condition: state
+                        entity_id: !input 'phase_entity'
+                        state: 'Night'
+                      - condition: state
+                        entity_id: !input 'shifting_mode_entity'
+                        state: 'Away'
+        sequence:
+          - choose:
+              - conditions:
+                  - condition: numeric_state
+                    entity_id: !input 'illuminance_entity'
+                    above: !input 'illuminance_value'
+                sequence:
+                  - service: input_boolean.turn_on
+                    target:
+                      entity_id: !input 'toggle_entity'
+            default:
+              - delay:
+                  seconds: !input 'off_delay_seconds'
+              - condition: numeric_state
+                entity_id: !input 'illuminance_entity'
+                below: !input 'illuminance_value'
+              - service: input_boolean.turn_off
+                target:
+                  entity_id: !input 'toggle_entity'
+    default:
+      - choose:
+          - conditions:
+              - condition: numeric_state
+                entity_id: !input 'illuminance_entity'
+                below: !input 'illuminance_value'
+              - condition: or
+                conditions:
+                  - condition: state
+                    entity_id: !input 'allow_on_night_away'
+                    state: 'on'
+                  - condition: not
+                    conditions:
+                      - condition: or
+                        conditions:
+                          - condition: state
+                            entity_id: !input 'phase_entity'
+                            state: 'Night'
+                          - condition: state
+                            entity_id: !input 'shifting_mode_entity'
+                            state: 'Away'
+            sequence:
+              - service: input_boolean.turn_on
+                target:
+                  entity_id: !input 'toggle_entity'
+        default:
+          - delay:
+              seconds: !input 'off_delay_seconds'
+          - condition: numeric_state
+            entity_id: !input 'illuminance_entity'
+            above: !input 'illuminance_value'
+          - service: input_boolean.turn_off
+            target:
+              entity_id: !input 'toggle_entity'
