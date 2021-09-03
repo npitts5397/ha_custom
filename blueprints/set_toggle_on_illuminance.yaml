@@ -73,7 +73,7 @@ action:
   - choose:
       - conditions:
           - condition: template
-            value_template: {{ toggle_on_high_illuminance }}
+            value_template: {{ toggle_on_high_illuminance == true }}
           - condition: or
             conditions:
               - condition: template
