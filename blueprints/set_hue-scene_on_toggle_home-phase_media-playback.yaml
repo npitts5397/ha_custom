@@ -110,15 +110,28 @@ trigger:
   - platform: state
     entity_id: !input 'phase_entity'
     id: Home-Phase-Change
+    to:
+      - Morning
+      - Day
+      - Evening
   - platform: state
     entity_id: !input 'shifting_mode_entity'
     id: Shifting-Mode-Change
+    to:
+      - Home
+      - Manual
+      - Vacation
 condition:
   - condition: not
     conditions:
-      - condition: state
-        entity_id: !input 'phase_entity'
-        state: 'Night'
+      - condition: or
+        conditions:
+          - condition: state
+            entity_id: !input 'phase_entity'
+            state: 'Night'
+          - condition: state
+            entity_id: !input 'shifting_mode_entity'
+            to: 'Away'
 action:
   - choose:
       - conditions:
@@ -133,48 +146,44 @@ action:
           - service: light.turn_off
             target:
               entity_id: !input 'light_entity'
-      - conditions:
-          - condition: or
-            conditions:
-              - condition: trigger
-                id: Toggle-On
-              - condition: state
-                entity_id: !input 'light_entity'
-                state: 'on'
-              - condition: not
-                conditions:
-                  - condition: state
-                    entity_id: !input 'shifting_mode_entity'
-                    state: 'Away'
-        sequence:
-          - choose:
+      # - conditions:
+      #     - condition: or
+      #       conditions:
+      #         - condition: trigger
+      #           id: Toggle-On
+      #         - condition: state
+      #           entity_id: !input 'light_entity'
+      #           state: 'on'
+      #   sequence:
+    default:
+      - choose:
+          conditions:
+            - condition: or
               conditions:
-                - condition: or
-                  conditions:
-                    - condition: state
-                      entity_id: input_select.home_phase
-                      state: Evening
-                    - condition: state
-                      entity_id: input_select.home_phase
-                      state: Night
-              sequence:
-                - service: !input 'media_script'
-                  data:
-                    light_entity: !input 'light_entity'
-                    media_entity: !input 'media_entity'
-                    hue_scene_default: !input 'night_hue_scene'
-                    hue_scene_playing: !input 'night_hue_scene_playing'
-                    hue_scene_paused: !input 'night_hue_scene_paused'
-                    hue_scene_playing_movie: !input 'night_hue_scene_movie_playing'
-                    hue_scene_paused_movie: !input 'night_hue_scene_movie_paused'
-            default:
-              - service: !input 'media_script'
-                data:
-                  light_entity: !input 'light_entity'
-                  media_entity: !input 'media_entity'
-                  hue_scene_default: !input 'day_hue_scene'
-                  hue_scene_playing: !input 'day_hue_scene_playing'
-                  hue_scene_paused: !input 'day_hue_scene_paused'
-                  hue_scene_playing_movie: !input 'day_hue_scene_movie_playing'
-                  hue_scene_paused_movie: !input 'day_hue_scene_movie_paused'
+                - condition: state
+                  entity_id: input_select.home_phase
+                  state: Evening
+                - condition: state
+                  entity_id: input_select.home_phase
+                  state: Night
+          sequence:
+            - service: !input 'media_script'
+              data:
+                light_entity: !input 'light_entity'
+                media_entity: !input 'media_entity'
+                hue_scene_default: !input 'night_hue_scene'
+                hue_scene_playing: !input 'night_hue_scene_playing'
+                hue_scene_paused: !input 'night_hue_scene_paused'
+                hue_scene_playing_movie: !input 'night_hue_scene_movie_playing'
+                hue_scene_paused_movie: !input 'night_hue_scene_movie_paused'
+        default:
+          - service: !input 'media_script'
+            data:
+              light_entity: !input 'light_entity'
+              media_entity: !input 'media_entity'
+              hue_scene_default: !input 'day_hue_scene'
+              hue_scene_playing: !input 'day_hue_scene_playing'
+              hue_scene_paused: !input 'day_hue_scene_paused'
+              hue_scene_playing_movie: !input 'day_hue_scene_movie_playing'
+              hue_scene_paused_movie: !input 'day_hue_scene_movie_paused'
 mode: restart
