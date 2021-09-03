@@ -54,6 +54,9 @@ blueprint:
       selector:
         entity:
           domain: input_select
+variables:
+  toggle_on_high_illuminance: !input 'toggle_on_high_illuminance'
+  allow_on_night_away: !input 'allow_on_night_away'
 trigger:
 #  - platform: event
 #    id: Automation-Reloaded
@@ -69,14 +72,10 @@ trigger:
 action: 
   - choose:
       - conditions:
-          - condition: state
-            entity_id: !input 'toggle_on_high_illuminance'
-            state: 'on'
+          - condition: {{ states(toggle_on_high_illuminance) == 'on' }}
           - condition: or
             conditions:
-              - condition: state
-                entity_id: !input 'allow_on_night_away'
-                state: 'on'
+              - condition: {{ states(allow_on_night_away) == 'on' }}
               - condition: not
                 conditions:
                   - condition: or
@@ -114,9 +113,7 @@ action:
                 below: !input 'illuminance_value'
               - condition: or
                 conditions:
-                  - condition: state
-                    entity_id: !input 'allow_on_night_away'
-                    state: 'on'
+                  - condition: {{ states(allow_on_night_away) == 'on' }}
                   - condition: not
                     conditions:
                       - condition: or
