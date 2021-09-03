@@ -147,6 +147,9 @@ action:
             target:
               entity_id: !input 'light_entity'
     default:
+      - condition: state
+        entity_id: !input 'toggle_entity'
+        state: 'on'
       - choose:
           conditions:
             - condition: or
