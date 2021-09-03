@@ -45,21 +45,19 @@ blueprint:
       selector:
         boolean:
     phase_entity:
-      description: Required when allow_on_night_away is set to true.
-      default: {}
+      description: Entity that holds current phase value.
       selector:
         entity:
           domain: input_select
     shifting_mode_entity:
-      description: Required when allow_on_night_away is set to true.
-      default: {}
+      description: Entity that holds phase shifting mode value.
       selector:
         entity:
           domain: input_select
 trigger:
-  - platform: event
-    id: Automation-Reloaded
-    event_type: automation_reloaded
+#  - platform: event
+#    id: Automation-Reloaded
+#    event_type: automation_reloaded
   - platform: numeric_state
     id: Illuminance-BelowThreshold
     entity_id: !input 'illuminance_entity'
