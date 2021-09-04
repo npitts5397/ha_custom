@@ -1,0 +1,271 @@
+# WORK IN PROGRESS!!!
+blueprint:
+  name: 'Set Hue Scene on Trigger'
+  description: 'Blueprint to set Hue Scene on triggers: Illuminance, LZW30-SN up/down presses, media playback changes, phase changes, and shifting mode changes.'
+  domain: automation
+  input:
+    light_entity:
+      description: The Hue light entity to be set.
+      required: true
+      selector:
+        entity:
+          domain: light
+    illuminance_entity:
+      description: Sensor entity which reports illuminance. Optional.
+      default: {}
+      selector:
+        entity:
+          domain: sensor
+          device_class: illuminance
+    illuminance_lux_threshold:
+      description: Lux value to trigger toggling between ON and OFF state. Required if illuminance_entity selected.
+      default: 1000
+      selector:
+        number: 
+          min: 0
+          max: 30000
+          mode: box
+          step: 50
+          unit_of_measurement: lux
+    illuminance_toggle_on_high:
+      description: By default (off/false), set toggle-ON when _below_ illuminance_value (darker). When on/true, set toggle-ON when _above_ illuminance_value (brighter).
+      default: false
+      selector:
+        boolean:
+    illuminance_off_delay_seconds:
+      description: Seconds to delay before changing to toggle-OFF. Illuminance will be re-evaluated before setting toggle-OFF.
+      default: 0
+      selector:
+        number:
+          min: 0
+          max: 86399
+          mode: box
+          step: 1
+          unit_of_measurement: seconds
+    illuminance_allow_night_execution:
+      description: Allow illuminance-based turn-ON during Night phase.
+      default: false
+      selector:
+        boolean:
+    illuminance_allow_away_execution:
+      description: Allow illuminance-based turn-ON during Away mode.
+      default: false
+      selector:
+        boolean:
+    zwave_node_id:
+      name: Z-Wave Switch Node ID
+      description: Node ID of the Z-Wave switch used for button input. Only been tested with LZW30-SN devices.
+      default: {}
+      selector:
+        number:
+          min: 0
+          max: 231
+          mode: box
+    media_entity:
+      description: Entity used for tracking playback state. Note- Only tested with Plex media players.
+      default: {}
+      selector:
+        entity:
+          domain: media_player
+    media_script:
+      name: Hue Scene / Media Playback Script
+      description: Script used to set Hue lights based on media playback state.
+      default: {}
+      selector:
+        entity:
+          domain: script
+    phase_entity:
+      description: Entity that holds current phase value.
+      default: {}
+      selector:
+        entity:
+          domain: input_select
+    phase_allow_night_trigger:
+      description: Allow phase changing to night trigger.
+      default: false
+      selector:
+        boolean:
+    shifting_mode_entity:
+      description: Entity that holds phase shifting mode value.
+      default: {}
+      selector:
+        entity:
+          domain: input_select
+    mode_allow_away_trigger:
+      description: Allow shifting mode changing to away trigger.
+      default: false
+      selector:
+        boolean:
+    day_hue_scene:
+      description: Default Hue scene for day time.
+      default: Concentrate
+      selector:
+        text: null
+    day_hue_scene_playing:
+      description: Hue scene for episode playing in day time.
+      default: TV Show Day
+      selector:
+        text: null
+    day_hue_scene_paused:
+      description: Hue scene for episode paused day time.
+      default: Concentrate
+      selector:
+        text: null
+    day_hue_scene_movie_playing:
+      description: Hue scene for movie playing in day time.
+      default: Movie
+      selector:
+        text: null
+    day_hue_scene_movie_paused:
+      description: Hue scene for movie paused in day time.
+      default: Relax
+      selector:
+        text: null
+    night_hue_scene:
+      description: Default Hue scene for night time.
+      default: Relax
+      selector:
+        text: null
+    night_hue_scene_playing:
+      description: Hue scene for episode playing in night time.
+      default: TV Show Night
+      selector:
+        text: null
+    night_hue_scene_paused:
+      description: Hue scene for episode paused in night time.
+      default: Relax
+      selector:
+        text: null
+    night_hue_scene_movie_playing:
+      description: Hue scene for movie playing in night time.
+      default: Movie
+      selector:
+        text: null
+    night_hue_scene_movie_paused:
+      description: Hue scene for movie paused night time.
+      default: Relax
+      selector:
+        text: null
+trigger:
+  - platform: event
+    id: Automation-Reloaded
+  - platform: numeric_state
+    id: Illuminance-BelowThreshold
+    entity_id: !input 'illuminance_entity'
+    below: !input 'illuminance_lux_threshold'
+  - platform: numeric_state
+    id: Illuminance-AboveThreshold
+    entity_id: !input 'illuminance_entity'
+    above: !input 'illuminance_lux_threshold'
+  - platform: event
+    id: SwitchButton-Up
+    event_type: zwave_js_value_notification
+    event_data:
+      property_key: '002'
+      value: KeyPressed
+      node_id: !input 'zwave_node_id'
+  - platform: event
+    id: SwitchButton-Down
+    event_type: zwave_js_value_notification
+    event_data:
+      property_key: '001'
+      value: KeyPressed
+      node_id: !input 'zwave_node_id'
+  - platform: state
+    entity_id: !input 'media_entity'
+    id: Media-State-Change
+  - platform: state
+    entity_id: !input 'phase_entity'
+    id: Home-Phase-Change
+    to:
+      - Morning
+      - Day
+      - Evening
+  - platform: state
+    entity_id: !input 'phase_entity'
+    id: Home-Phase-Change-Night
+    to: Night
+  - platform: state
+    entity_id: !input 'shifting_mode_entity'
+    id: Shifting-Mode-Change
+    to:
+      - Home
+      - Manual
+      - Vacation
+  - platform: state
+    entity_id: !input 'shifting_mode_entity'
+    id: Shifting-Mode-Change-Away
+    to: Away
+variables:
+  illuminance_toggle_on_high: !input 'illuminance_toggle_on_high'
+  illuminance_allow_night_execution: !input 'illuminance_allow_night_execution'
+  illuminance_allow_away_execution: !input 'illuminance_allow_away_execution'
+  phase_allow_night_trigger: !input 'phase_allow_night_execution'
+  mode_allow_away_trigger: !input 'mode_allow_away_execution'
+condition:
+  # Allow various grouped triggers. Allows for conditionally allowing triggers.
+  - condition: or
+    conditions:
+      # Allow illuminance triggers conditionally-- if not Night/Away or allow Night/Away execution
+      - condition: and
+        conditions:
+          # Illuminance Triggers
+          - condition: or
+            conditions:
+              - condition: trigger
+                id: Illuminance-BelowThreshold
+              - condition: trigger
+                id: Illuminance-AboveThreshold
+          # Must either allow night exec OR be NOT be Phase-Night
+          - condition: or
+            conditions:
+              - condition: template
+                value_template: "{{ illuminance_allow_night_execution }}"
+              - condition: not
+                conditions:
+                  - condition: state
+                    entity_id: !input home_phase
+                    state: 'Night'
+          # Must either allow away exec OR be NOT ShiftingMode-Away
+          - condition: or
+            conditions:
+              - condition: template
+                value_template: "{{ illuminance_allow_away_execution }}"
+              - condition: not
+                conditions:
+                  - condition: state
+                    entity_id: !input home_phase_shifting_mode
+                    state: 'Away'
+      # Allow switch triggers
+      - condition: trigger
+        id: SwitchButton-Down
+      - condition: trigger
+        id: SwitchButton-Up
+      # Allow media triggers if lights are on
+      - condition: and
+        conditions:
+          - condition: trigger
+            id: Media-State-Change
+          - condition: state
+            entity_id: !input light_entity
+            state: 'on'
+      # Allow phase change trigger for Morning, Day, Night
+      - condition: trigger
+        id: Home-Phase-Change
+      # Allow phase change trigger for Night if allowed
+      - condition: and
+        conditions:
+          - condition: trigger
+            id: Home-Phase-Change-Night
+          - condition: template
+            value_template: "{{ phase_allow_night_trigger }}"
+      # Allow shifting mode trigger
+      - condition: trigger
+        id: Shifting-Mode-Change
+      # Allow shifting mode change for Away if allowed
+      - condition: and
+        conditions:
+          - condition: trigger
+            id: Shifting-Mode-Change-Away
+          - condition: template
+            value_template: "{{ mode_allow_away_trigger }}"
