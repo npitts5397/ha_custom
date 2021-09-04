@@ -77,7 +77,7 @@ action:
           - condition: or
             conditions:
               - condition: template
-                value_template: {{ states(allow_on_night_away) == true }}
+                value_template: "{{ allow_on_night_away }}"
               - condition: not
                 conditions:
                   - condition: or
@@ -116,7 +116,7 @@ action:
               - condition: or
                 conditions:
                   - condition: template
-                    value_template: {{ states(allow_on_night_away) == true }}
+                    value_template: "{{ allow_on_night_away }}"
                   - condition: not
                     conditions:
                       - condition: or
