@@ -55,9 +55,9 @@ blueprint:
         entity:
           domain: input_select
 trigger:
-#  - platform: event
-#    id: Automation-Reloaded
-#    event_type: automation_reloaded
+  - platform: event
+    id: Automation-Reloaded
+    event_type: automation_reloaded
   - platform: numeric_state
     id: Illuminance-BelowThreshold
     entity_id: !input 'illuminance_entity'
