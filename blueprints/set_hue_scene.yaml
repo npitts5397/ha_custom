@@ -98,51 +98,61 @@ blueprint:
         boolean:
     day_hue_scene:
       description: Default Hue scene for day time.
+      required: true
       default: Concentrate
       selector:
         text: null
     day_hue_scene_playing:
       description: Hue scene for episode playing in day time.
+      required: false
       default: TV Show Day
       selector:
         text: null
     day_hue_scene_paused:
       description: Hue scene for episode paused day time.
+      required: false
       default: Concentrate
       selector:
         text: null
     day_hue_scene_movie_playing:
       description: Hue scene for movie playing in day time.
+      required: false
       default: Movie
       selector:
         text: null
     day_hue_scene_movie_paused:
       description: Hue scene for movie paused in day time.
+      required: false
       default: Relax
       selector:
         text: null
     night_hue_scene:
       description: Default Hue scene for night time.
+      required: false
       default: Relax
       selector:
         text: null
     night_hue_scene_playing:
       description: Hue scene for episode playing in night time.
+      required: false
       default: TV Show Night
       selector:
         text: null
     night_hue_scene_paused:
       description: Hue scene for episode paused in night time.
+      required: false
       default: Relax
       selector:
         text: null
     night_hue_scene_movie_playing:
       description: Hue scene for movie playing in night time.
+      required: false
       default: Movie
       selector:
         text: null
     night_hue_scene_movie_paused:
       description: Hue scene for movie paused night time.
+      required: false
       default: Relax
       selector:
         text: null
@@ -259,7 +269,7 @@ condition:
             id: Home-Phase-Change-Night
           - condition: template
             value_template: "{{ phase_allow_night_trigger }}"
-      # Allow shifting mode trigger
+      # Allow shifting mode trigger for Home, Manual, Vacation
       - condition: trigger
         id: Shifting-Mode-Change
       # Allow shifting mode change for Away if allowed
@@ -269,3 +279,114 @@ condition:
             id: Shifting-Mode-Change-Away
           - condition: template
             value_template: "{{ mode_allow_away_trigger }}"
+action:
+  # Choose action based on trigger. This will be considated--but need to get the basic logic
+  # for each trigger determined first.
+
+# TURN LIGHTS ON / OFF APPOACH - This will likely work better as I attempt to consolidate.
+  # Turn on lights
+  - choose:
+      -
+  # Turn off lights
+    default:
+
+
+
+
+
+ #TRIGGER-BASED ACTION APPROACH
+  # Lux crosses BELOW threshold
+  - choose:
+      - conditions:
+          - condition: trigger
+            id: Illuminance-BelowThreshold
+        sequence:
+          - choose:
+              - conditions:
+                  condition: template
+                  value_template: "{{ illuminance_toggle_on_high }}"
+                sequence:
+                  - delay:
+                      seconds: !input 'illuminance_off_delay_seconds'
+                  - condition: numeric_state
+                    entity_id: !input 'illuminance_entity'
+                    below: !input 'illuminance_lux_threshold'
+                  - service: light.turn_off
+                    target:
+                      entity_id: !input 'light_entity'
+            default:
+              - service: hue.hue_activate_scene
+                data:
+                  group_name: '{{ state_attr(light_entity,"friendly_name") }}'
+                  scene_name: '{{ hue_scene_day }}'  # Maybe there should be logic to determine the correct Hue scene? Or call script to determine? Idk...
+  # Lux crosses ABOVE threshold
+  - choose:
+      - conditions:
+          - condition: trigger
+            id: Illuminance-AboveThreshold
+        sequence:
+          - choose:
+              - conditions:
+                  condition: template
+                  value_template: "{{ illuminance_toggle_on_high }}"
+                sequence:
+                  - service: hue.hue_activate_scene
+                    data:
+                      group_name: '{{ state_attr(light_entity,"friendly_name") }}'
+                      scene_name: '{{ hue_scene_day }}'  # Maybe there should be logic to determine the correct Hue scene? Or call script to determine? Idk...
+            default:
+              - delay:
+                  seconds: !input 'illuminance_off_delay_seconds'
+              - condition: numeric_state
+                entity_id: !input 'illuminance_entity'
+                below: !input 'illuminance_lux_threshold'
+              - service: light.turn_off
+                target:
+                  entity_id: !input 'light_entity'
+  # Switch button up pushed
+  - choose:
+      - conditions:
+          - condition: trigger
+            id: SwitchButton-Up
+        sequence:
+          - service: hue.hue_activate_scene
+            data:
+              group_name: '{{ state_attr(light_entity,"friendly_name") }}'
+              scene_name: '{{ hue_scene_day }}'  # Maybe there should be logic to determine the correct Hue scene? Or call script to determine? Idk...
+  # Switch button down pushed
+  - choose:
+      - conditions:
+          - condition: trigger
+            id: SwitchButton-Down
+        sequence:
+          - service: light.turn_off
+            target:
+              entity_id: !input 'light_entity'
+  # Media change
+  - choose:
+      - conditions:
+          - condition: trigger
+            id: Media-State-Change
+        sequence:
+          - service: !input 'media_script'
+            data:
+              light_entity: !input 'light_entity'
+              media_entity: !input 'media_entity'
+              hue_scene_default: !input 'day_hue_scene'
+              hue_scene_playing: !input 'day_hue_scene_playing'
+              hue_scene_paused: !input 'day_hue_scene_paused'
+              hue_scene_playing_movie: !input 'day_hue_scene_movie_playing'
+              hue_scene_paused_movie: !input 'day_hue_scene_movie_paused'
+# Phase Trigger
+
+# Phase-Night Trigger
+
+# Mode Trigger
+
+# Mode-Away Trigger
+          
+
+            
+
+          
+          
