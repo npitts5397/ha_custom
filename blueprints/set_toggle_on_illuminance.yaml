@@ -39,8 +39,13 @@ blueprint:
           mode: box
           step: 1
           unit_of_measurement: seconds
-    allow_on_night_away:
-      description: Allow toggle-ON during 'Night' phase or 'Away' mode.
+    allow_night_toggle_on:
+      description: Allow toggle-ON during Night phase.
+      default: false
+      selector:
+        boolean:
+    allow_away_toggle_on:
+      description: Allow toggle-ON during Away mode.
       default: false
       selector:
         boolean:
@@ -68,7 +73,8 @@ trigger:
     above: !input 'illuminance_value'
 variables:
   toggle_on_high_illuminance: !input 'toggle_on_high_illuminance'
-  allow_on_night_away: !input 'allow_on_night_away'
+  allow_night_toggle_on: !input 'allow_night_toggle_on'
+  allow_away_toggle_on: !input 'allow_away_toggle_on'
 action: 
   - choose:
       - conditions:
@@ -77,17 +83,21 @@ action:
           - condition: or
             conditions:
               - condition: template
-                value_template: "{{ allow_on_night_away }}"
+                value_template: "{{ allow_night_toggle_on }}"
               - condition: not
                 conditions:
-                  - condition: or
-                    conditions:
-                      - condition: state
-                        entity_id: !input 'phase_entity'
-                        state: 'Night'
-                      - condition: state
-                        entity_id: !input 'shifting_mode_entity'
-                        state: 'Away'
+                  - condition: state
+                    entity_id: !input 'phase_entity'
+                    state: 'Night'
+          - condition: or
+            conditions:
+              - condition: template
+                value_template: "{{ allow_away_toggle_on }}"
+              - condition: not
+                conditions:
+                  - condition: state
+                    entity_id: !input 'shifting_mode_entity'
+                    state: 'Away'
         sequence:
           - choose:
               - conditions:
@@ -110,24 +120,28 @@ action:
     default:
       - choose:
           - conditions:
-              - condition: numeric_state
-                entity_id: !input 'illuminance_entity'
-                below: !input 'illuminance_value'
               - condition: or
                 conditions:
                   - condition: template
-                    value_template: "{{ allow_on_night_away }}"
+                    value_template: "{{ allow_night_toggle_on }}"
                   - condition: not
                     conditions:
-                      - condition: or
-                        conditions:
-                          - condition: state
-                            entity_id: !input 'phase_entity'
-                            state: 'Night'
-                          - condition: state
-                            entity_id: !input 'shifting_mode_entity'
-                            state: 'Away'
+                      - condition: state
+                        entity_id: !input 'phase_entity'
+                        state: 'Night'
+              - condition: or
+                conditions:
+                  - condition: template
+                    value_template: "{{ allow_away_toggle_on }}"
+                  - condition: not
+                    conditions:
+                      - condition: state
+                        entity_id: !input 'shifting_mode_entity'
+                        state: 'Away'
             sequence:
+              - condition: numeric_state
+                entity_id: !input 'illuminance_entity'
+                below: !input 'illuminance_value'
               - service: input_boolean.turn_on
                 target:
                   entity_id: !input 'toggle_entity'
