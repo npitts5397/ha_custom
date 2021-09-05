@@ -284,7 +284,7 @@ action:
               - condition: and
                 conditions:
                   - condition: template
-                    value_template: "{{ is_defined(illuminance_entity) }}" # check syntax
+                    value_template: "{{ illuminance_entity }}"
                   - condition: or
                     conditions:
                       - condition: and
@@ -329,7 +329,7 @@ action:
                 - choose:
                     conditions:
                       - condition: template
-                        valute_template: "{{ is_defined(media_entity) }}" # check syntax
+                        valute_template: "{{ media_entity }}" # check syntax
                     sequence:
                       - service: !input 'media_script'
                         data:
@@ -353,7 +353,7 @@ action:
                   conditions:
                     - condition:
                         - condition: template
-                          valute_template: "{{ is_defined(media_entity) }}" # check syntax
+                          valute_template: "{{ media_entity }}" # check syntax
                   sequence:
                     - service: !input 'media_script'
                       data:
@@ -375,7 +375,7 @@ action:
       - choose:
           - conditions:
               - condition: template
-                value_template: "{{ is_defined(illuminance_entity) }}" # check syntax
+                value_template: "{{ illuminance_entity }}" # check syntax
               - condition: trigger
                 id: 
             sequence:
