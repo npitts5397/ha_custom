@@ -6,7 +6,6 @@ blueprint:
   input:
     light_entity:
       description: The Hue light entity to be set.
-      required: true
       selector:
         entity:
           domain: light
