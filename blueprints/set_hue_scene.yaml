@@ -352,8 +352,7 @@ action:
               - choose:
                   conditions:
                     - condition:
-                        - condition: template
-                          valute_template: "{{ media_entity }}" # check syntax
+                        - condition: "{{ media_entity }}" # check syntax
                   sequence:
                     - service: !input 'media_script'
                       data:
