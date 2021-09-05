@@ -225,7 +225,7 @@ condition:
               - condition: not
                 conditions:
                   - condition: state
-                    entity_id: !input home_phase
+                    entity_id: !input 'phase_entity'
                     state: 'Night'
           # Must either allow away exec OR be NOT ShiftingMode-Away
           - condition: or
@@ -235,7 +235,7 @@ condition:
               - condition: not
                 conditions:
                   - condition: state
-                    entity_id: !input home_phase_shifting_mode
+                    entity_id: !input shifting_mode_entity
                     state: 'Away'
       # Allow switch triggers
       - condition: trigger
