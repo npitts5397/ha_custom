@@ -287,20 +287,16 @@ action:
                     value_template: "{{ is_defined(illuminance_entity) }}" # check syntax
                   - condition: or
                     conditions:
-                      
-                  - condition: or
-                    conditions:
                       - condition: and
                         conditions:
                           - condition: state
-                            entity_id: "{{ illuminance_entity }}"
+                            entity_id: !input 'illuminance_entity'
                             above: !input 'illuminance_lux_threshold'
                           - condition: template
                             value_template: "{{ illuminance_toggle_on_high }}"
-                      - condition: and
-                        conditions:
-                            entity_id: "{{ illuminance_entity }}"
-                            below: !input 'illuminance_lux_threshold'
+                      - condition: state
+                        entity_id: !input 'illuminance_entity'
+                        below: !input 'illuminance_lux_threshold'
               # switch button up pressed condition
               - condition: trigger
                 id: SwitchButton-Up
@@ -383,11 +379,15 @@ action:
               - condition: trigger
                 id: 
             sequence:
+              # Will need to check to see what type:
+              # trigger when above + on when high
+              # then 2nd condition needs to be checking to make
+              # we're still in that state.
               - delay:
-                  minutes: !input 'off_delay_minutes'
+                  seconds: !input 'illuminance_off_delay_seconds'
               - condition: state
-                entity_id: !input 'toggle_entity'
-                state: 'off'
+                entity_id: !input 'illuminance_entity'
+                below: !input 'illuminance_lux_threshold'
               - service: light.turn_off
                 target:
                   entity_id: !input 'light_entity'
