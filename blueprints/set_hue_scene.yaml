@@ -289,12 +289,12 @@ action:
                     conditions:
                       - condition: and
                         conditions:
-                          - condition: state
+                          - condition: numeric_state
                             entity_id: !input 'illuminance_entity'
                             above: !input 'illuminance_lux_threshold'
                           - condition: template
                             value_template: "{{ illuminance_toggle_on_high }}"
-                      - condition: state
+                      - condition: numeric_state
                         entity_id: !input 'illuminance_entity'
                         below: !input 'illuminance_lux_threshold'
               # switch button up pressed condition
@@ -384,7 +384,7 @@ action:
               # we're still in that state.
               - delay:
                   seconds: !input 'illuminance_off_delay_seconds'
-              - condition: state
+              - condition: numeric_state
                 entity_id: !input 'illuminance_entity'
                 below: !input 'illuminance_lux_threshold'
               - service: light.turn_off
