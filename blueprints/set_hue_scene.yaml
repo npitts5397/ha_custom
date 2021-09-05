@@ -98,64 +98,54 @@ blueprint:
         boolean:
     day_hue_scene:
       description: Default Hue scene for day time.
-      required: true
       default: Concentrate
       selector:
-        text: null
+        text:
     day_hue_scene_playing:
       description: Hue scene for episode playing in day time.
-      required: false
       default: TV Show Day
       selector:
-        text: null
+        text:
     day_hue_scene_paused:
       description: Hue scene for episode paused day time.
-      required: false
       default: Concentrate
       selector:
-        text: null
+        text:
     day_hue_scene_movie_playing:
       description: Hue scene for movie playing in day time.
-      required: false
       default: Movie
       selector:
-        text: null
+        text:
     day_hue_scene_movie_paused:
       description: Hue scene for movie paused in day time.
-      required: false
       default: Relax
       selector:
-        text: null
+        text:
     night_hue_scene:
       description: Default Hue scene for night time.
-      required: false
       default: Relax
       selector:
-        text: null
+        text:
     night_hue_scene_playing:
       description: Hue scene for episode playing in night time.
-      required: false
       default: TV Show Night
       selector:
-        text: null
+        text:
     night_hue_scene_paused:
       description: Hue scene for episode paused in night time.
-      required: false
       default: Relax
       selector:
-        text: null
+        text:
     night_hue_scene_movie_playing:
       description: Hue scene for movie playing in night time.
-      required: false
       default: Movie
       selector:
-        text: null
+        text:
     night_hue_scene_movie_paused:
       description: Hue scene for movie paused night time.
-      required: false
       default: Relax
       selector:
-        text: null
+        text:
 trigger:
   - platform: event
     id: Automation-Reloaded
