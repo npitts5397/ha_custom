@@ -201,8 +201,8 @@ variables:
   illuminance_allow_night_execution: !input 'illuminance_allow_night_execution'
   illuminance_allow_away_execution: !input 'illuminance_allow_away_execution'
   media_entity: !input 'media_entity'
-  phase_allow_night_trigger: !input 'phase_allow_night_execution'
-  mode_allow_away_trigger: !input 'mode_allow_away_execution'
+  phase_allow_night_trigger: !input 'phase_allow_night_trigger'
+  mode_allow_away_trigger: !input 'mode_allow_away_trigger'
 condition:
   # Allow various grouped triggers. Allows for conditionally allowing triggers.
   - condition: or
