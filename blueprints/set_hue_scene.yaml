@@ -283,7 +283,8 @@ action:
               # illuminance conditions
               - condition: and
                 conditions:
-                  - condition: "{{ illuminance_entity != None }}"
+                  - condition: template
+                    value_template: "{{ illuminance_entity or states(illuminance_entity) }}"
                   - condition: or
                     conditions:
                       - condition: and
@@ -327,7 +328,8 @@ action:
                 # media entity is defined
                 - choose:
                     conditions:
-                      - condition: "{{ media_entity  != None }}" # check syntax
+                      - condition: template
+                        value_template: "{{ media_entity or states(media_entity) }}"
                     sequence:
                       - service: !input 'media_script'
                         data:
@@ -349,7 +351,8 @@ action:
               # media entity is defined
               - choose:
                   conditions:
-                    - condition: "{{ media_entity  != None }}" # check syntax
+                    - condition: template
+                      value_template: "{{ media_entity or states(media_entity) }}"
                   sequence:
                     - service: !input 'media_script'
                       data:
@@ -370,7 +373,8 @@ action:
     default:
       - choose:
           - conditions:
-              - condition: "{{ illuminance_entity != None }}"
+              - condition: template
+                value_template: "{{ illuminance_entity or states(illuminance_entity) }}"
               - condition: trigger
                 id: 
             sequence:
