@@ -207,9 +207,11 @@ trigger:
     id: Shifting-Mode-Change-Away
     to: Away
 variables:
+  illuminance_entity: !input 'illuminance_entity'
   illuminance_toggle_on_high: !input 'illuminance_toggle_on_high'
   illuminance_allow_night_execution: !input 'illuminance_allow_night_execution'
   illuminance_allow_away_execution: !input 'illuminance_allow_away_execution'
+  media_entity: !input 'media_entity'
   phase_allow_night_trigger: !input 'phase_allow_night_execution'
   mode_allow_away_trigger: !input 'mode_allow_away_execution'
 condition:
@@ -279,114 +281,129 @@ condition:
             id: Shifting-Mode-Change-Away
           - condition: template
             value_template: "{{ mode_allow_away_trigger }}"
+      - condition: state
+        entity_id: !input 'light_entity'
+        state: 'on'
 action:
-  # Choose action based on trigger. This will be considated--but need to get the basic logic
-  # for each trigger determined first.
-
-# TURN LIGHTS ON / OFF APPOACH - This will likely work better as I attempt to consolidate.
   # Turn on lights
   - choose:
-      -
-  # Turn off lights
-    default:
-
-
-
-
-
- #TRIGGER-BASED ACTION APPROACH
-  # Lux crosses BELOW threshold
-  - choose:
+      # validate triggers before allowing lights on
       - conditions:
-          - condition: trigger
-            id: Illuminance-BelowThreshold
+          - condition: or
+            conditions:
+              # illuminance conditions
+              - condition: and
+                conditions:
+                  - condition: template
+                    value_template: "{{ is_defined(illuminance_entity) }}" # check syntax
+                  - condition: or
+                    conditions:
+                      
+                  - condition: or
+                    conditions:
+                      - condition: and
+                        conditions:
+                          - condition: state
+                            entity_id: "{{ illuminance_entity }}"
+                            above: !input 'illuminance_lux_threshold'
+                          - condition: template
+                            value_template: "{{ illuminance_toggle_on_high }}"
+                      - condition: and
+                        conditions:
+                            entity_id: "{{ illuminance_entity }}"
+                            below: !input 'illuminance_lux_threshold'
+              # switch button up pressed condition
+              - condition: trigger
+                id: SwitchButton-Up
+              # media controls (lights = on, per blueprint conditions)
+              - condition: trigger
+                id: Media-State-Change
+              # phase change
+              - condition: trigger
+                id: Phase-State-Change
+              # phase change night (allow on night = true, per blueprint conditions)
+              - condition: trigger
+                id: Phase-State-Change-Night
+              # shifting mode change
+              - condition: trigger
+                id: Shifting-Mode-Change
+              # shifting mode change night (allow on away = true, per blueprint conditions)
+              - condition: trigger
+                id: Shifting-Mode-Change-Away
         sequence:
+          # if it's evening/night time
           - choose:
-              - conditions:
-                  condition: template
-                  value_template: "{{ illuminance_toggle_on_high }}"
-                sequence:
-                  - delay:
-                      seconds: !input 'illuminance_off_delay_seconds'
-                  - condition: numeric_state
-                    entity_id: !input 'illuminance_entity'
-                    below: !input 'illuminance_lux_threshold'
-                  - service: light.turn_off
-                    target:
-                      entity_id: !input 'light_entity'
+              conditions:
+                - condition: state
+                  entity_id: !input 'phase_entity'
+                  state:
+                    - Evening
+                    - Night
+              sequence:
+                # media entity is defined
+                - choose:
+                    conditions:
+                      - condition: template
+                        valute_template: "{{ is_defined(media_entity) }}" # check syntax
+                    sequence:
+                      - service: !input 'media_script'
+                        data:
+                          light_entity: !input 'light_entity'
+                          media_entity: !input 'media_entity'
+                          hue_scene_default: !input 'night_hue_scene'
+                          hue_scene_playing: !input 'night_hue_scene_playing'
+                          hue_scene_paused: !input 'night_hue_scene_paused'
+                          hue_scene_playing_movie: !input 'night_hue_scene_movie_playing'
+                          hue_scene_paused_movie: !input 'night_hue_scene_movie_paused'
+                # no media entity is defined
+                  default:
+                    - service: hue.hue_activate_scene
+                      data:
+                        group_name: "{{ state_attr(light_entity,'friendly_name') }}"
+                        scene_name: !input 'night_hue_scene'
+          #normal morning/day
             default:
-              - service: hue.hue_activate_scene
-                data:
-                  group_name: '{{ state_attr(light_entity,"friendly_name") }}'
-                  scene_name: '{{ hue_scene_day }}'  # Maybe there should be logic to determine the correct Hue scene? Or call script to determine? Idk...
-  # Lux crosses ABOVE threshold
-  - choose:
-      - conditions:
-          - condition: trigger
-            id: Illuminance-AboveThreshold
-        sequence:
-          - choose:
-              - conditions:
-                  condition: template
-                  value_template: "{{ illuminance_toggle_on_high }}"
-                sequence:
+              # media entity is defined
+              - choose:
+                  conditions:
+                    - condition:
+                        - condition: template
+                          valute_template: "{{ is_defined(media_entity) }}" # check syntax
+                  sequence:
+                    - service: !input 'media_script'
+                      data:
+                        light_entity: !input 'light_entity'
+                        media_entity: !input 'media_entity'
+                        hue_scene_default: !input 'day_hue_scene'
+                        hue_scene_playing: !input 'day_hue_scene_playing'
+                        hue_scene_paused: !input 'day_hue_scene_paused'
+                        hue_scene_playing_movie: !input 'day_hue_scene_movie_playing'
+                        hue_scene_paused_movie: !input 'day_hue_scene_movie_paused'
+              #no media entity is defined
+                default:
                   - service: hue.hue_activate_scene
                     data:
-                      group_name: '{{ state_attr(light_entity,"friendly_name") }}'
-                      scene_name: '{{ hue_scene_day }}'  # Maybe there should be logic to determine the correct Hue scene? Or call script to determine? Idk...
-            default:
+                      group_name: "{{ state_attr(light_entity,'friendly_name') }}"
+                      scene_name: !input 'day_hue_scene'
+  # Turn off lights
+    default:
+      - choose:
+          - conditions:
+              - condition: template
+                value_template: "{{ is_defined(illuminance_entity) }}" # check syntax
+              - condition: trigger
+                id: 
+            sequence:
               - delay:
-                  seconds: !input 'illuminance_off_delay_seconds'
-              - condition: numeric_state
-                entity_id: !input 'illuminance_entity'
-                below: !input 'illuminance_lux_threshold'
+                  minutes: !input 'off_delay_minutes'
+              - condition: state
+                entity_id: !input 'toggle_entity'
+                state: 'off'
               - service: light.turn_off
                 target:
                   entity_id: !input 'light_entity'
-  # Switch button up pushed
-  - choose:
-      - conditions:
-          - condition: trigger
-            id: SwitchButton-Up
-        sequence:
-          - service: hue.hue_activate_scene
-            data:
-              group_name: '{{ state_attr(light_entity,"friendly_name") }}'
-              scene_name: '{{ hue_scene_day }}'  # Maybe there should be logic to determine the correct Hue scene? Or call script to determine? Idk...
-  # Switch button down pushed
-  - choose:
-      - conditions:
-          - condition: trigger
-            id: SwitchButton-Down
-        sequence:
+        default:
           - service: light.turn_off
             target:
               entity_id: !input 'light_entity'
-  # Media change
-  - choose:
-      - conditions:
-          - condition: trigger
-            id: Media-State-Change
-        sequence:
-          - service: !input 'media_script'
-            data:
-              light_entity: !input 'light_entity'
-              media_entity: !input 'media_entity'
-              hue_scene_default: !input 'day_hue_scene'
-              hue_scene_playing: !input 'day_hue_scene_playing'
-              hue_scene_paused: !input 'day_hue_scene_paused'
-              hue_scene_playing_movie: !input 'day_hue_scene_movie_playing'
-              hue_scene_paused_movie: !input 'day_hue_scene_movie_paused'
-# Phase Trigger
-
-# Phase-Night Trigger
-
-# Mode Trigger
-
-# Mode-Away Trigger
-          
-
-            
-
-          
           
