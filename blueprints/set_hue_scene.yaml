@@ -11,7 +11,7 @@ blueprint:
           domain: light
     illuminance_entity:
       description: Sensor entity which reports illuminance. Optional.
-      default: {}
+      default:
       selector:
         entity:
           domain: sensor
@@ -54,7 +54,7 @@ blueprint:
     zwave_node_id:
       name: Z-Wave Switch Node ID
       description: Node ID of the Z-Wave switch used for button input. Only been tested with LZW30-SN devices.
-      default: {}
+      default:
       selector:
         number:
           min: 0
@@ -62,20 +62,20 @@ blueprint:
           mode: box
     media_entity:
       description: Entity used for tracking playback state. Note- Only tested with Plex media players.
-      default: {}
+      default:
       selector:
         entity:
           domain: media_player
     media_script:
       name: Hue Scene / Media Playback Script
       description: Script used to set Hue lights based on media playback state.
-      default: {}
+      default:
       selector:
         entity:
           domain: script
     phase_entity:
       description: Entity that holds current phase value.
-      default: {}
+      default:
       selector:
         entity:
           domain: input_select
@@ -86,7 +86,7 @@ blueprint:
         boolean:
     shifting_mode_entity:
       description: Entity that holds phase shifting mode value.
-      default: {}
+      default:
       selector:
         entity:
           domain: input_select
@@ -283,7 +283,7 @@ action:
               # illuminance conditions
               - condition: and
                 conditions:
-                  - condition: "{{ illuminance_entity }}"
+                  - condition: "{{ illuminance_entity != None }}"
                   - condition: or
                     conditions:
                       - condition: and
@@ -327,7 +327,7 @@ action:
                 # media entity is defined
                 - choose:
                     conditions:
-                      - condition: "{{ media_entity }}" # check syntax
+                      - condition: "{{ media_entity  != None }}" # check syntax
                     sequence:
                       - service: !input 'media_script'
                         data:
@@ -349,7 +349,7 @@ action:
               # media entity is defined
               - choose:
                   conditions:
-                    - condition: "{{ media_entity }}" # check syntax
+                    - condition: "{{ media_entity  != None }}" # check syntax
                   sequence:
                     - service: !input 'media_script'
                       data:
@@ -370,7 +370,7 @@ action:
     default:
       - choose:
           - conditions:
-              - condition: "{{ illuminance_entity }}" # check syntax
+              - condition: "{{ illuminance_entity != None }}"
               - condition: trigger
                 id: 
             sequence:
