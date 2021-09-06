@@ -80,7 +80,7 @@ blueprint:
         entity:
           domain: input_select
     phase_allow_night_trigger:
-      description: (Optional) Allow phase changing to night trigger.
+      description: Allow phase changing to night trigger.
       default: false
       selector:
         boolean:
@@ -91,7 +91,7 @@ blueprint:
         entity:
           domain: input_select
     mode_allow_away_trigger:
-      description: (Optional) Allow shifting mode changing to away trigger.
+      description: Allow shifting mode changing to away trigger.
       default: false
       selector:
         boolean:
