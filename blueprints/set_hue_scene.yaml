@@ -291,13 +291,10 @@ action:
       # Illuminance off when illuminance_toggle_on_high is false
       # Could add optional night / away shifts to this condition as well - will allow delayed off on changes
       - conditions:
-          - condition: and
-            conditions:
-              - condition: template
-                value_template: "{{ (illuminance_entity != none) }}"
-              - condition: numeric_state
-                entity_id: !input 'illuminance_entity'
-                above: !input 'illuminance_lux_threshold'
+          - condition: trigger
+            id: Illuminance-AboveThreshold
+          - condition: template
+            value_template: "{{ illuminance_toggle_on_high == false }}"
         # wait for delay, make sure condition is still met before taking action
         sequence:
           - delay:
@@ -311,15 +308,10 @@ action:
       # Illuminance off when illuminance_toggle_on_high is true
       # Could add optional night / away shifts to this condition as well - will allow delayed off on changes
       - conditions:
-          - condition: and
-            conditions:
-              - condition: template
-                value_template: "{{ (illuminance_entity != none) }}"
-              - condition: numeric_state
-                entity_id: !input 'illuminance_entity'
-                below: !input 'illuminance_lux_threshold'
-              - condition: template
-                value_template: "{{ illuminance_toggle_on_high }}"
+          - condition: trigger
+            id: Illuminance-BelowThreshold
+          - condition: template
+            value_template: "{{ illuminance_toggle_on_high }}"
         # wait for delay, make sure condition is still met before taking action
         sequence:
           - delay:
@@ -338,26 +330,19 @@ action:
           - condition: trigger
             id: SwitchButton-Up
           # Illuminance on when illuminance_toggle_on_high is false
-          - condition: and
-            conditions:
+          - conditions:
+              - condition: trigger
+                id: Illuminance-AboveThreshold
               - condition: template
-                value_template: "{{ (illuminance_entity != none) }}"
-              - condition: numeric_state
-                entity_id: !input 'illuminance_entity'
-                below: !input 'illuminance_lux_threshold'
+                value_template: "{{ illuminance_toggle_on_high == false }}"
           # Illuminance on when illuminance_toggle_on_high is true
-          - condition: and
-            conditions:
-              - condition: template
-                value_template: "{{ (illuminance_entity != none) }}"
-              - condition: numeric_state
-                entity_id: !input 'illuminance_entity'
-                above: !input 'illuminance_lux_threshold'
+          - conditions:
+              - condition: trigger
+                id: Illuminance-BelowThreshold
               - condition: template
                 value_template: "{{ illuminance_toggle_on_high }}"
           # Lights are on and Media state or phase change
-          - condition: and
-            conditions:
+          - conditions:
               - condition: state
                 entity_id: !input 'light_entity'
                 state: 'on'
