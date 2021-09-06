@@ -332,7 +332,7 @@ action:
             - choose:
                 conditions:
                   - condition: template
-                    value_template: "{{ media_entity or states(media_entity) }}"
+                    value_template: "{{ (media_entity != none) }}"
                 sequence:
                   - service: !input 'media_script'
                     data:
@@ -355,7 +355,7 @@ action:
           - choose:
               conditions:
                 - condition: template
-                  value_template: "{{ media_entity or states(media_entity) }}"
+                  value_template: "{{ (media_entity != none) }}"
               sequence:
                 - service: !input 'media_script'
                   data:
