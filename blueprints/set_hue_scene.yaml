@@ -197,6 +197,7 @@ trigger:
     id: Shifting-Mode-Change-Away
     to: Away
 variables:
+  light_entity: !input 'light_entity'
   illuminance_entity: !input 'illuminance_entity'
   illuminance_toggle_on_high: !input 'illuminance_toggle_on_high'
   illuminance_allow_night_execution: !input 'illuminance_allow_night_execution'
@@ -249,7 +250,7 @@ condition:
           - condition: trigger
             id: Media-State-Change
           - condition: state
-            entity_id: !input light_entity
+            entity_id: !input 'light_entity'
             state: 'on'
       # Allow phase change trigger for Morning, Day, Night
       - condition: trigger
