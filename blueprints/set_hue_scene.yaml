@@ -302,11 +302,10 @@ action:
       - conditions:
           - condition: and
             conditions:
-              - condition: 
-                  - condition: trigger
-                    id: Illuminance-BelowThreshold
-                  - condition: template
-                    value_template: "{{ illuminance_toggle_on_high }}"
+              - condition: trigger
+                id: Illuminance-BelowThreshold
+              - condition: template
+                value_template: "{{ illuminance_toggle_on_high }}"
         sequence:
           - delay:
               seconds: !input 'illuminance_off_delay_seconds'
