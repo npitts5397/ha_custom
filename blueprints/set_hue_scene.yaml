@@ -332,17 +332,23 @@ action:
           # Illuminance on when illuminance_toggle_on_high is false
           - condition: and
             conditions:
-              - condition: trigger
-                id: Illuminance-AboveThreshold
+              - condition: template
+                value_template: "{{ (illuminance_entity != none) }}"
+              - condition: numeric_state
+                entity_id: !input 'illuminance_entity'
+                below: !input 'illuminance_lux_threshold'
               - condition: template
                 value_template: "{{ illuminance_toggle_on_high == false }}"
           # Illuminance on when illuminance_toggle_on_high is true
           - condition: and
             conditions:
-              - condition: trigger
-                id: Illuminance-BelowThreshold
               - condition: template
-                value_template: "{{ illuminance_toggle_on_high }}"
+                value_template: "{{ (illuminance_entity != none) }}"
+              - condition: numeric_state
+                entity_id: !input 'illuminance_entity'
+                above: !input 'illuminance_lux_threshold'
+              - condition: template
+                value_template: "{{ illuminance_toggle_on_high == true }}"
           # Lights are on and Media state or phase change
           - condition: and
             conditions:
