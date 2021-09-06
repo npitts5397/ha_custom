@@ -1,4 +1,3 @@
-# WORK IN PROGRESS!!!
 blueprint:
   name: 'Set Hue Scene on Various Triggers'
   description: 'Blueprint to set Hue Scene on triggers: Illuminance, LZW30-SN up/down presses, media playback changes, phase changes, and shifting mode changes.'
@@ -295,8 +294,6 @@ action:
           - condition: trigger
             id: Illuminance-AboveThreshold
           - condition: template
-            value_template: "{{ (media_entity != none) }}"
-          - condition: template
             value_template: "{{ illuminance_toggle_on_high == false }}"
         # wait for delay, make sure condition is still met before taking action
         sequence:
@@ -336,7 +333,7 @@ action:
           - condition: and
             conditions:
               - condition: template
-                value_template: "{{ (illuminance_entity != none) }}"
+                value_template: "{{ states(illuminance_entity) }}"
               - condition: numeric_state
                 entity_id: !input 'illuminance_entity'
                 below: !input 'illuminance_lux_threshold'
@@ -346,7 +343,7 @@ action:
           - condition: and
             conditions:
               - condition: template
-                value_template: "{{ (illuminance_entity != none) }}"
+                value_template: "{{ states(illuminance_entity) }}"
               - condition: numeric_state
                 entity_id: !input 'illuminance_entity'
                 above: !input 'illuminance_lux_threshold'
