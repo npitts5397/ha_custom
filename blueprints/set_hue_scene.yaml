@@ -11,7 +11,7 @@ blueprint:
           domain: light
     illuminance_entity:
       description: (Optional) Sensor entity which reports illuminance.
-      default:
+      default: {}
       selector:
         entity:
           domain: sensor
@@ -62,7 +62,7 @@ blueprint:
           mode: box
     media_entity:
       description: (Optional) Entity used for tracking playback state. Note- Only tested with Plex media players.
-      default:
+      default: {}
       selector:
         entity:
           domain: media_player
@@ -300,8 +300,9 @@ action:
         sequence:
           - delay:
               seconds: !input 'illuminance_off_delay_seconds'
-          - condition: template
-            value_template: "{{ (illuminance_entity != none) and (states(illuminance_entity)|int > illuminance_lux_threshold|int) }}"
+          - condition: numeric_state
+            entity_id: !input 'illuminance_entity'
+            above: !input 'illuminance_lux_threshold'
           - service: light.turn_off
             target:
               entity_id: !input 'light_entity'
@@ -316,8 +317,9 @@ action:
         sequence:
           - delay:
               seconds: !input 'illuminance_off_delay_seconds'
-          - condition: template
-            value_template: "{{ (illuminance_entity != none) and (states(illuminance_entity)|int < illuminance_lux_threshold|int) }}"
+          - condition: numeric_state
+            entity_id: !input 'illuminance_entity'
+            below: !input 'illuminance_lux_threshold'
           - service: light.turn_off
             target:
               entity_id: !input 'light_entity'
@@ -331,15 +333,17 @@ action:
           # Illuminance on when illuminance_toggle_on_high is false
           - condition: and
             conditions:
-              - condition: template
-                value_template: "{{ (illuminance_entity != none) and (states(illuminance_entity)|int < illuminance_lux_threshold|int) }}"
+              - condition: numeric_state
+                entity_id: !input 'illuminance_entity'
+                below: !input 'illuminance_lux_threshold'
               - condition: template
                 value_template: "{{ illuminance_toggle_on_high == false }}"
           # Illuminance on when illuminance_toggle_on_high is true
           - condition: and
             conditions:
-              - condition: template
-                value_template: "{{ (illuminance_entity != none) and (states(illuminance_entity)|int > illuminance_lux_threshold|int) }}"
+              - condition: numeric_state
+                entity_id: !input 'illuminance_entity'
+                above: !input 'illuminance_lux_threshold'
               - condition: template
                 value_template: "{{ illuminance_toggle_on_high == true }}"
           # Lights are on and Media state or phase change
