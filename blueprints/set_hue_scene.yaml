@@ -270,118 +270,47 @@ condition:
             id: Shifting-Mode-Change-Away
           - condition: template
             value_template: "{{ mode_allow_away_trigger }}"
+      # Allow automation updates if the lights are already on (catch all)
       - condition: state
         entity_id: !input 'light_entity'
         state: 'on'
 action:
-  # Turn on lights
-  - choose:
-      # validate triggers before allowing lights on
-      - conditions:
-          - condition: or
-            conditions:
-              # illuminance conditions
-              - condition: and
-                conditions:
-                  - condition: template
-                    value_template: "{{ illuminance_entity or states(illuminance_entity) }}"
-                  - condition: or
-                    conditions:
-                      - condition: and
-                        conditions:
-                          - condition: numeric_state
-                            entity_id: !input 'illuminance_entity'
-                            above: !input 'illuminance_lux_threshold'
-                          - condition: template
-                            value_template: "{{ illuminance_toggle_on_high }}"
-                      - condition: numeric_state
-                        entity_id: !input 'illuminance_entity'
-                        below: !input 'illuminance_lux_threshold'
-              # switch button up pressed condition
-              - condition: trigger
-                id: SwitchButton-Up
-              # media controls (lights = on, per blueprint conditions)
-              - condition: trigger
-                id: Media-State-Change
-              # phase change
-              - condition: trigger
-                id: Phase-State-Change
-              # phase change night (allow on night = true, per blueprint conditions)
-              - condition: trigger
-                id: Phase-State-Change-Night
-              # shifting mode change
-              - condition: trigger
-                id: Shifting-Mode-Change
-              # shifting mode change night (allow on away = true, per blueprint conditions)
-              - condition: trigger
-                id: Shifting-Mode-Change-Away
-        sequence:
-          # if it's evening/night time
-          - choose:
-              conditions:
-                - condition: state
-                  entity_id: !input 'phase_entity'
-                  state:
-                    - Evening
-                    - Night
-              sequence:
-                # media entity is defined
-                - choose:
-                    conditions:
-                      - condition: template
-                        value_template: "{{ media_entity or states(media_entity) }}"
-                    sequence:
-                      - service: !input 'media_script'
-                        data:
-                          light_entity: !input 'light_entity'
-                          media_entity: !input 'media_entity'
-                          hue_scene_default: !input 'night_hue_scene'
-                          hue_scene_playing: !input 'night_hue_scene_playing'
-                          hue_scene_paused: !input 'night_hue_scene_paused'
-                          hue_scene_playing_movie: !input 'night_hue_scene_movie_playing'
-                          hue_scene_paused_movie: !input 'night_hue_scene_movie_paused'
-                # no media entity is defined
-                  default:
-                    - service: hue.hue_activate_scene
-                      data:
-                        group_name: "{{ state_attr(light_entity,'friendly_name') }}"
-                        scene_name: !input 'night_hue_scene'
-          #normal morning/day
-            default:
-              # media entity is defined
-              - choose:
-                  conditions:
-                    - condition: template
-                      value_template: "{{ media_entity or states(media_entity) }}"
-                  sequence:
-                    - service: !input 'media_script'
-                      data:
-                        light_entity: !input 'light_entity'
-                        media_entity: !input 'media_entity'
-                        hue_scene_default: !input 'day_hue_scene'
-                        hue_scene_playing: !input 'day_hue_scene_playing'
-                        hue_scene_paused: !input 'day_hue_scene_paused'
-                        hue_scene_playing_movie: !input 'day_hue_scene_movie_playing'
-                        hue_scene_paused_movie: !input 'day_hue_scene_movie_paused'
-              #no media entity is defined
-                default:
-                  - service: hue.hue_activate_scene
-                    data:
-                      group_name: "{{ state_attr(light_entity,'friendly_name') }}"
-                      scene_name: !input 'day_hue_scene'
   # Turn off lights
-    default:
+  - choose:
+      # Button off
       - choose:
           - conditions:
-              - condition: template
-                value_template: "{{ illuminance_entity or states(illuminance_entity) }}"
               - condition: trigger
-                id: 
+                id: SwitchButton-Down
             sequence:
-              # Will need to check to see what type:
-              # trigger when above + on when high
-              # then 2nd condition needs to be checking to make
-              # we're still in that state.
+              - service: light.turn_off
+                target:
+                  entity_id: !input 'light_entity' 
+      # Illuminance off when illuminance_toggle_on_high is false
+      - choose:
+          - conditions:
+              - condition: trigger
+                id: Illuminance-AboveThreshold
+            sequence:
+              - delay:
+                  seconds: !input 'illuminance_off_delay_seconds'
+              - condition: numeric_state
+                entity_id: !input 'illuminance_entity'
+                above: !input 'illuminance_lux_threshold'
+              - service: light.turn_off
+                target:
+                  entity_id: !input 'light_entity'
+      # Illuminance off when illuminance_toggle_on_high is true
+      - choose:
+          - conditions:
+              - condition: and
+                conditions:
+                  - condition: 
+                      - condition: trigger
+                        id: Illuminance-BelowThreshold
+                      - condition: template
+                        value_template: "{{ illuminance_toggle_on_high }}"
+            sequence:
               - delay:
                   seconds: !input 'illuminance_off_delay_seconds'
               - condition: numeric_state
@@ -394,4 +323,58 @@ action:
           - service: light.turn_off
             target:
               entity_id: !input 'light_entity'
-          
+  # Turn on lights
+    default:
+      # Night phase handling
+      - choose:
+          conditions:
+            - condition: state
+              entity_id: !input 'phase_entity'
+              state:
+                - Evening
+                - Night
+          sequence:
+            # Media entity is defined
+            - choose:
+                conditions:
+                  - condition: template
+                    value_template: "{{ media_entity or states(media_entity) }}"
+                sequence:
+                  - service: !input 'media_script'
+                    data:
+                      light_entity: !input 'light_entity'
+                      media_entity: !input 'media_entity'
+                      hue_scene_default: !input 'night_hue_scene'
+                      hue_scene_playing: !input 'night_hue_scene_playing'
+                      hue_scene_paused: !input 'night_hue_scene_paused'
+                      hue_scene_playing_movie: !input 'night_hue_scene_movie_playing'
+                      hue_scene_paused_movie: !input 'night_hue_scene_movie_paused'
+            # No media entity is defined
+              default:
+                - service: hue.hue_activate_scene
+                  data:
+                    group_name: "{{ state_attr(light_entity,'friendly_name') }}"
+                    scene_name: !input 'night_hue_scene'
+      # Normal morning/day
+        default:
+          # Media entity is defined
+          - choose:
+              conditions:
+                - condition: template
+                  value_template: "{{ media_entity or states(media_entity) }}"
+              sequence:
+                - service: !input 'media_script'
+                  data:
+                    light_entity: !input 'light_entity'
+                    media_entity: !input 'media_entity'
+                    hue_scene_default: !input 'day_hue_scene'
+                    hue_scene_playing: !input 'day_hue_scene_playing'
+                    hue_scene_paused: !input 'day_hue_scene_paused'
+                    hue_scene_playing_movie: !input 'day_hue_scene_movie_playing'
+                    hue_scene_paused_movie: !input 'day_hue_scene_movie_paused'
+          # No media entity is defined
+            default:
+              - service: hue.hue_activate_scene
+                data:
+                  group_name: "{{ state_attr(light_entity,'friendly_name') }}"
+                  scene_name: !input 'day_hue_scene'
