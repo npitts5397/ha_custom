@@ -330,19 +330,22 @@ action:
           - condition: trigger
             id: SwitchButton-Up
           # Illuminance on when illuminance_toggle_on_high is false
-          - conditions:
+          - condition: and
+            conditions:
               - condition: trigger
                 id: Illuminance-AboveThreshold
               - condition: template
                 value_template: "{{ illuminance_toggle_on_high == false }}"
           # Illuminance on when illuminance_toggle_on_high is true
-          - conditions:
+          - condition: and
+            conditions:
               - condition: trigger
                 id: Illuminance-BelowThreshold
               - condition: template
                 value_template: "{{ illuminance_toggle_on_high }}"
           # Lights are on and Media state or phase change
-          - conditions:
+          - condition: and
+            conditions:
               - condition: state
                 entity_id: !input 'light_entity'
                 state: 'on'
