@@ -1,3 +1,7 @@
+#TODO:
+# * actions[0]default[0]conditions[1 & 2]. Not a good way to check to see if entity exists--throws warning on every evaluation, but works. Needs to be investigated further
+#     perhaps we can use a illuminance_lux_value variable set to -1 when illuminance_entity not defined?
+
 blueprint:
   name: 'Set Hue Scene on Various Triggers'
   description: 'Blueprint to set Hue Scene on triggers: Illuminance, LZW30-SN up/down presses, media playback changes, phase changes, and shifting mode changes.'
