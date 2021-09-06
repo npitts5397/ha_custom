@@ -10,14 +10,14 @@ blueprint:
         entity:
           domain: light
     illuminance_entity:
-      description: Sensor entity which reports illuminance. Optional.
+      description: (Optional) Sensor entity which reports illuminance.
       default:
       selector:
         entity:
           domain: sensor
           device_class: illuminance
     illuminance_lux_threshold:
-      description: Lux value to trigger toggling between ON and OFF state. Required if illuminance_entity selected.
+      description: (Optional) Lux value to trigger toggling between ON and OFF state. Required if illuminance_entity selected.
       default: 1000
       selector:
         number: 
@@ -27,12 +27,12 @@ blueprint:
           step: 50
           unit_of_measurement: lux
     illuminance_toggle_on_high:
-      description: By default (off/false), set toggle-ON when _below_ illuminance_value (darker). When on/true, set toggle-ON when _above_ illuminance_value (brighter).
+      description: (Optional) By default (off/false), set toggle-ON when _below_ illuminance_value (darker). When on/true, set toggle-ON when _above_ illuminance_value (brighter).
       default: false
       selector:
         boolean:
     illuminance_off_delay_seconds:
-      description: Seconds to delay before changing to toggle-OFF. Illuminance will be re-evaluated before setting toggle-OFF.
+      description: (Optional) Seconds to delay before changing to toggle-OFF. Illuminance will be re-evaluated before setting toggle-OFF.
       default: 0
       selector:
         number:
@@ -42,18 +42,18 @@ blueprint:
           step: 1
           unit_of_measurement: seconds
     illuminance_allow_night_execution:
-      description: Allow illuminance-based turn-ON during Night phase.
+      description: (Optional) Allow illuminance-based turn-ON during Night phase.
       default: false
       selector:
         boolean:
     illuminance_allow_away_execution:
-      description: Allow illuminance-based turn-ON during Away mode.
+      description: (Optional) Allow illuminance-based turn-ON during Away mode.
       default: false
       selector:
         boolean:
     zwave_node_id:
       name: Z-Wave Switch Node ID
-      description: Node ID of the Z-Wave switch used for button input. Only been tested with LZW30-SN devices.
+      description: (Optional) Node ID of the Z-Wave switch used for button input. Only been tested with LZW30-SN devices.
       default:
       selector:
         number:
@@ -61,13 +61,13 @@ blueprint:
           max: 231
           mode: box
     media_entity:
-      description: Entity used for tracking playback state. Note- Only tested with Plex media players.
+      description: (Optional) Entity used for tracking playback state. Note- Only tested with Plex media players.
       default:
       selector:
         entity:
           domain: media_player
     media_script:
-      name: Hue Scene / Media Playback Script
+      name: (Optional) Hue Scene / Media Playback Script
       description: Script used to set Hue lights based on media playback state.
       default:
       selector:
@@ -80,7 +80,7 @@ blueprint:
         entity:
           domain: input_select
     phase_allow_night_trigger:
-      description: Allow phase changing to night trigger.
+      description: (Optional) Allow phase changing to night trigger.
       default: false
       selector:
         boolean:
@@ -91,7 +91,7 @@ blueprint:
         entity:
           domain: input_select
     mode_allow_away_trigger:
-      description: Allow shifting mode changing to away trigger.
+      description: (Optional) Allow shifting mode changing to away trigger.
       default: false
       selector:
         boolean:
@@ -101,47 +101,47 @@ blueprint:
       selector:
         text:
     day_hue_scene_playing:
-      description: Hue scene for episode playing in day time.
+      description: (Optional) Hue scene for episode playing in day time.
       default: TV Show Day
       selector:
         text:
     day_hue_scene_paused:
-      description: Hue scene for episode paused day time.
+      description: (Optional) Hue scene for episode paused day time.
       default: Concentrate
       selector:
         text:
     day_hue_scene_movie_playing:
-      description: Hue scene for movie playing in day time.
+      description: (Optional) Hue scene for movie playing in day time.
       default: Movie
       selector:
         text:
     day_hue_scene_movie_paused:
-      description: Hue scene for movie paused in day time.
+      description: (Optional) Hue scene for movie paused in day time.
       default: Relax
       selector:
         text:
     night_hue_scene:
-      description: Default Hue scene for night time.
+      description: (Optional) Default Hue scene for night time.
       default: Relax
       selector:
         text:
     night_hue_scene_playing:
-      description: Hue scene for episode playing in night time.
+      description: (Optional) Hue scene for episode playing in night time.
       default: TV Show Night
       selector:
         text:
     night_hue_scene_paused:
-      description: Hue scene for episode paused in night time.
+      description: (Optional) Hue scene for episode paused in night time.
       default: Relax
       selector:
         text:
     night_hue_scene_movie_playing:
-      description: Hue scene for movie playing in night time.
+      description: (Optional) Hue scene for movie playing in night time.
       default: Movie
       selector:
         text:
     night_hue_scene_movie_paused:
-      description: Hue scene for movie paused night time.
+      description: (Optional) Hue scene for movie paused night time.
       default: Relax
       selector:
         text:
@@ -288,9 +288,16 @@ action:
             target:
               entity_id: !input 'light_entity' 
       # Illuminance off when illuminance_toggle_on_high is false
+      # Could add optional night / away shifts to this condition as well - will allow delayed off on changes
       - conditions:
-          - condition: trigger
-            id: Illuminance-AboveThreshold
+          - condition: and
+            conditions:
+              - condition: template
+                value_template: "{{ (illuminance_entity != none) }}"
+              - condition: numeric_state
+                entity_id: !input 'illuminance_entity'
+                above: !input 'illuminance_lux_threshold'
+        # wait for delay, make sure condition is still met before taking action
         sequence:
           - delay:
               seconds: !input 'illuminance_off_delay_seconds'
@@ -301,13 +308,18 @@ action:
             target:
               entity_id: !input 'light_entity'
       # Illuminance off when illuminance_toggle_on_high is true
+      # Could add optional night / away shifts to this condition as well - will allow delayed off on changes
       - conditions:
           - condition: and
             conditions:
-              - condition: trigger
-                id: Illuminance-BelowThreshold
+              - condition: template
+                value_template: "{{ (illuminance_entity != none) }}"
+              - condition: numeric_state
+                entity_id: !input 'illuminance_entity'
+                below: !input 'illuminance_lux_threshold'
               - condition: template
                 value_template: "{{ illuminance_toggle_on_high }}"
+        # wait for delay, make sure condition is still met before taking action
         sequence:
           - delay:
               seconds: !input 'illuminance_off_delay_seconds'
@@ -319,6 +331,51 @@ action:
               entity_id: !input 'light_entity'
   # Turn on lights
     default:
+      - condition: or
+        conditions:
+          # Button up
+          - conditions:
+              - condition: trigger
+                id: SwitchButton-Up
+          # Illuminance on when illuminance_toggle_on_high is false
+          - condition: and
+            conditions:
+              - condition: template
+                value_template: "{{ (illuminance_entity != none) }}"
+              - condition: numeric_state
+                entity_id: !input 'illuminance_entity'
+                below: !input 'illuminance_lux_threshold'
+          # Illuminance on when illuminance_toggle_on_high is true
+          - conditions:
+              - condition: and
+                conditions:
+                  - condition: template
+                    value_template: "{{ (illuminance_entity != none) }}"
+                  - condition: numeric_state
+                    entity_id: !input 'illuminance_entity'
+                    above: !input 'illuminance_lux_threshold'
+                  - condition: template
+                    value_template: "{{ illuminance_toggle_on_high }}"
+          # Lights are on and Media state or phase change
+          - condition: and
+            conditions:
+              - condition: state
+                entity_id: !input 'light_entity'
+                state: 'on'
+              - condition: or
+                conditions:
+                  - condition: trigger
+                    id: Media-State-Change
+                  - condition: trigger
+                    id: Home-Phase-Change
+                  - condition: trigger
+                    id: Home-Phase-Change-Night
+                  - condition: trigger
+                    id: Shifting-Mode-Change
+                  - condition: trigger
+                    id: Shifting-Mode-Change-Away
+# below is the code for turning lights on. All conditional logic for whether lights should adjust should be above this line.
+# _how_ the lights adjust is below:
       # Night phase handling
       - choose:
           conditions:
