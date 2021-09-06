@@ -294,13 +294,13 @@ action:
           - condition: trigger
             id: Illuminance-AboveThreshold
           - condition: template
-            value_template: "{{ (illuminance_entity != none) }}"
-          - condition: template
             value_template: "{{ illuminance_toggle_on_high == false }}"
         # wait for delay, make sure condition is still met before taking action
         sequence:
           - delay:
               seconds: !input 'illuminance_off_delay_seconds'
+          - condition: template
+            value_template: "{{ (illuminance_entity != none) }}"
           - condition: numeric_state
             entity_id: !input 'illuminance_entity'
             above: !input 'illuminance_lux_threshold'
@@ -313,13 +313,13 @@ action:
           - condition: trigger
             id: Illuminance-BelowThreshold
           - condition: template
-            value_template: "{{ (illuminance_entity != none) }}"
-          - condition: template
             value_template: "{{ illuminance_toggle_on_high }}"
         # wait for delay, make sure condition is still met before taking action
         sequence:
           - delay:
               seconds: !input 'illuminance_off_delay_seconds'
+          - condition: template
+            value_template: "{{ (illuminance_entity != none) }}"
           - condition: numeric_state
             entity_id: !input 'illuminance_entity'
             below: !input 'illuminance_lux_threshold'
