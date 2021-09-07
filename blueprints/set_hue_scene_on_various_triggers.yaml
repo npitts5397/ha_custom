@@ -337,7 +337,7 @@ action:
           - condition: and
             conditions:
               - condition: template
-                value_template: "{{ states(illuminance_entity) }}"
+                value_template: "{{ illuminance_entity != {} }}"
               - condition: numeric_state
                 entity_id: !input 'illuminance_entity'
                 below: !input 'illuminance_lux_threshold'
@@ -347,7 +347,7 @@ action:
           - condition: and
             conditions:
               - condition: template
-                value_template: "{{ states(illuminance_entity) }}"
+                value_template: "{{ illuminance_entity != {} }}"
               - condition: numeric_state
                 entity_id: !input 'illuminance_entity'
                 above: !input 'illuminance_lux_threshold'
@@ -386,7 +386,7 @@ action:
             - choose:
                 conditions:
                   - condition: template
-                    value_template: "{{ (media_entity != none) }}"
+                    value_template: "{{ media_entity != {} }}"
                 sequence:
                   - service: !input 'media_script'
                     data:
@@ -409,7 +409,7 @@ action:
           - choose:
               conditions:
                 - condition: template
-                  value_template: "{{ (media_entity != none) }}"
+                  value_template: "{{ media_entity != {} }}"
               sequence:
                 - service: !input 'media_script'
                   data:
