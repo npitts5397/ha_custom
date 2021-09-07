@@ -4,11 +4,13 @@ blueprint:
   domain: automation
   input:
     light_entity:
+      name: Hue Light
       description: The Hue light entity to be set.
       selector:
         entity:
           domain: light
     illuminance_entity:
+      name: Illuminance Sensor
       description: (Optional) Sensor entity which reports illuminance. If left default, illuminance-based changes are disabled and further illuminance settings have no impact.
       default: {}
       selector:
@@ -16,7 +18,8 @@ blueprint:
           domain: sensor
           device_class: illuminance
     illuminance_lux_threshold:
-      description: (Optional) Lux value to trigger toggling between ON and OFF state. Required if illuminance_entity selected.
+      name: Lux Threshold
+      description: Lux value to trigger toggling between ON and OFF state. Required if illuminance_entity selected.
       default: 1000
       selector:
         number: 
@@ -26,6 +29,7 @@ blueprint:
           step: 50
           unit_of_measurement: lux
     illuminance_toggle_on_high:
+      name: Turn On When Illuminance is High?
       description: (Optional) By default (off/false), set toggle-ON when _below_ illuminance_value (darker). When on/true, set toggle-ON when _above_ illuminance_value (brighter).
       default: false
       selector:
@@ -397,6 +401,8 @@ action:
                 conditions:
                   - condition: template
                     value_template: "{{ media_entity != {} }}"
+                  - condition: template
+                    value_template: "{{ media_script != {} }}"
                 sequence:
                   - service: !input 'media_script'
                     data:
@@ -420,6 +426,8 @@ action:
               conditions:
                 - condition: template
                   value_template: "{{ media_entity != {} }}"
+                - condition: template
+                  value_template: "{{ media_script != {} }}"
               sequence:
                 - service: !input 'media_script'
                   data:
