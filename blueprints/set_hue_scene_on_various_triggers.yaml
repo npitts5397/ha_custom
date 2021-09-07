@@ -72,7 +72,7 @@ blueprint:
     media_script:
       name: (Optional) Hue Scene / Media Playback Script
       description: Script used to set Hue lights based on media playback state. Required if media_entity is set.
-      default: {}
+      default: script.set_hue_scene_on_media_state
       selector:
         entity:
           domain: script
@@ -298,6 +298,9 @@ action:
       - conditions:
           - condition: template
             value_template: "{{ illuminance_entity != {} }}"
+          - condition: state
+            entity_id: !input light_entity
+            state: 'on'
           - condition: numeric_state
             entity_id: !input 'illuminance_entity'
             above: !input 'illuminance_lux_threshold'
@@ -318,6 +321,9 @@ action:
       - conditions:
           - condition: template
             value_template: "{{ illuminance_entity != {} }}"
+          - condition: state
+            entity_id: !input light_entity
+            state: 'on'
           - condition: numeric_state
             entity_id: !input 'illuminance_entity'
             below: !input 'illuminance_lux_threshold'
