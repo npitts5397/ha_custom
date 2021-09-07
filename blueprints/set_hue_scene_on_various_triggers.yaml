@@ -67,8 +67,8 @@ blueprint:
           domain: media_player
     media_script:
       name: (Optional) Hue Scene / Media Playback Script
-      description: Script used to set Hue lights based on media playback state.
-      default:
+      description: Script used to set Hue lights based on media playback state. Required if media_entity is set.
+      default: {}
       selector:
         entity:
           domain: script
@@ -100,22 +100,22 @@ blueprint:
       selector:
         text:
     day_hue_scene_playing:
-      description: (Optional) Hue scene for episode playing in day time.
+      description: (Optional) Hue scene for episode playing in day time. Required if media_entity is set.
       default: TV Show Day
       selector:
         text:
     day_hue_scene_paused:
-      description: (Optional) Hue scene for episode paused day time.
+      description: (Optional) Hue scene for episode paused day time. Required if media_entity is set.
       default: Concentrate
       selector:
         text:
     day_hue_scene_movie_playing:
-      description: (Optional) Hue scene for movie playing in day time.
+      description: (Optional) Hue scene for movie playing in day time. Required if media_entity is set.
       default: Movie
       selector:
         text:
     day_hue_scene_movie_paused:
-      description: (Optional) Hue scene for movie paused in day time.
+      description: (Optional) Hue scene for movie paused in day time. Required if media_entity is set.
       default: Relax
       selector:
         text:
@@ -125,22 +125,22 @@ blueprint:
       selector:
         text:
     night_hue_scene_playing:
-      description: (Optional) Hue scene for episode playing in night time.
+      description: (Optional) Hue scene for episode playing in night time. Required if media_entity is set.
       default: TV Show Night
       selector:
         text:
     night_hue_scene_paused:
-      description: (Optional) Hue scene for episode paused in night time.
+      description: (Optional) Hue scene for episode paused in night time. Required if media_entity is set.
       default: Relax
       selector:
         text:
     night_hue_scene_movie_playing:
-      description: (Optional) Hue scene for movie playing in night time.
+      description: (Optional) Hue scene for movie playing in night time. Required if media_entity is set.
       default: Movie
       selector:
         text:
     night_hue_scene_movie_paused:
-      description: (Optional) Hue scene for movie paused night time.
+      description: (Optional) Hue scene for movie paused night time. Required if media_entity is set.
       default: Relax
       selector:
         text:
