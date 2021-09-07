@@ -72,7 +72,7 @@ blueprint:
     media_script:
       name: (Optional) Hue Scene / Media Playback Script
       description: Script used to set Hue lights based on media playback state. Required if media_entity is set.
-      default: script.set_hue_scene_on_media_state
+      default: {}
       selector:
         entity:
           domain: script
