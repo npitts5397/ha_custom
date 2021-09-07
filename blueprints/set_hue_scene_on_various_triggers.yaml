@@ -13,7 +13,7 @@ blueprint:
         entity:
           domain: light
     illuminance_entity:
-      description: (Optional) Sensor entity which reports illuminance.
+      description: (Optional) Sensor entity which reports illuminance. If left default, illuminance-based changes are disabled and further illuminance settings have no impact.
       default: {}
       selector:
         entity:
@@ -56,15 +56,15 @@ blueprint:
         boolean:
     zwave_node_id:
       name: Z-Wave Switch Node ID
-      description: (Optional) Node ID of the Z-Wave switch used for button input. Only been tested with LZW30-SN devices.
-      default:
+      description: (Optional) Node ID of the Z-Wave switch used for button input. Only been tested with LZW30-SN devices. 0 = Disabled.
+      default: 0
       selector:
         number:
           min: 0
           max: 231
           mode: box
     media_entity:
-      description: (Optional) Entity used for tracking playback state. Note- Only tested with Plex media players.
+      description: (Optional) Entity used for tracking playback state. If left default, media-based changes are disabled and further media-based scene definitions have no impact.
       default: {}
       selector:
         entity:
@@ -365,12 +365,20 @@ action:
                     id: Media-State-Change
                   - condition: trigger
                     id: Home-Phase-Change
-                  - condition: trigger
-                    id: Home-Phase-Change-Night
+                  - condition: and
+                    conditions:
+                      - condition: trigger
+                        id: Home-Phase-Change-Night
+                      - condition: template
+                        value_template: "{{ phase_allow_night_trigger }}"
                   - condition: trigger
                     id: Shifting-Mode-Change
-                  - condition: trigger
-                    id: Shifting-Mode-Change-Away
+                  - condition: and
+                    conditions:
+                      - condition: trigger
+                        id: Shifting-Mode-Change-Away
+                      - condition: template
+                        value_template: "{{ mode_allow_away_trigger }}"
 # below is the code for turning lights on. All conditional logic for whether lights should adjust should be above this line.
 # _how_ the lights adjust is below:
       # Night phase handling
