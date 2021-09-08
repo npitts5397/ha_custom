@@ -216,8 +216,11 @@ condition:
   - condition: or
     conditions:
       # Run automation if reloaded to make sure lights are in correct state
-      - condition: trigger
-        id: Automation-Reloaded
+      - conditions:
+          - condition: trigger
+            id: Automation-Reloaded
+          - condition: template
+            value_template: "{{ illuminance_entity != {} }}"
       # Allow illuminance triggers conditionally-- if not Night/Away or allow Night/Away execution
       - condition: and
         conditions:
