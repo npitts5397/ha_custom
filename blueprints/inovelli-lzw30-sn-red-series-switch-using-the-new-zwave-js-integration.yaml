@@ -133,7 +133,7 @@ action:
   - service: "logbook.log"
     data:
       name: "Device"
-      message: "{{ zwave_device }}"
+      message: "{{ device_id }}"
   - choose:
     - conditions: '{{ button_id == "003" and press_count == "KeyPressed" }}'
       sequence: !input config_button
