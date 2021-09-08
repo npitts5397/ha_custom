@@ -215,6 +215,9 @@ condition:
   # Allow various grouped triggers. Allows for conditionally allowing triggers.
   - condition: or
     conditions:
+      # Run automation if reloaded to make sure lights are in correct state
+      - condition: trigger
+        id: Automation-Reloaded
       # Allow illuminance triggers conditionally-- if not Night/Away or allow Night/Away execution
       - condition: and
         conditions:
@@ -366,7 +369,7 @@ action:
                 above: !input 'illuminance_lux_threshold'
               - condition: template
                 value_template: "{{ illuminance_toggle_on_high == true }}"
-          # Lights are on and Media state or phase change
+          # Lights are on and Media state or phase/mode change
           - condition: and
             conditions:
               - condition: state
