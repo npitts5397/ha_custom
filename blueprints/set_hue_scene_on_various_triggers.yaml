@@ -49,6 +49,11 @@ blueprint:
       default: false
       selector:
         boolean:
+    illuminance_night_trigger_delayed_off:
+      description: (Optional) Transitioning to night mode will trigger a delayed off as if illuminance changed to the off condition. Not compatible with illuminance_allow_night_execution.
+      default: false
+      selector:
+        boolean:
     illuminance_allow_away_execution:
       description: (Optional) Allow illuminance-based turn-ON during Away mode.
       default: false
@@ -206,6 +211,7 @@ variables:
   illuminance_lux_threshold: !input illuminance_lux_threshold
   illuminance_toggle_on_high: !input 'illuminance_toggle_on_high'
   illuminance_allow_night_execution: !input 'illuminance_allow_night_execution'
+  illuminance_night_trigger_delayed_off: !input 'illuminance_night_trigger_delayed_off'
   illuminance_allow_away_execution: !input 'illuminance_allow_away_execution'
   media_entity: !input 'media_entity'
   media_script: !input 'media_script'
@@ -269,8 +275,12 @@ condition:
         conditions:
           - condition: trigger
             id: Home-Phase-Change-Night
-          - condition: template
-            value_template: "{{ phase_allow_night_trigger }}"
+          - condition: or
+            conditions:
+              - condition: template
+                value_template: "{{ illuminance_night_trigger_delayed_off }}"
+              - condition: template
+                value_template: "{{ phase_allow_night_trigger }}"
       # Allow shifting mode trigger for Home, Manual, Vacation
       - condition: trigger
         id: Shifting-Mode-Change
@@ -339,6 +349,28 @@ action:
           - condition: numeric_state
             entity_id: !input 'illuminance_entity'
             below: !input 'illuminance_lux_threshold'
+          - service: light.turn_off
+            target:
+              entity_id: !input 'light_entity'
+      # Delayed off when 
+      - conditions:
+          - condition: template
+            value_template: "{{ illuminance_entity != {} }}"
+          - condition: template
+            value_template: "{{ illuminance_night_trigger_delayed_off == true }}"
+          - condition: state
+            entity_id: !input light_entity
+            state: 'on'
+          - condition: state
+            entity_id: !input 'phase_entity'
+            state: 'Night'
+        # wait for delay, make sure condition is still met before taking action
+        sequence:
+          - delay:
+              seconds: !input 'illuminance_off_delay_seconds'
+          - condition: state
+            entity_id: !input 'phase_entity'
+            state: 'Night'
           - service: light.turn_off
             target:
               entity_id: !input 'light_entity'
