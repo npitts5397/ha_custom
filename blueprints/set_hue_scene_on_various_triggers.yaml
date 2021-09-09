@@ -281,10 +281,10 @@ condition:
             id: Shifting-Mode-Change-Away
           - condition: template
             value_template: "{{ mode_allow_away_trigger }}"
-      # Allow automation updates if the lights are already on (catch all)
-      - condition: state
-        entity_id: !input 'light_entity'
-        state: 'on'
+      # # Allow automation updates if the lights are already on (catch all)
+      # - condition: state
+      #   entity_id: !input 'light_entity'
+      #   state: 'on'
 action:
   # Turn off lights
   - choose:
