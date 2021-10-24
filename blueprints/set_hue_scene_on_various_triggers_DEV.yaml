@@ -1,5 +1,5 @@
 blueprint:
-  name: 'Set Hue Scene on Various Triggers'
+  name: 'Set Hue Scene on Various Triggers DEV'
   description: 'Blueprint to set Hue Scene on triggers: Illuminance, LZW30-SN up/down presses, media playback changes, phase changes, and shifting mode changes.'
   domain: automation
   input:
@@ -218,7 +218,7 @@ variables:
   illuminance_allow_night_execution: !input 'illuminance_allow_night_execution'
   illuminance_night_trigger_delayed_off: !input 'illuminance_night_trigger_delayed_off'
   illuminance_allow_away_execution: !input 'illuminance_allow_away_execution'
-  do_not_refresh_when_on: !input do_not_refresh_when_on
+  do_not_refresh_when_on: !input 'do_not_refresh_when_on'
   media_entity: !input 'media_entity'
   media_script: !input 'media_script'
   phase_allow_night_trigger: !input 'phase_allow_night_trigger'
