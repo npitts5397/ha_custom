@@ -103,6 +103,11 @@ blueprint:
       default: false
       selector:
         boolean:
+    do_not_refresh_when_on:
+      description: Prevents Hue scene from being set again if Hue lights are already in an ON state.
+      default: false
+      selector:
+        boolean:
     day_hue_scene:
       description: Default Hue scene for day time.
       default: Concentrate
@@ -213,6 +218,7 @@ variables:
   illuminance_allow_night_execution: !input 'illuminance_allow_night_execution'
   illuminance_night_trigger_delayed_off: !input 'illuminance_night_trigger_delayed_off'
   illuminance_allow_away_execution: !input 'illuminance_allow_away_execution'
+  do_not_refresh_when_on: !input 'do_not_refresh_when_on'
   media_entity: !input 'media_entity'
   media_script: !input 'media_script'
   phase_allow_night_trigger: !input 'phase_allow_night_trigger'
@@ -376,57 +382,72 @@ action:
               entity_id: !input 'light_entity'
   # Turn on lights
     default:
-      - condition: or
+      - condition: and
         conditions:
-          # Button up
-          - condition: trigger
-            id: SwitchButton-Up
-          # Illuminance on when illuminance_toggle_on_high is false
-          - condition: and
+          # If 'do_not_refresh_when_on' true, only continue if lights are off.
+          - condition: or
             conditions:
               - condition: template
-                value_template: "{{ illuminance_entity != {} }}"
-              - condition: numeric_state
-                entity_id: !input 'illuminance_entity'
-                below: !input 'illuminance_lux_threshold'
-              - condition: template
-                value_template: "{{ illuminance_toggle_on_high == false }}"
-          # Illuminance on when illuminance_toggle_on_high is true
-          - condition: and
-            conditions:
-              - condition: template
-                value_template: "{{ illuminance_entity != {} }}"
-              - condition: numeric_state
-                entity_id: !input 'illuminance_entity'
-                above: !input 'illuminance_lux_threshold'
-              - condition: template
-                value_template: "{{ illuminance_toggle_on_high == true }}"
-          # Lights are on and Media state or phase/mode change
-          - condition: and
-            conditions:
-              - condition: state
-                entity_id: !input 'light_entity'
-                state: 'on'
-              - condition: or
+                value_template: "{{ do_not_refresh_when_on == false }}"
+              - condition: and
                 conditions:
-                  - condition: trigger
-                    id: Media-State-Change
-                  - condition: trigger
-                    id: Home-Phase-Change
-                  - condition: and
+                  - condition: template
+                    value_template: "{{ do_not_refresh_when_on == true }}"
+                  - condition: state
+                    entity_id: !input light_entity
+                    state: 'off'
+          # Evaluate triggers to determine action
+          - condition: or
+            conditions:
+              # Button up
+              - condition: trigger
+                id: SwitchButton-Up
+              # Illuminance on when illuminance_toggle_on_high is false
+              - condition: and
+                conditions:
+                  - condition: template
+                    value_template: "{{ illuminance_entity != {} }}"
+                  - condition: numeric_state
+                    entity_id: !input 'illuminance_entity'
+                    below: !input 'illuminance_lux_threshold'
+                  - condition: template
+                    value_template: "{{ illuminance_toggle_on_high == false }}"
+              # Illuminance on when illuminance_toggle_on_high is true
+              - condition: and
+                conditions:
+                  - condition: template
+                    value_template: "{{ illuminance_entity != {} }}"
+                  - condition: numeric_state
+                    entity_id: !input 'illuminance_entity'
+                    above: !input 'illuminance_lux_threshold'
+                  - condition: template
+                    value_template: "{{ illuminance_toggle_on_high == true }}"
+              # Lights are on and Media state or phase/mode change
+              - condition: and
+                conditions:
+                  - condition: state
+                    entity_id: !input 'light_entity'
+                    state: 'on'
+                  - condition: or
                     conditions:
                       - condition: trigger
-                        id: Home-Phase-Change-Night
-                      - condition: template
-                        value_template: "{{ phase_allow_night_trigger }}"
-                  - condition: trigger
-                    id: Shifting-Mode-Change
-                  - condition: and
-                    conditions:
+                        id: Media-State-Change
                       - condition: trigger
-                        id: Shifting-Mode-Change-Away
-                      - condition: template
-                        value_template: "{{ mode_allow_away_trigger }}"
+                        id: Home-Phase-Change
+                      - condition: and
+                        conditions:
+                          - condition: trigger
+                            id: Home-Phase-Change-Night
+                          - condition: template
+                            value_template: "{{ phase_allow_night_trigger }}"
+                      - condition: trigger
+                        id: Shifting-Mode-Change
+                      - condition: and
+                        conditions:
+                          - condition: trigger
+                            id: Shifting-Mode-Change-Away
+                          - condition: template
+                            value_template: "{{ mode_allow_away_trigger }}"
 # below is the code for turning lights on. All conditional logic for whether lights should adjust should be above this line.
 # _how_ the lights adjust is below:
       # Night phase handling
