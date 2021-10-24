@@ -381,72 +381,74 @@ action:
               entity_id: !input 'light_entity'
   # Turn on lights
     default:
-      # If 'do_not_refresh_when_on' true, only continue if lights are off.
-      - condition: or
+      - condition: and
         conditions:
-          - condition: state
-            entity_id: !input do_not_refresh_when_on
-            state: false
-          - condition: and
+          # If 'do_not_refresh_when_on' true, only continue if lights are off.
+          - condition: or
             conditions:
               - condition: state
                 entity_id: !input do_not_refresh_when_on
-                state: true
-              - condition: state
-                entity_id: !input light_entity
-                state: 'off'
-      # Evaluate triggers to determine action
-      - condition: or
-        conditions:
-          # Button up
-          - condition: trigger
-            id: SwitchButton-Up
-          # Illuminance on when illuminance_toggle_on_high is false
-          - condition: and
-            conditions:
-              - condition: template
-                value_template: "{{ illuminance_entity != {} }}"
-              - condition: numeric_state
-                entity_id: !input 'illuminance_entity'
-                below: !input 'illuminance_lux_threshold'
-              - condition: template
-                value_template: "{{ illuminance_toggle_on_high == false }}"
-          # Illuminance on when illuminance_toggle_on_high is true
-          - condition: and
-            conditions:
-              - condition: template
-                value_template: "{{ illuminance_entity != {} }}"
-              - condition: numeric_state
-                entity_id: !input 'illuminance_entity'
-                above: !input 'illuminance_lux_threshold'
-              - condition: template
-                value_template: "{{ illuminance_toggle_on_high == true }}"
-          # Lights are on and Media state or phase/mode change
-          - condition: and
-            conditions:
-              - condition: state
-                entity_id: !input 'light_entity'
-                state: 'on'
-              - condition: or
+                state: false
+              - condition: and
                 conditions:
-                  - condition: trigger
-                    id: Media-State-Change
-                  - condition: trigger
-                    id: Home-Phase-Change
-                  - condition: and
+                  - condition: state
+                    entity_id: !input do_not_refresh_when_on
+                    state: true
+                  - condition: state
+                    entity_id: !input light_entity
+                    state: 'off'
+          # Evaluate triggers to determine action
+          - condition: or
+            conditions:
+              # Button up
+              - condition: trigger
+                id: SwitchButton-Up
+              # Illuminance on when illuminance_toggle_on_high is false
+              - condition: and
+                conditions:
+                  - condition: template
+                    value_template: "{{ illuminance_entity != {} }}"
+                  - condition: numeric_state
+                    entity_id: !input 'illuminance_entity'
+                    below: !input 'illuminance_lux_threshold'
+                  - condition: template
+                    value_template: "{{ illuminance_toggle_on_high == false }}"
+              # Illuminance on when illuminance_toggle_on_high is true
+              - condition: and
+                conditions:
+                  - condition: template
+                    value_template: "{{ illuminance_entity != {} }}"
+                  - condition: numeric_state
+                    entity_id: !input 'illuminance_entity'
+                    above: !input 'illuminance_lux_threshold'
+                  - condition: template
+                    value_template: "{{ illuminance_toggle_on_high == true }}"
+              # Lights are on and Media state or phase/mode change
+              - condition: and
+                conditions:
+                  - condition: state
+                    entity_id: !input 'light_entity'
+                    state: 'on'
+                  - condition: or
                     conditions:
                       - condition: trigger
-                        id: Home-Phase-Change-Night
-                      - condition: template
-                        value_template: "{{ phase_allow_night_trigger }}"
-                  - condition: trigger
-                    id: Shifting-Mode-Change
-                  - condition: and
-                    conditions:
+                        id: Media-State-Change
                       - condition: trigger
-                        id: Shifting-Mode-Change-Away
-                      - condition: template
-                        value_template: "{{ mode_allow_away_trigger }}"
+                        id: Home-Phase-Change
+                      - condition: and
+                        conditions:
+                          - condition: trigger
+                            id: Home-Phase-Change-Night
+                          - condition: template
+                            value_template: "{{ phase_allow_night_trigger }}"
+                      - condition: trigger
+                        id: Shifting-Mode-Change
+                      - condition: and
+                        conditions:
+                          - condition: trigger
+                            id: Shifting-Mode-Change-Away
+                          - condition: template
+                            value_template: "{{ mode_allow_away_trigger }}"
 # below is the code for turning lights on. All conditional logic for whether lights should adjust should be above this line.
 # _how_ the lights adjust is below:
       # Night phase handling
