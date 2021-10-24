@@ -387,7 +387,7 @@ action:
           # If 'do_not_refresh_when_on' true, only continue if lights are off.
           - condition: or
             conditions:
-              - condition: state
+              - condition: template
                 entity_id: "{{ do_not_refresh_when_on == false }}"
               - condition: and
                 conditions:
