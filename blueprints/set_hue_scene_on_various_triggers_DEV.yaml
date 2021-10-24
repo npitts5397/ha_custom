@@ -388,7 +388,7 @@ action:
           - condition: or
             conditions:
               - condition: template
-                entity_id: "{{ do_not_refresh_when_on == false }}"
+                value_template: "{{ do_not_refresh_when_on == false }}"
               - condition: and
                 conditions:
                   - condition: template
