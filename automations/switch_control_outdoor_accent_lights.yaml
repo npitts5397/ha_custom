@@ -2,18 +2,22 @@ alias: 'Switch Control: Outdoor Accent Lights'
 description: ''
 trigger:
   - platform: time
-    at: '15:00'
+    at: input_datetime.time_1500
     id: Start-Time
   - platform: time
-    at: '01:00'
+    at: input_datetime.time_0100
     id: End-Time
+  - platform: event
+    event_type: automation_reloaded
+    id: Automation-Reloaded
 condition: []
 action:
-  - delay: 00:{{ (range(1,54)|random|int) }}:00 }}
+  - delay: 00:{{ (range(0,54)|random|int) }}:00
   - choose:
       - conditions:
-          - condition: trigger
-            id: Start-Time
+          - condition: time
+            after: input_datetime.time_1500
+            before: input_datetime.time_0100
         sequence:
           - service: switch.turn_on
             target:
