@@ -20,36 +20,58 @@ blueprint:
       selector:
         entity:
           domain: input_text
+    default_scene_transition_seconds:
+      name: Default Scene Transition Seconds
+      description: The amount of time to transition to default scenes.
+      default: 0.5
+      selector:
+        number:
+          min: 0
+          max: 20
+          mode: box
+          step: 0.1
+          unit_of_measurement: seconds
     plex_scene_helper:
       name: Plex Scene Helper
       description: The Home Assistant helper which holds the current Plex-determined scene name.
       selector:
         entity:
           domain: input_text
+    plex_scene_transition_seconds:
+      name: Plex Scene Transition Seconds
+      description: The amount of time to transition to Plex scenes.
+      default: 2
+      selector:
+        number:
+          min: 0
+          max: 20
+          mode: box
+          step: 0.1
+          unit_of_measurement: seconds
 mode: restart
 trigger:
 - platform: event
   id: Automation-Reloaded
   event_type: automation_reloaded
 - platform: mqtt
-  topic: !input 'mqtt_topic'
+  topic: !input mqtt_topic
   payload: 'on'
   id: trigger_on
 - platform: mqtt
-  topic: !input 'mqtt_topic'
+  topic: !input mqtt_topic
   payload: 'off'
   id: trigger_off
 - platform: state
-  entity_id: !input 'default_scene_helper'
+  entity_id: !input default_scene_helper
   id: trigger_default_scene
 - platform: state
-  entity_id: !input 'plex_scene_helper'
+  entity_id: !input plex_scene_helper
   id: trigger_plex_scene
 variables:
-  light_entity: !input 'light_entity'
-  mqtt_topic: !input 'mqtt_topic'
-  default_scene_helper: !input 'default_scene_helper'
-  plex_scene_helper: !input 'default_scene_helper'
+  light_entity: !input light_entity
+  mqtt_topic: !input mqtt_topic
+  default_scene_helper: !input default_scene_helper
+  plex_scene_helper: !input plex_scene_helper
   scene_prefix: "{{ (light_entity | replace('light.','scene.')) + '_' }}"
 action:
 - choose:
@@ -89,12 +111,28 @@ action:
             - service: hue.activate_scene
               target:
                 entity_id: "{{ scene_prefix + states(plex_scene_helper) | lower }}"
-              metadata: {}
+              data:
+                transition: !input plex_scene_transition_seconds
+          - conditions:
+            - condition: and
+              conditions:
+              - condition: trigger
+                id: trigger_plex_scene
+              - condition: state
+                entity_id: !input plex_scene_helper
+                state: NO_SCENE_SPECIFIED
+            sequence:
+              service: hue.activate_scene
+              target:
+                entity_id: "{{ scene_prefix + states(default_scene_helper) | lower }}"
+              data:
+                transition: !input plex_scene_transition_seconds
           default:
           - service: hue.activate_scene
             target:
               entity_id: "{{ scene_prefix + states(default_scene_helper) | lower }}"
-            metadata: {}
+            data:
+              transition: !input default_scene_transition_seconds
       default: []
   - conditions:
     - condition: trigger
