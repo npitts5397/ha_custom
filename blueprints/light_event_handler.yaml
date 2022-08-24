@@ -1,0 +1,106 @@
+blueprint:
+  name: 'Light Event Handler'
+  description: 'Sets a scene stored in Home Assistant helpers when triggered by a supported event.'
+  domain: automation
+  input:
+    light_entity:
+      name: Light Entity
+      description: The light entity for which scenes will be set.
+      selector:
+        entity:
+          domain: light
+    mqtt_topic:
+      name: MQTT Topic
+      description: The MQTT topic to which 'on' and 'off' messages are published.
+      selector:
+        text:
+    default_scene_helper:
+      name: Default Scene Helper
+      description: The Home Assistant helper which holds the current default scene name.
+      selector:
+        entity:
+          domain: input_text
+    plex_scene_helper:
+      name: Plex Scene Helper
+      description: The Home Assistant helper which holds the current Plex-determined scene name.
+      selector:
+        entity:
+          domain: input_text
+mode: restart
+trigger:
+- platform: event
+  id: Automation-Reloaded
+  event_type: automation_reloaded
+- platform: mqtt
+  topic: !input 'mqtt_topic'
+  payload: 'on'
+  id: trigger_on
+- platform: mqtt
+  topic: !input 'mqtt_topic'
+  payload: 'off'
+  id: trigger_off
+- platform: state
+  entity_id: !input 'default_scene_helper'
+  id: trigger_default_scene
+- platform: state
+  entity_id: !input 'plex_scene_helper'
+  id: trigger_plex_scene
+variables:
+  light_entity: !input 'light_entity'
+  mqtt_topic: !input 'mqtt_topic'
+  default_scene_helper: !input 'default_scene_helper'
+  plex_scene_helper: !input 'default_scene_helper'
+  scene_prefix: "{{ (light_entity | replace('light.','scene.')) + '_' }}"
+action:
+- choose:
+  - conditions:
+    - condition: or
+      conditions:
+      - condition: trigger
+        id: trigger_on
+      - condition: trigger
+        id: trigger_default_scene
+      - condition: trigger
+        id: trigger_plex_scene
+    sequence:
+    - choose:
+      - conditions:
+        - condition: or
+          conditions:
+          - condition: and
+            conditions:
+            - condition: state
+              entity_id: !input light_entity
+              state: 'off'
+            - condition: trigger
+              id: trigger_on
+          - condition: state
+            entity_id: !input light_entity
+            state: 'on'
+        sequence:
+        - choose:
+          - conditions:
+            - condition: not
+              conditions:
+              - condition: state
+                entity_id: !input plex_scene_helper
+                state: NO_SCENE_SPECIFIED
+            sequence:
+            - service: hue.activate_scene
+              target:
+                entity_id: "{{ scene_prefix + states(default_scene_helper) | lower }}"
+              metadata: {}
+          default:
+          - service: hue.activate_scene
+            target:
+              entity_id: "{{ scene_prefix + states(default_scene_helper) | lower }}"
+            metadata: {}
+      default: []
+  - conditions:
+    - condition: trigger
+      id: trigger_off
+    sequence:
+    - service: light.turn_off
+      target:
+        entity_id: !input light_entity
+      data: {}
