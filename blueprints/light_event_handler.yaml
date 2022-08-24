@@ -17,6 +17,7 @@ blueprint:
     default_scene_helper:
       name: Default Scene Helper
       description: The Home Assistant helper which holds the current default scene name.
+      default: input_text.light_scene_default
       selector:
         entity:
           domain: input_text
@@ -34,6 +35,7 @@ blueprint:
     plex_scene_helper:
       name: Plex Scene Helper
       description: The Home Assistant helper which holds the current Plex-determined scene name.
+      default: input_text.light_scene_plex_no_client
       selector:
         entity:
           domain: input_text
