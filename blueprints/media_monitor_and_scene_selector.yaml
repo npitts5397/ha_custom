@@ -1,0 +1,348 @@
+blueprint:
+  name: Media Monitor and Scene Selector
+  description: Monitors a playback device and sets scene names to a Home Assistant helper.
+  domain: automation
+  input:
+    media_entity:
+      name: Media Player
+      description: The media player entity that will be monitored.
+      selector:
+        entity:
+          domain: media_player
+    media_scene_helper:
+      name: Media Scene Helper
+      description: The Home Assistant helper which holds the current playback-determined scene name.
+      default: input_text.light_scene_plex_no_client
+      selector:
+        entity:
+          domain: input_text    
+    default_playback_scene:
+      name: Default Playback Scene
+      description: The scene name to apply to the Home Assistant Helper during playback when no content information is available.
+      default: Dimmed
+      selector:
+        text:
+    default_paused_scene:
+      name: Default Playback Scene
+      description: The scene name to apply to the Home Assistant Helper during playback when no content information is available.
+      default: Dimmed
+      selector:
+        text:
+    
+trigger:
+- platform: state
+  entity_id: !input media_scene_helper
+condition: []
+action:
+- choose:
+  - conditions:
+    - condition: and
+      conditions:
+      - condition: state
+        entity_id: media_player.plex_plex_for_android_tv_nate_s_office_cc_plex
+        state: playing
+      - condition: state
+        entity_id: media_player.plex_plex_for_android_tv_nate_s_office_cc_plex
+        attribute: media_content_type
+        state: movie
+      - condition: state
+        entity_id: input_select.home_phase
+        state: Morning
+    sequence:
+    - service: input_text.set_value
+      data:
+        value: Movie
+      target:
+        entity_id: input_text.light_scene_plex_nate_s_office
+  - conditions:
+    - condition: and
+      conditions:
+      - condition: state
+        entity_id: media_player.plex_plex_for_android_tv_nate_s_office_cc_plex
+        state: playing
+      - condition: state
+        entity_id: media_player.plex_plex_for_android_tv_nate_s_office_cc_plex
+        attribute: media_content_type
+        state: movie
+      - condition: state
+        entity_id: input_select.home_phase
+        state: Day
+    sequence:
+    - service: input_text.set_value
+      data:
+        value: Movie
+      target:
+        entity_id: input_text.light_scene_plex_nate_s_office
+  - conditions:
+    - condition: and
+      conditions:
+      - condition: state
+        entity_id: media_player.plex_plex_for_android_tv_nate_s_office_cc_plex
+        state: playing
+      - condition: state
+        entity_id: media_player.plex_plex_for_android_tv_nate_s_office_cc_plex
+        attribute: media_content_type
+        state: movie
+      - condition: state
+        entity_id: input_select.home_phase
+        state: Evening
+    sequence:
+    - service: input_text.set_value
+      data:
+        value: Movie
+      target:
+        entity_id: input_text.light_scene_plex_nate_s_office
+  - conditions:
+    - condition: and
+      conditions:
+      - condition: state
+        entity_id: media_player.plex_plex_for_android_tv_nate_s_office_cc_plex
+        state: playing
+      - condition: state
+        entity_id: media_player.plex_plex_for_android_tv_nate_s_office_cc_plex
+        attribute: media_content_type
+        state: movie
+      - condition: state
+        entity_id: input_select.home_phase
+        state: Night
+    sequence:
+    - service: input_text.set_value
+      data:
+        value: Movie
+      target:
+        entity_id: input_text.light_scene_plex_nate_s_office
+  - conditions:
+    - condition: and
+      conditions:
+      - condition: state
+        entity_id: media_player.plex_plex_for_android_tv_nate_s_office_cc_plex
+        state: playing
+      - condition: state
+        entity_id: media_player.plex_plex_for_android_tv_nate_s_office_cc_plex
+        attribute: media_content_type
+        state: episode
+      - condition: state
+        entity_id: input_select.home_phase
+        state: Morning
+    sequence:
+    - service: input_text.set_value
+      data:
+        value: Episode
+      target:
+        entity_id: input_text.light_scene_plex_nate_s_office
+  - conditions:
+    - condition: and
+      conditions:
+      - condition: state
+        entity_id: media_player.plex_plex_for_android_tv_nate_s_office_cc_plex
+        state: playing
+      - condition: state
+        entity_id: media_player.plex_plex_for_android_tv_nate_s_office_cc_plex
+        attribute: media_content_type
+        state: episode
+      - condition: state
+        entity_id: input_select.home_phase
+        state: Day
+    sequence:
+    - service: input_text.set_value
+      data:
+        value: Episode
+      target:
+        entity_id: input_text.light_scene_plex_nate_s_office
+  - conditions:
+    - condition: and
+      conditions:
+      - condition: state
+        entity_id: media_player.plex_plex_for_android_tv_nate_s_office_cc_plex
+        state: playing
+      - condition: state
+        entity_id: media_player.plex_plex_for_android_tv_nate_s_office_cc_plex
+        attribute: media_content_type
+        state: episode
+      - condition: state
+        entity_id: input_select.home_phase
+        state: Evening
+    sequence:
+    - service: input_text.set_value
+      data:
+        value: NO_SCENE_SPECIFIED
+      target:
+        entity_id: input_text.light_scene_plex_nate_s_office
+  - conditions:
+    - condition: and
+      conditions:
+      - condition: state
+        entity_id: media_player.plex_plex_for_android_tv_nate_s_office_cc_plex
+        state: playing
+      - condition: state
+        entity_id: media_player.plex_plex_for_android_tv_nate_s_office_cc_plex
+        attribute: media_content_type
+        state: episode
+      - condition: state
+        entity_id: input_select.home_phase
+        state: Night
+    sequence:
+    - service: input_text.set_value
+      data:
+        value: NO_SCENE_SPECIFIED
+      target:
+        entity_id: input_text.light_scene_plex_nate_s_office
+  - conditions:
+    - condition: and
+      conditions:
+      - condition: state
+        entity_id: media_player.plex_plex_for_android_tv_nate_s_office_cc_plex
+        state: paused
+      - condition: state
+        entity_id: media_player.plex_plex_for_android_tv_nate_s_office_cc_plex
+        attribute: media_content_type
+        state: movie
+      - condition: state
+        entity_id: input_select.home_phase
+        state: Morning
+    sequence:
+    - service: input_text.set_value
+      data:
+        value: NO_SCENE_SPECIFIED
+      target:
+        entity_id: input_text.light_scene_plex_nate_s_office
+  - conditions:
+    - condition: and
+      conditions:
+      - condition: state
+        entity_id: media_player.plex_plex_for_android_tv_nate_s_office_cc_plex
+        state: paused
+      - condition: state
+        entity_id: media_player.plex_plex_for_android_tv_nate_s_office_cc_plex
+        attribute: media_content_type
+        state: movie
+      - condition: state
+        entity_id: input_select.home_phase
+        state: Day
+    sequence:
+    - service: input_text.set_value
+      data:
+        value: Dimmed
+      target:
+        entity_id: input_text.light_scene_plex_nate_s_office
+  - conditions:
+    - condition: and
+      conditions:
+      - condition: state
+        entity_id: media_player.plex_plex_for_android_tv_nate_s_office_cc_plex
+        state: paused
+      - condition: state
+        entity_id: media_player.plex_plex_for_android_tv_nate_s_office_cc_plex
+        attribute: media_content_type
+        state: movie
+      - condition: state
+        entity_id: input_select.home_phase
+        state: Evening
+    sequence:
+    - service: input_text.set_value
+      data:
+        value: NO_SCENE_SPECIFIED
+      target:
+        entity_id: input_text.light_scene_plex_nate_s_office
+  - conditions:
+    - condition: and
+      conditions:
+      - condition: state
+        entity_id: media_player.plex_plex_for_android_tv_nate_s_office_cc_plex
+        state: paused
+      - condition: state
+        entity_id: media_player.plex_plex_for_android_tv_nate_s_office_cc_plex
+        attribute: media_content_type
+        state: movie
+      - condition: state
+        entity_id: input_select.home_phase
+        state: Night
+    sequence:
+    - service: input_text.set_value
+      data:
+        value: NO_SCENE_SPECIFIED
+      target:
+        entity_id: input_text.light_scene_plex_nate_s_office
+  - conditions:
+    - condition: and
+      conditions:
+      - condition: state
+        entity_id: media_player.plex_plex_for_android_tv_nate_s_office_cc_plex
+        state: paused
+      - condition: state
+        entity_id: media_player.plex_plex_for_android_tv_nate_s_office_cc_plex
+        attribute: media_content_type
+        state: episode
+      - condition: state
+        entity_id: input_select.home_phase
+        state: Morning
+    sequence:
+    - service: input_text.set_value
+      data:
+        value: NO_SCENE_SPECIFIED
+      target:
+        entity_id: input_text.light_scene_plex_nate_s_office
+  - conditions:
+    - condition: and
+      conditions:
+      - condition: state
+        entity_id: media_player.plex_plex_for_android_tv_nate_s_office_cc_plex
+        state: paused
+      - condition: state
+        entity_id: media_player.plex_plex_for_android_tv_nate_s_office_cc_plex
+        attribute: media_content_type
+        state: episode
+      - condition: state
+        entity_id: input_select.home_phase
+        state: Day
+    sequence:
+    - service: input_text.set_value
+      data:
+        value: NO_SCENE_SPECIFIED
+      target:
+        entity_id: input_text.light_scene_plex_nate_s_office
+  - conditions:
+    - condition: and
+      conditions:
+      - condition: state
+        entity_id: media_player.plex_plex_for_android_tv_nate_s_office_cc_plex
+        state: paused
+      - condition: state
+        entity_id: media_player.plex_plex_for_android_tv_nate_s_office_cc_plex
+        attribute: media_content_type
+        state: episode
+      - condition: state
+        entity_id: input_select.home_phase
+        state: Evening
+    sequence:
+    - service: input_text.set_value
+      data:
+        value: NO_SCENE_SPECIFIED
+      target:
+        entity_id: input_text.light_scene_plex_nate_s_office
+  - conditions:
+    - condition: and
+      conditions:
+      - condition: state
+        entity_id: media_player.plex_plex_for_android_tv_nate_s_office_cc_plex
+        state: paused
+      - condition: state
+        entity_id: media_player.plex_plex_for_android_tv_nate_s_office_cc_plex
+        attribute: media_content_type
+        state: episode
+      - condition: state
+        entity_id: input_select.home_phase
+        state: Night
+    sequence:
+    - service: input_text.set_value
+      data:
+        value: NO_SCENE_SPECIFIED
+      target:
+        entity_id: input_text.light_scene_plex_nate_s_office
+  default:
+  - service: input_text.set_value
+    data:
+      value: NO_SCENE_SPECIFIED
+    target:
+      entity_id: input_text.light_scene_plex_nate_s_office
+
