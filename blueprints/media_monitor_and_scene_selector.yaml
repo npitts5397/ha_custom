@@ -28,10 +28,11 @@ blueprint:
       default: Dimmed
       selector:
         text:
-    
+mode: restart
 trigger:
 - platform: state
   entity_id: !input media_scene_helper
+################################################## UNTOUCHED ##########################################################
 condition: []
 action:
 - choose:
