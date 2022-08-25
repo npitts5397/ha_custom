@@ -122,7 +122,7 @@ blueprint:
 mode: restart
 trigger:
 - platform: state
-  entity_id: !input media_scene_helper
+  entity_id: !input media_entity
   id: trigger_media_state
 - platform: state
   entity_id: !input phase_helper
@@ -155,81 +155,27 @@ action:
     - condition: and
       conditions:
       - condition: state
+        entity_id: !input phase_helper
+        state: Morning
+      - condition: state
         entity_id: !input media_entity
         state: playing
       - condition: state
         entity_id: !input media_entity
         attribute: media_content_type
         state: movie
+    sequence:
+    - service: input_text.set_value
+      data:
+        value: !input morning_playing_movie_scene
+      target:
+        entity_id: !input media_scene_helper
+  - conditions:
+    - condition: and
+      conditions:
       - condition: state
         entity_id: !input phase_helper
         state: Morning
-    sequence:
-    - service: input_text.set_value
-      data:
-        value: Movie
-      target:
-        entity_id: !input media_scene_helper
-  - conditions:
-    - condition: and
-      conditions:
-      - condition: state
-        entity_id: !input media_entity
-        state: playing
-      - condition: state
-        entity_id: !input media_entity
-        attribute: media_content_type
-        state: movie
-      - condition: state
-        entity_id: !input phase_helper
-        state: Day
-    sequence:
-    - service: input_text.set_value
-      data:
-        value: Movie
-      target:
-        entity_id: !input media_scene_helper
-  - conditions:
-    - condition: and
-      conditions:
-      - condition: state
-        entity_id: !input media_entity
-        state: playing
-      - condition: state
-        entity_id: !input media_entity
-        attribute: media_content_type
-        state: movie
-      - condition: state
-        entity_id: !input phase_helper
-        state: Evening
-    sequence:
-    - service: input_text.set_value
-      data:
-        value: Movie
-      target:
-        entity_id: !input media_scene_helper
-  - conditions:
-    - condition: and
-      conditions:
-      - condition: state
-        entity_id: !input media_entity
-        state: playing
-      - condition: state
-        entity_id: !input media_entity
-        attribute: media_content_type
-        state: movie
-      - condition: state
-        entity_id: !input phase_helper
-        state: Night
-    sequence:
-    - service: input_text.set_value
-      data:
-        value: Movie
-      target:
-        entity_id: !input media_scene_helper
-  - conditions:
-    - condition: and
-      conditions:
       - condition: state
         entity_id: !input media_entity
         state: playing
@@ -237,75 +183,18 @@ action:
         entity_id: !input media_entity
         attribute: media_content_type
         state: episode
+    sequence:
+    - service: input_text.set_value
+      data:
+        value: !input morning_playing_episode_scene
+      target:
+        entity_id: !input media_scene_helper
+  - conditions:
+    - condition: and
+      conditions:
       - condition: state
         entity_id: !input phase_helper
         state: Morning
-    sequence:
-    - service: input_text.set_value
-      data:
-        value: Episode
-      target:
-        entity_id: !input media_scene_helper
-  - conditions:
-    - condition: and
-      conditions:
-      - condition: state
-        entity_id: !input media_entity
-        state: playing
-      - condition: state
-        entity_id: !input media_entity
-        attribute: media_content_type
-        state: episode
-      - condition: state
-        entity_id: !input phase_helper
-        state: Day
-    sequence:
-    - service: input_text.set_value
-      data:
-        value: Episode
-      target:
-        entity_id: !input media_scene_helper
-  - conditions:
-    - condition: and
-      conditions:
-      - condition: state
-        entity_id: !input media_entity
-        state: playing
-      - condition: state
-        entity_id: !input media_entity
-        attribute: media_content_type
-        state: episode
-      - condition: state
-        entity_id: !input phase_helper
-        state: Evening
-    sequence:
-    - service: input_text.set_value
-      data:
-        value: NO_SCENE_SPECIFIED
-      target:
-        entity_id: !input media_scene_helper
-  - conditions:
-    - condition: and
-      conditions:
-      - condition: state
-        entity_id: !input media_entity
-        state: playing
-      - condition: state
-        entity_id: !input media_entity
-        attribute: media_content_type
-        state: episode
-      - condition: state
-        entity_id: !input phase_helper
-        state: Night
-    sequence:
-    - service: input_text.set_value
-      data:
-        value: NO_SCENE_SPECIFIED
-      target:
-        entity_id: !input media_scene_helper
-  - conditions:
-    - condition: and
-      conditions:
       - condition: state
         entity_id: !input media_entity
         state: paused
@@ -313,113 +202,94 @@ action:
         entity_id: !input media_entity
         attribute: media_content_type
         state: movie
+    sequence:
+    - service: input_text.set_value
+      data:
+        value: !input morning_paused_movie_scene
+      target:
+        entity_id: !input media_scene_helper
+  - conditions:
+    - condition: and
+      conditions:
       - condition: state
         entity_id: !input phase_helper
         state: Morning
-    sequence:
-    - service: input_text.set_value
-      data:
-        value: NO_SCENE_SPECIFIED
-      target:
-        entity_id: !input media_scene_helper
-  - conditions:
-    - condition: and
-      conditions:
       - condition: state
         entity_id: !input media_entity
         state: paused
       - condition: state
         entity_id: !input media_entity
         attribute: media_content_type
-        state: movie
+        state: episode
+    sequence:
+    - service: input_text.set_value
+      data:
+        value: !input morning_paused_episode_scene
+      target:
+        entity_id: !input media_scene_helper
+  - conditions:
+    - condition: and
+      conditions:
       - condition: state
         entity_id: !input phase_helper
         state: Day
-    sequence:
-    - service: input_text.set_value
-      data:
-        value: Dimmed
-      target:
-        entity_id: !input media_scene_helper
-  - conditions:
-    - condition: and
-      conditions:
       - condition: state
         entity_id: !input media_entity
-        state: paused
+        state: playing
       - condition: state
         entity_id: !input media_entity
         attribute: media_content_type
         state: movie
-      - condition: state
-        entity_id: !input phase_helper
-        state: Evening
     sequence:
     - service: input_text.set_value
       data:
-        value: NO_SCENE_SPECIFIED
+        value: !input day_playing_movie_scene
       target:
         entity_id: !input media_scene_helper
   - conditions:
     - condition: and
       conditions:
-      - condition: state
-        entity_id: !input media_entity
-        state: paused
-      - condition: state
-        entity_id: !input media_entity
-        attribute: media_content_type
-        state: movie
-      - condition: state
-        entity_id: !input phase_helper
-        state: Night
-    sequence:
-    - service: input_text.set_value
-      data:
-        value: NO_SCENE_SPECIFIED
-      target:
-        entity_id: !input media_scene_helper
-  - conditions:
-    - condition: and
-      conditions:
-      - condition: state
-        entity_id: !input media_entity
-        state: paused
-      - condition: state
-        entity_id: !input media_entity
-        attribute: media_content_type
-        state: episode
-      - condition: state
-        entity_id: !input phase_helper
-        state: Morning
-    sequence:
-    - service: input_text.set_value
-      data:
-        value: NO_SCENE_SPECIFIED
-      target:
-        entity_id: !input media_scene_helper
-  - conditions:
-    - condition: and
-      conditions:
-      - condition: state
-        entity_id: !input media_entity
-        state: paused
-      - condition: state
-        entity_id: !input media_entity
-        attribute: media_content_type
-        state: episode
       - condition: state
         entity_id: !input phase_helper
         state: Day
+      - condition: state
+        entity_id: !input media_entity
+        state: playing
+      - condition: state
+        entity_id: !input media_entity
+        attribute: media_content_type
+        state: episode
     sequence:
     - service: input_text.set_value
       data:
-        value: NO_SCENE_SPECIFIED
+        value: !input day_playing_episode_scene
       target:
         entity_id: !input media_scene_helper
   - conditions:
     - condition: and
       conditions:
+      - condition: state
+        entity_id: !input phase_helper
+        state: Day
+      - condition: state
+        entity_id: !input media_entity
+        state: paused
+      - condition: state
+        entity_id: !input media_entity
+        attribute: media_content_type
+        state: movie
+    sequence:
+    - service: input_text.set_value
+      data:
+        value: !input day_paused_movie_scene
+      target:
+        entity_id: !input media_scene_helper
+  - conditions:
+    - condition: and
+      conditions:
+      - condition: state
+        entity_id: !input phase_helper
+        state: Day
       - condition: state
         entity_id: !input media_entity
         state: paused
@@ -427,18 +297,75 @@ action:
         entity_id: !input media_entity
         attribute: media_content_type
         state: episode
+    sequence:
+    - service: input_text.set_value
+      data:
+        value: !input day_paused_episode_scene
+      target:
+        entity_id: !input media_scene_helper
+  - conditions:
+    - condition: and
+      conditions:
       - condition: state
         entity_id: !input phase_helper
         state: Evening
+      - condition: state
+        entity_id: !input media_entity
+        state: playing
+      - condition: state
+        entity_id: !input media_entity
+        attribute: media_content_type
+        state: movie
     sequence:
     - service: input_text.set_value
       data:
-        value: NO_SCENE_SPECIFIED
+        value: !input evening_playing_movie_scene
       target:
         entity_id: !input media_scene_helper
   - conditions:
     - condition: and
       conditions:
+      - condition: state
+        entity_id: !input phase_helper
+        state: Evening
+      - condition: state
+        entity_id: !input media_entity
+        state: playing
+      - condition: state
+        entity_id: !input media_entity
+        attribute: media_content_type
+        state: episode
+    sequence:
+    - service: input_text.set_value
+      data:
+        value: !input evening_playing_episode_scene
+      target:
+        entity_id: !input media_scene_helper
+  - conditions:
+    - condition: and
+      conditions:
+      - condition: state
+        entity_id: !input phase_helper
+        state: Evening
+      - condition: state
+        entity_id: !input media_entity
+        state: paused
+      - condition: state
+        entity_id: !input media_entity
+        attribute: media_content_type
+        state: movie
+    sequence:
+    - service: input_text.set_value
+      data:
+        value: !input evening_paused_movie_scene
+      target:
+        entity_id: !input media_scene_helper
+  - conditions:
+    - condition: and
+      conditions:
+      - condition: state
+        entity_id: !input phase_helper
+        state: Evening
       - condition: state
         entity_id: !input media_entity
         state: paused
@@ -446,13 +373,86 @@ action:
         entity_id: !input media_entity
         attribute: media_content_type
         state: episode
-      - condition: state
-        entity_id: !input phase_helper
-        state: Night
     sequence:
     - service: input_text.set_value
       data:
-        value: NO_SCENE_SPECIFIED
+        value: !input evening_paused_episode_scene
+      target:
+        entity_id: !input media_scene_helper
+  - conditions:
+    - condition: and
+      conditions:
+      - condition: state
+        entity_id: !input phase_helper
+        state: Night
+      - condition: state
+        entity_id: !input media_entity
+        state: playing
+      - condition: state
+        entity_id: !input media_entity
+        attribute: media_content_type
+        state: movie
+    sequence:
+    - service: input_text.set_value
+      data:
+        value: !input night_playing_movie_scene
+      target:
+        entity_id: !input media_scene_helper
+  - conditions:
+    - condition: and
+      conditions:
+      - condition: state
+        entity_id: !input phase_helper
+        state: Night
+      - condition: state
+        entity_id: !input media_entity
+        state: playing
+      - condition: state
+        entity_id: !input media_entity
+        attribute: media_content_type
+        state: episode
+    sequence:
+    - service: input_text.set_value
+      data:
+        value: !input night_playing_episode_scene
+      target:
+        entity_id: !input media_scene_helper
+  - conditions:
+    - condition: and
+      conditions:
+      - condition: state
+        entity_id: !input phase_helper
+        state: Night
+      - condition: state
+        entity_id: !input media_entity
+        state: paused
+      - condition: state
+        entity_id: !input media_entity
+        attribute: media_content_type
+        state: movie
+    sequence:
+    - service: input_text.set_value
+      data:
+        value: !input night_paused_movie_scene
+      target:
+        entity_id: !input media_scene_helper
+  - conditions:
+    - condition: and
+      conditions:
+      - condition: state
+        entity_id: !input phase_helper
+        state: Night
+      - condition: state
+        entity_id: !input media_entity
+        state: paused
+      - condition: state
+        entity_id: !input media_entity
+        attribute: media_content_type
+        state: episode
+    sequence:
+    - service: input_text.set_value
+      data:
+        value: !input night_paused_episode_scene
       target:
         entity_id: !input media_scene_helper
   default:
