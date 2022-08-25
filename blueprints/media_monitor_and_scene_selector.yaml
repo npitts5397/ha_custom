@@ -16,34 +16,142 @@ blueprint:
       selector:
         entity:
           domain: input_text    
-    default_playback_scene:
-      name: Default Playback Scene
-      description: The scene name to apply to the Home Assistant Helper during playback when no content information is available.
-      default: Dimmed
+    morning_playing_movie_scene:
+      name: Morning-Playing-Movie Scene
+      description: Scene for phase:morning, playback:playing, type:movie.
+      default: NO_SCENE_SPECIFIED
       selector:
         text:
-    default_paused_scene:
-      name: Default Playback Scene
-      description: The scene name to apply to the Home Assistant Helper during playback when no content information is available.
-      default: Dimmed
+    morning_playing_episode_scene:
+      name: Morning-Playing-Episode Scene
+      description: Scene for phase:morning, playback:playing, type:episode.
+      default: NO_SCENE_SPECIFIED
+      selector:
+        text:
+    morning_paused_movie_scene:
+      name: Morning-Paused-Movie Scene
+      description: Scene for phase:morning, playback:paused, type:movie.
+      default: NO_SCENE_SPECIFIED
+      selector:
+        text:
+    morning_paused_episode_scene:
+      name: Morning-Paused-Episode Scene
+      description: Scene for phase:morning, playback:paused, type:episode.
+      default: NO_SCENE_SPECIFIED
+      selector:
+        text:
+    day_playing_movie_scene:
+      name: Day-Playing-Movie Scene
+      description: Scene for phase:day, playback:playing, type:movie.
+      default: NO_SCENE_SPECIFIED
+      selector:
+        text:
+    day_playing_episode_scene:
+      name: Day-Playing-Episode Scene
+      description: Scene for phase:day, playback:playing, type:episode.
+      default: NO_SCENE_SPECIFIED
+      selector:
+        text:
+    day_paused_movie_scene:
+      name: Day-Paused-Movie Scene
+      description: Scene for phase:day, playback:paused, type:movie.
+      default: NO_SCENE_SPECIFIED
+      selector:
+        text:
+    day_paused_episode_scene:
+      name: Day-Paused-Episode Scene
+      description: Scene for phase:day, playback:paused, type:episode.
+      default: NO_SCENE_SPECIFIED
+      selector:
+        text:
+    evening_playing_movie_scene:
+      name: Evening-Playing-Movie Scene
+      description: Scene for phase:evening, playback:playing, type:movie.
+      default: NO_SCENE_SPECIFIED
+      selector:
+        text:
+    evening_playing_episode_scene:
+      name: Evening-Playing-Episode Scene
+      description: Scene for phase:evening, playback:playing, type:episode.
+      default: NO_SCENE_SPECIFIED
+      selector:
+        text:
+    evening_paused_movie_scene:
+      name: Evening-Paused-Movie Scene
+      description: Scene for phase:evening, playback:paused, type:movie.
+      default: NO_SCENE_SPECIFIED
+      selector:
+        text:
+    evening_paused_episode_scene:
+      name: Evening-Paused-Episode Scene
+      description: Scene for phase:evening, playback:paused, type:episode.
+      default: NO_SCENE_SPECIFIED
+      selector:
+        text:
+    night_playing_movie_scene:
+      name: Night-Playing-Movie Scene
+      description: Scene for phase:night, playback:playing, type:movie.
+      default: NO_SCENE_SPECIFIED
+      selector:
+        text:
+    night_playing_episode_scene:
+      name: Night-Playing-Episode Scene
+      description: Scene for phase:night, playback:playing, type:episode.
+      default: NO_SCENE_SPECIFIED
+      selector:
+        text:
+    night_paused_movie_scene:
+      name: Night-Paused-Movie Scene
+      description: Scene for phase:night, playback:paused, type:movie.
+      default: NO_SCENE_SPECIFIED
+      selector:
+        text:
+    night_paused_episode_scene:
+      name: Night-Paused-Episode Scene
+      description: Scene for phase:night, playback:paused, type:episode.
+      default: NO_SCENE_SPECIFIED
       selector:
         text:
 mode: restart
 trigger:
 - platform: state
   entity_id: !input media_scene_helper
-################################################## UNTOUCHED ##########################################################
-condition: []
+  id: trigger_media_state
+- platform: state
+  entity_id: !input phase_entity
+  id: trigger_phase_state
+variables:
+  media_entity: !input media_entity
+  playback_state: "{{ states(media_entity) }}"
+  playback_type: "{{ state_attr(media_entity,'media_content_type') | default('default',true) }}"
+  phase_entity: !input phase_entity
+  current_phase: "{{ states(phase_entity) }}"
+  scene_variable: "{{ current_phase + '_' + playback_state + '_' + playback_type }}"
+  current_prefix: "{{ (light_entity | replace('light.','scene.')) + '_' }}"
+condition:
+  - or:
+    - and:
+      - condition: trigger
+        id: trigger_phase_state
+      - not:
+        - condition: state
+          entity_id: !input media_entity
+          state: stopped
+        - condition: state
+          entity_id: !input media_entity
+          state: unavailable 
+    - condition: trigger
+      id: trigger_media_state
 action:
 - choose:
   - conditions:
     - condition: and
       conditions:
       - condition: state
-        entity_id: media_player.plex_plex_for_android_tv_nate_s_office_cc_plex
+        entity_id: !input media_entity
         state: playing
       - condition: state
-        entity_id: media_player.plex_plex_for_android_tv_nate_s_office_cc_plex
+        entity_id: !input media_entity
         attribute: media_content_type
         state: movie
       - condition: state
@@ -54,15 +162,15 @@ action:
       data:
         value: Movie
       target:
-        entity_id: input_text.light_scene_plex_nate_s_office
+        entity_id: !input media_scene_helper
   - conditions:
     - condition: and
       conditions:
       - condition: state
-        entity_id: media_player.plex_plex_for_android_tv_nate_s_office_cc_plex
+        entity_id: !input media_entity
         state: playing
       - condition: state
-        entity_id: media_player.plex_plex_for_android_tv_nate_s_office_cc_plex
+        entity_id: !input media_entity
         attribute: media_content_type
         state: movie
       - condition: state
@@ -73,15 +181,15 @@ action:
       data:
         value: Movie
       target:
-        entity_id: input_text.light_scene_plex_nate_s_office
+        entity_id: !input media_scene_helper
   - conditions:
     - condition: and
       conditions:
       - condition: state
-        entity_id: media_player.plex_plex_for_android_tv_nate_s_office_cc_plex
+        entity_id: !input media_entity
         state: playing
       - condition: state
-        entity_id: media_player.plex_plex_for_android_tv_nate_s_office_cc_plex
+        entity_id: !input media_entity
         attribute: media_content_type
         state: movie
       - condition: state
@@ -92,15 +200,15 @@ action:
       data:
         value: Movie
       target:
-        entity_id: input_text.light_scene_plex_nate_s_office
+        entity_id: !input media_scene_helper
   - conditions:
     - condition: and
       conditions:
       - condition: state
-        entity_id: media_player.plex_plex_for_android_tv_nate_s_office_cc_plex
+        entity_id: !input media_entity
         state: playing
       - condition: state
-        entity_id: media_player.plex_plex_for_android_tv_nate_s_office_cc_plex
+        entity_id: !input media_entity
         attribute: media_content_type
         state: movie
       - condition: state
@@ -111,15 +219,15 @@ action:
       data:
         value: Movie
       target:
-        entity_id: input_text.light_scene_plex_nate_s_office
+        entity_id: !input media_scene_helper
   - conditions:
     - condition: and
       conditions:
       - condition: state
-        entity_id: media_player.plex_plex_for_android_tv_nate_s_office_cc_plex
+        entity_id: !input media_entity
         state: playing
       - condition: state
-        entity_id: media_player.plex_plex_for_android_tv_nate_s_office_cc_plex
+        entity_id: !input media_entity
         attribute: media_content_type
         state: episode
       - condition: state
@@ -130,15 +238,15 @@ action:
       data:
         value: Episode
       target:
-        entity_id: input_text.light_scene_plex_nate_s_office
+        entity_id: !input media_scene_helper
   - conditions:
     - condition: and
       conditions:
       - condition: state
-        entity_id: media_player.plex_plex_for_android_tv_nate_s_office_cc_plex
+        entity_id: !input media_entity
         state: playing
       - condition: state
-        entity_id: media_player.plex_plex_for_android_tv_nate_s_office_cc_plex
+        entity_id: !input media_entity
         attribute: media_content_type
         state: episode
       - condition: state
@@ -149,15 +257,15 @@ action:
       data:
         value: Episode
       target:
-        entity_id: input_text.light_scene_plex_nate_s_office
+        entity_id: !input media_scene_helper
   - conditions:
     - condition: and
       conditions:
       - condition: state
-        entity_id: media_player.plex_plex_for_android_tv_nate_s_office_cc_plex
+        entity_id: !input media_entity
         state: playing
       - condition: state
-        entity_id: media_player.plex_plex_for_android_tv_nate_s_office_cc_plex
+        entity_id: !input media_entity
         attribute: media_content_type
         state: episode
       - condition: state
@@ -168,15 +276,15 @@ action:
       data:
         value: NO_SCENE_SPECIFIED
       target:
-        entity_id: input_text.light_scene_plex_nate_s_office
+        entity_id: !input media_scene_helper
   - conditions:
     - condition: and
       conditions:
       - condition: state
-        entity_id: media_player.plex_plex_for_android_tv_nate_s_office_cc_plex
+        entity_id: !input media_entity
         state: playing
       - condition: state
-        entity_id: media_player.plex_plex_for_android_tv_nate_s_office_cc_plex
+        entity_id: !input media_entity
         attribute: media_content_type
         state: episode
       - condition: state
@@ -187,15 +295,15 @@ action:
       data:
         value: NO_SCENE_SPECIFIED
       target:
-        entity_id: input_text.light_scene_plex_nate_s_office
+        entity_id: !input media_scene_helper
   - conditions:
     - condition: and
       conditions:
       - condition: state
-        entity_id: media_player.plex_plex_for_android_tv_nate_s_office_cc_plex
+        entity_id: !input media_entity
         state: paused
       - condition: state
-        entity_id: media_player.plex_plex_for_android_tv_nate_s_office_cc_plex
+        entity_id: !input media_entity
         attribute: media_content_type
         state: movie
       - condition: state
@@ -206,15 +314,15 @@ action:
       data:
         value: NO_SCENE_SPECIFIED
       target:
-        entity_id: input_text.light_scene_plex_nate_s_office
+        entity_id: !input media_scene_helper
   - conditions:
     - condition: and
       conditions:
       - condition: state
-        entity_id: media_player.plex_plex_for_android_tv_nate_s_office_cc_plex
+        entity_id: !input media_entity
         state: paused
       - condition: state
-        entity_id: media_player.plex_plex_for_android_tv_nate_s_office_cc_plex
+        entity_id: !input media_entity
         attribute: media_content_type
         state: movie
       - condition: state
@@ -225,15 +333,15 @@ action:
       data:
         value: Dimmed
       target:
-        entity_id: input_text.light_scene_plex_nate_s_office
+        entity_id: !input media_scene_helper
   - conditions:
     - condition: and
       conditions:
       - condition: state
-        entity_id: media_player.plex_plex_for_android_tv_nate_s_office_cc_plex
+        entity_id: !input media_entity
         state: paused
       - condition: state
-        entity_id: media_player.plex_plex_for_android_tv_nate_s_office_cc_plex
+        entity_id: !input media_entity
         attribute: media_content_type
         state: movie
       - condition: state
@@ -244,15 +352,15 @@ action:
       data:
         value: NO_SCENE_SPECIFIED
       target:
-        entity_id: input_text.light_scene_plex_nate_s_office
+        entity_id: !input media_scene_helper
   - conditions:
     - condition: and
       conditions:
       - condition: state
-        entity_id: media_player.plex_plex_for_android_tv_nate_s_office_cc_plex
+        entity_id: !input media_entity
         state: paused
       - condition: state
-        entity_id: media_player.plex_plex_for_android_tv_nate_s_office_cc_plex
+        entity_id: !input media_entity
         attribute: media_content_type
         state: movie
       - condition: state
@@ -263,15 +371,15 @@ action:
       data:
         value: NO_SCENE_SPECIFIED
       target:
-        entity_id: input_text.light_scene_plex_nate_s_office
+        entity_id: !input media_scene_helper
   - conditions:
     - condition: and
       conditions:
       - condition: state
-        entity_id: media_player.plex_plex_for_android_tv_nate_s_office_cc_plex
+        entity_id: !input media_entity
         state: paused
       - condition: state
-        entity_id: media_player.plex_plex_for_android_tv_nate_s_office_cc_plex
+        entity_id: !input media_entity
         attribute: media_content_type
         state: episode
       - condition: state
@@ -282,15 +390,15 @@ action:
       data:
         value: NO_SCENE_SPECIFIED
       target:
-        entity_id: input_text.light_scene_plex_nate_s_office
+        entity_id: !input media_scene_helper
   - conditions:
     - condition: and
       conditions:
       - condition: state
-        entity_id: media_player.plex_plex_for_android_tv_nate_s_office_cc_plex
+        entity_id: !input media_entity
         state: paused
       - condition: state
-        entity_id: media_player.plex_plex_for_android_tv_nate_s_office_cc_plex
+        entity_id: !input media_entity
         attribute: media_content_type
         state: episode
       - condition: state
@@ -301,15 +409,15 @@ action:
       data:
         value: NO_SCENE_SPECIFIED
       target:
-        entity_id: input_text.light_scene_plex_nate_s_office
+        entity_id: !input media_scene_helper
   - conditions:
     - condition: and
       conditions:
       - condition: state
-        entity_id: media_player.plex_plex_for_android_tv_nate_s_office_cc_plex
+        entity_id: !input media_entity
         state: paused
       - condition: state
-        entity_id: media_player.plex_plex_for_android_tv_nate_s_office_cc_plex
+        entity_id: !input media_entity
         attribute: media_content_type
         state: episode
       - condition: state
@@ -320,15 +428,15 @@ action:
       data:
         value: NO_SCENE_SPECIFIED
       target:
-        entity_id: input_text.light_scene_plex_nate_s_office
+        entity_id: !input media_scene_helper
   - conditions:
     - condition: and
       conditions:
       - condition: state
-        entity_id: media_player.plex_plex_for_android_tv_nate_s_office_cc_plex
+        entity_id: !input media_entity
         state: paused
       - condition: state
-        entity_id: media_player.plex_plex_for_android_tv_nate_s_office_cc_plex
+        entity_id: !input media_entity
         attribute: media_content_type
         state: episode
       - condition: state
@@ -339,11 +447,11 @@ action:
       data:
         value: NO_SCENE_SPECIFIED
       target:
-        entity_id: input_text.light_scene_plex_nate_s_office
+        entity_id: !input media_scene_helper
   default:
   - service: input_text.set_value
     data:
       value: NO_SCENE_SPECIFIED
     target:
-      entity_id: input_text.light_scene_plex_nate_s_office
+      entity_id: !input media_scene_helper
 
