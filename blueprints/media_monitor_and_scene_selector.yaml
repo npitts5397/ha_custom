@@ -15,7 +15,14 @@ blueprint:
       default: input_text.light_scene_plex_no_client
       selector:
         entity:
-          domain: input_text    
+          domain: input_text
+    phase_helper:
+      name: Phase Helper
+      description: The Home Assistant helper which holds the current phase name.
+      default: !input phase_helper
+      selector:
+        entity:
+          domain: input_select   
     morning_playing_movie_scene:
       name: Morning-Playing-Movie Scene
       description: Scene for phase:morning, playback:playing, type:movie.
@@ -118,14 +125,14 @@ trigger:
   entity_id: !input media_scene_helper
   id: trigger_media_state
 - platform: state
-  entity_id: !input phase_entity
+  entity_id: !input phase_helper
   id: trigger_phase_state
 variables:
   media_entity: !input media_entity
   playback_state: "{{ states(media_entity) }}"
   playback_type: "{{ state_attr(media_entity,'media_content_type') | default('default',true) }}"
-  phase_entity: !input phase_entity
-  current_phase: "{{ states(phase_entity) }}"
+  phase_helper: !input phase_helper
+  current_phase: "{{ states(phase_helper) }}"
   scene_variable: "{{ current_phase + '_' + playback_state + '_' + playback_type }}"
   current_prefix: "{{ (light_entity | replace('light.','scene.')) + '_' }}"
 condition:
@@ -155,7 +162,7 @@ action:
         attribute: media_content_type
         state: movie
       - condition: state
-        entity_id: input_select.home_phase
+        entity_id: !input phase_helper
         state: Morning
     sequence:
     - service: input_text.set_value
@@ -174,7 +181,7 @@ action:
         attribute: media_content_type
         state: movie
       - condition: state
-        entity_id: input_select.home_phase
+        entity_id: !input phase_helper
         state: Day
     sequence:
     - service: input_text.set_value
@@ -193,7 +200,7 @@ action:
         attribute: media_content_type
         state: movie
       - condition: state
-        entity_id: input_select.home_phase
+        entity_id: !input phase_helper
         state: Evening
     sequence:
     - service: input_text.set_value
@@ -212,7 +219,7 @@ action:
         attribute: media_content_type
         state: movie
       - condition: state
-        entity_id: input_select.home_phase
+        entity_id: !input phase_helper
         state: Night
     sequence:
     - service: input_text.set_value
@@ -231,7 +238,7 @@ action:
         attribute: media_content_type
         state: episode
       - condition: state
-        entity_id: input_select.home_phase
+        entity_id: !input phase_helper
         state: Morning
     sequence:
     - service: input_text.set_value
@@ -250,7 +257,7 @@ action:
         attribute: media_content_type
         state: episode
       - condition: state
-        entity_id: input_select.home_phase
+        entity_id: !input phase_helper
         state: Day
     sequence:
     - service: input_text.set_value
@@ -269,7 +276,7 @@ action:
         attribute: media_content_type
         state: episode
       - condition: state
-        entity_id: input_select.home_phase
+        entity_id: !input phase_helper
         state: Evening
     sequence:
     - service: input_text.set_value
@@ -288,7 +295,7 @@ action:
         attribute: media_content_type
         state: episode
       - condition: state
-        entity_id: input_select.home_phase
+        entity_id: !input phase_helper
         state: Night
     sequence:
     - service: input_text.set_value
@@ -307,7 +314,7 @@ action:
         attribute: media_content_type
         state: movie
       - condition: state
-        entity_id: input_select.home_phase
+        entity_id: !input phase_helper
         state: Morning
     sequence:
     - service: input_text.set_value
@@ -326,7 +333,7 @@ action:
         attribute: media_content_type
         state: movie
       - condition: state
-        entity_id: input_select.home_phase
+        entity_id: !input phase_helper
         state: Day
     sequence:
     - service: input_text.set_value
@@ -345,7 +352,7 @@ action:
         attribute: media_content_type
         state: movie
       - condition: state
-        entity_id: input_select.home_phase
+        entity_id: !input phase_helper
         state: Evening
     sequence:
     - service: input_text.set_value
@@ -364,7 +371,7 @@ action:
         attribute: media_content_type
         state: movie
       - condition: state
-        entity_id: input_select.home_phase
+        entity_id: !input phase_helper
         state: Night
     sequence:
     - service: input_text.set_value
@@ -383,7 +390,7 @@ action:
         attribute: media_content_type
         state: episode
       - condition: state
-        entity_id: input_select.home_phase
+        entity_id: !input phase_helper
         state: Morning
     sequence:
     - service: input_text.set_value
@@ -402,7 +409,7 @@ action:
         attribute: media_content_type
         state: episode
       - condition: state
-        entity_id: input_select.home_phase
+        entity_id: !input phase_helper
         state: Day
     sequence:
     - service: input_text.set_value
@@ -421,7 +428,7 @@ action:
         attribute: media_content_type
         state: episode
       - condition: state
-        entity_id: input_select.home_phase
+        entity_id: !input phase_helper
         state: Evening
     sequence:
     - service: input_text.set_value
@@ -440,7 +447,7 @@ action:
         attribute: media_content_type
         state: episode
       - condition: state
-        entity_id: input_select.home_phase
+        entity_id: !input phase_helper
         state: Night
     sequence:
     - service: input_text.set_value
