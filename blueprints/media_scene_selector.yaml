@@ -1,5 +1,5 @@
 blueprint:
-  name: Media Monitor and Scene Selector
+  name: Media Scene Selector
   description: Monitors a playback device and sets scene names to a Home Assistant helper.
   domain: automation
   input:
