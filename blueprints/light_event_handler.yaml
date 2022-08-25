@@ -17,7 +17,7 @@ blueprint:
     default_scene_helper:
       name: Default Scene Helper
       description: The Home Assistant helper which holds the current default scene name.
-      default: input_text.light_scene_default
+      default: input_text.light_scene_helper_default
       selector:
         entity:
           domain: input_text
@@ -35,7 +35,7 @@ blueprint:
     media_scene_helper:
       name: Media Scene Helper
       description: The Home Assistant helper which holds the current media-determined scene name.
-      default: input_text.light_scene_media_no_client
+      default: input_text.light_scene_helper_media_no_client
       selector:
         entity:
           domain: input_text
@@ -71,7 +71,6 @@ trigger:
   id: trigger_media_scene
 variables:
   light_entity: !input light_entity
-  mqtt_topic: !input mqtt_topic
   default_scene_helper: !input default_scene_helper
   media_scene_helper: !input media_scene_helper
 action:
