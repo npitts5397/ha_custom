@@ -127,14 +127,6 @@ trigger:
 - platform: state
   entity_id: !input phase_helper
   id: trigger_phase_state
-variables:
-  media_entity: !input media_entity
-  playback_state: "{{ states(media_entity) }}"
-  playback_type: "{{ state_attr(media_entity,'media_content_type') | default('default',true) }}"
-  phase_helper: !input phase_helper
-  current_phase: "{{ states(phase_helper) }}"
-  scene_variable: "{{ current_phase + '_' + playback_state + '_' + playback_type }}"
-  current_prefix: "{{ (light_entity | replace('light.','scene.')) + '_' }}"
 condition:
   - or:
     - and:
