@@ -29,9 +29,9 @@ blueprint:
       default: NO_SCENE_SPECIFIED
       selector:
         text:
-    morning_playing_episode_scene:
-      name: Morning-Playing-Episode Scene
-      description: Scene for phase:morning, playback:playing, type:episode.
+    morning_playing_tvshow_scene:
+      name: Morning-Playing-TVShow Scene
+      description: Scene for phase:morning, playback:playing, type:tvshow.
       default: NO_SCENE_SPECIFIED
       selector:
         text:
@@ -41,9 +41,9 @@ blueprint:
       default: NO_SCENE_SPECIFIED
       selector:
         text:
-    morning_paused_episode_scene:
-      name: Morning-Paused-Episode Scene
-      description: Scene for phase:morning, playback:paused, type:episode.
+    morning_paused_tvshow_scene:
+      name: Morning-Paused-TVShow Scene
+      description: Scene for phase:morning, playback:paused, type:tvshow.
       default: NO_SCENE_SPECIFIED
       selector:
         text:
@@ -53,9 +53,9 @@ blueprint:
       default: NO_SCENE_SPECIFIED
       selector:
         text:
-    day_playing_episode_scene:
-      name: Day-Playing-Episode Scene
-      description: Scene for phase:day, playback:playing, type:episode.
+    day_playing_tvshow_scene:
+      name: Day-Playing-TVShow Scene
+      description: Scene for phase:day, playback:playing, type:tvshow.
       default: NO_SCENE_SPECIFIED
       selector:
         text:
@@ -65,9 +65,9 @@ blueprint:
       default: NO_SCENE_SPECIFIED
       selector:
         text:
-    day_paused_episode_scene:
-      name: Day-Paused-Episode Scene
-      description: Scene for phase:day, playback:paused, type:episode.
+    day_paused_tvshow_scene:
+      name: Day-Paused-TVShow Scene
+      description: Scene for phase:day, playback:paused, type:tvshow.
       default: NO_SCENE_SPECIFIED
       selector:
         text:
@@ -77,9 +77,9 @@ blueprint:
       default: NO_SCENE_SPECIFIED
       selector:
         text:
-    evening_playing_episode_scene:
-      name: Evening-Playing-Episode Scene
-      description: Scene for phase:evening, playback:playing, type:episode.
+    evening_playing_tvshow_scene:
+      name: Evening-Playing-TVShow Scene
+      description: Scene for phase:evening, playback:playing, type:tvshow.
       default: NO_SCENE_SPECIFIED
       selector:
         text:
@@ -89,9 +89,9 @@ blueprint:
       default: NO_SCENE_SPECIFIED
       selector:
         text:
-    evening_paused_episode_scene:
-      name: Evening-Paused-Episode Scene
-      description: Scene for phase:evening, playback:paused, type:episode.
+    evening_paused_tvshow_scene:
+      name: Evening-Paused-TVShow Scene
+      description: Scene for phase:evening, playback:paused, type:tvshow.
       default: NO_SCENE_SPECIFIED
       selector:
         text:
@@ -101,9 +101,9 @@ blueprint:
       default: NO_SCENE_SPECIFIED
       selector:
         text:
-    night_playing_episode_scene:
-      name: Night-Playing-Episode Scene
-      description: Scene for phase:night, playback:playing, type:episode.
+    night_playing_tvshow_scene:
+      name: Night-Playing-TVShow Scene
+      description: Scene for phase:night, playback:playing, type:tvshow.
       default: NO_SCENE_SPECIFIED
       selector:
         text:
@@ -113,9 +113,9 @@ blueprint:
       default: NO_SCENE_SPECIFIED
       selector:
         text:
-    night_paused_episode_scene:
-      name: Night-Paused-Episode Scene
-      description: Scene for phase:night, playback:paused, type:episode.
+    night_paused_tvshow_scene:
+      name: Night-Paused-TVShow Scene
+      description: Scene for phase:night, playback:paused, type:tvshow.
       default: NO_SCENE_SPECIFIED
       selector:
         text:
@@ -182,11 +182,11 @@ action:
       - condition: state
         entity_id: !input media_entity
         attribute: media_content_type
-        state: episode
+        state: tvshow
     sequence:
     - service: input_text.set_value
       data:
-        value: !input morning_playing_episode_scene
+        value: !input morning_playing_tvshow_scene
       target:
         entity_id: !input media_scene_helper
   - conditions:
@@ -220,11 +220,11 @@ action:
       - condition: state
         entity_id: !input media_entity
         attribute: media_content_type
-        state: episode
+        state: tvshow
     sequence:
     - service: input_text.set_value
       data:
-        value: !input morning_paused_episode_scene
+        value: !input morning_paused_tvshow_scene
       target:
         entity_id: !input media_scene_helper
   - conditions:
@@ -258,11 +258,11 @@ action:
       - condition: state
         entity_id: !input media_entity
         attribute: media_content_type
-        state: episode
+        state: tvshow
     sequence:
     - service: input_text.set_value
       data:
-        value: !input day_playing_episode_scene
+        value: !input day_playing_tvshow_scene
       target:
         entity_id: !input media_scene_helper
   - conditions:
@@ -296,11 +296,11 @@ action:
       - condition: state
         entity_id: !input media_entity
         attribute: media_content_type
-        state: episode
+        state: tvshow
     sequence:
     - service: input_text.set_value
       data:
-        value: !input day_paused_episode_scene
+        value: !input day_paused_tvshow_scene
       target:
         entity_id: !input media_scene_helper
   - conditions:
@@ -334,11 +334,11 @@ action:
       - condition: state
         entity_id: !input media_entity
         attribute: media_content_type
-        state: episode
+        state: tvshow
     sequence:
     - service: input_text.set_value
       data:
-        value: !input evening_playing_episode_scene
+        value: !input evening_playing_tvshow_scene
       target:
         entity_id: !input media_scene_helper
   - conditions:
@@ -372,11 +372,11 @@ action:
       - condition: state
         entity_id: !input media_entity
         attribute: media_content_type
-        state: episode
+        state: tvshow
     sequence:
     - service: input_text.set_value
       data:
-        value: !input evening_paused_episode_scene
+        value: !input evening_paused_tvshow_scene
       target:
         entity_id: !input media_scene_helper
   - conditions:
@@ -410,11 +410,11 @@ action:
       - condition: state
         entity_id: !input media_entity
         attribute: media_content_type
-        state: episode
+        state: tvshow
     sequence:
     - service: input_text.set_value
       data:
-        value: !input night_playing_episode_scene
+        value: !input night_playing_tvshow_scene
       target:
         entity_id: !input media_scene_helper
   - conditions:
@@ -440,19 +440,19 @@ action:
     - condition: and
       conditions:
       - condition: state
-        entity_id: !input phase_helper
-        state: Night
-      - condition: state
         entity_id: !input media_entity
         state: paused
       - condition: state
         entity_id: !input media_entity
         attribute: media_content_type
-        state: episode
+        state: tvshow
+      - condition: state
+        entity_id: !input phase_helper
+        state: Night
     sequence:
     - service: input_text.set_value
       data:
-        value: !input night_paused_episode_scene
+        value: !input night_paused_tvshow_scene
       target:
         entity_id: !input media_scene_helper
   default:
