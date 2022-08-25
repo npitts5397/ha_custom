@@ -74,7 +74,6 @@ variables:
   mqtt_topic: !input mqtt_topic
   default_scene_helper: !input default_scene_helper
   media_scene_helper: !input media_scene_helper
-  scene_prefix: "{{ (light_entity | replace('light.','scene.')) + '_' }}"
 action:
 - choose:
   - conditions:
@@ -112,7 +111,7 @@ action:
             sequence:
             - service: hue.activate_scene
               target:
-                entity_id: "{{ scene_prefix + states(media_scene_helper) | lower }}"
+                entity_id: "{{ (light_entity | replace('light.','scene.')) + '_' + states(media_scene_helper) | lower }}"
               data:
                 transition: !input media_scene_transition_seconds
           - conditions:
@@ -126,13 +125,13 @@ action:
             sequence:
               service: hue.activate_scene
               target:
-                entity_id: "{{ scene_prefix + states(default_scene_helper) | lower }}"
+                entity_id: "{{ (light_entity | replace('light.','scene.')) + '_' + states(default_scene_helper) | lower }}"
               data:
                 transition: !input media_scene_transition_seconds
           default:
           - service: hue.activate_scene
             target:
-              entity_id: "{{ scene_prefix + states(default_scene_helper) | lower }}"
+              entity_id: "{{ (light_entity | replace('light.','scene.')) + '_' + states(default_scene_helper) | lower }}"
             data:
               transition: !input default_scene_transition_seconds
       default: []
