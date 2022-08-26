@@ -12,7 +12,6 @@ blueprint:
     media_scene_helper:
       name: Media Scene Helper
       description: The Home Assistant helper which holds the current playback-determined scene name.
-      default: input_text.light_scene_plex_no_client
       selector:
         entity:
           domain: input_text
