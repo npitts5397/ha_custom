@@ -14,16 +14,16 @@ blueprint:
       description: The MQTT topic to which 'on' and 'off' messages are published.
       selector:
         text:
-    default_scene_helper:
-      name: Default Scene Helper
-      description: The Home Assistant helper which holds the current default scene name.
+    primary_scene_helper:
+      name: Primary Scene Helper
+      description: The Home Assistant helper which holds the current primary scene name. This scene will be set when secondary_scene_helper is not set.
       default: input_text.light_scene_helper_default
       selector:
         entity:
           domain: input_text
-    default_scene_transition_seconds:
-      name: Default Scene Transition Seconds
-      description: The amount of time to transition to default scenes.
+    primary_scene_transition_seconds:
+      name: Primary Scene Transition Seconds
+      description: The amount of time to transition to primary scenes.
       default: 0.5
       selector:
         number:
@@ -32,16 +32,16 @@ blueprint:
           mode: box
           step: 0.1
           unit_of_measurement: seconds
-    media_scene_helper:
-      name: Media Scene Helper
-      description: The Home Assistant helper which holds the current media-determined scene name.
-      default: input_text.light_scene_helper_media_no_client
+    secondary_scene_helper:
+      name: Secondary Scene Helper
+      description: The Home Assistant helper which holds the current secondary-determined scene name. This value is determined externally and can be set for media state, holiday status, etc.
+      default: input_text.light_scene_helper_none_selected
       selector:
         entity:
           domain: input_text
-    media_scene_transition_seconds:
-      name: Media Scene Transition Seconds
-      description: The amount of time to transition to/from media scenes.
+    secondary_scene_transition_seconds:
+      name: Secondary Scene Transition Seconds
+      description: The amount of time to transition to/from secondary scenes.
       default: 2
       selector:
         number:
@@ -64,19 +64,19 @@ trigger:
   payload: 'off'
   id: trigger_off
 - platform: state
-  entity_id: !input default_scene_helper
-  id: trigger_default_scene
+  entity_id: !input primary_scene_helper
+  id: trigger_primary_scene
 - platform: state
-  entity_id: !input media_scene_helper
-  id: trigger_media_scene
+  entity_id: !input secondary_scene_helper
+  id: trigger_secondary_scene
 - platform: state
   entity_id: !input light_entity
   from: 'off'
   to: 'on'
 variables:
   light_entity: !input light_entity
-  default_scene_helper: !input default_scene_helper
-  media_scene_helper: !input media_scene_helper
+  primary_scene_helper: !input primary_scene_helper
+  secondary_scene_helper: !input secondary_scene_helper
   scene_prefix: "{{ (light_entity | replace('light.','scene.')) + '_' }}"
 action:
 - choose:
@@ -86,11 +86,12 @@ action:
       - condition: trigger
         id: trigger_on
       - condition: trigger
-        id: trigger_default_scene
+        id: trigger_primary_scene
       - condition: trigger
-        id: trigger_media_scene
+        id: trigger_secondary_scene
     sequence:
     - choose:
+      # light is on or was triggered to turn on
       - conditions:
         - condition: or
           conditions:
@@ -106,39 +107,43 @@ action:
             state: 'on'
         sequence:
         - choose:
+          # if secondary helper has a scene specified, use that one
           - conditions:
             - condition: not
               conditions:
               - condition: state
-                entity_id: !input media_scene_helper
+                entity_id: !input secondary_scene_helper
                 state: NO_SCENE_SPECIFIED
             sequence:
             - service: hue.activate_scene
               target:
-                entity_id: "{{ scene_prefix + states(media_scene_helper) | lower }}"
+                entity_id: "{{ scene_prefix + states(secondary_scene_helper) | lower }}"
               data:
-                transition: !input media_scene_transition_seconds
+                transition: !input secondary_scene_transition_seconds
+          # if secondary helper has no scene specified but triggered the automation, use primary with secondary transition time
           - conditions:
             - condition: and
               conditions:
               - condition: trigger
-                id: trigger_media_scene
+                id: trigger_secondary_scene
               - condition: state
-                entity_id: !input media_scene_helper
+                entity_id: !input secondary_scene_helper
                 state: NO_SCENE_SPECIFIED
             sequence:
               service: hue.activate_scene
               target:
-                entity_id: "{{ scene_prefix + states(default_scene_helper) | lower }}"
+                entity_id: "{{ scene_prefix + states(primary_scene_helper) | lower }}"
               data:
-                transition: !input media_scene_transition_seconds
+                transition: !input secondary_scene_transition_seconds
+          # secondary helper has no scene specified and did not trigger the automation
           default:
           - service: hue.activate_scene
             target:
-              entity_id: "{{ scene_prefix + states(default_scene_helper) | lower }}"
+              entity_id: "{{ scene_prefix + states(primary_scene_helper) | lower }}"
             data:
-              transition: !input default_scene_transition_seconds
+              transition: !input primary_scene_transition_seconds
       default: []
+  # turn light off
   - conditions:
     - condition: trigger
       id: trigger_off
