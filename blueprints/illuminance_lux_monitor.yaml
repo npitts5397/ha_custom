@@ -1,0 +1,76 @@
+blueprint:
+  name: Illuminance (Lux) Monitor
+  description: Publishes an MQTT message when lux becomes above or below set lux threshold.
+  domain: automation
+  input:
+    lux_sensor:
+      name: Illuminance Sensor
+      description: The illuminance (lux) sensor.
+      selector:
+        entity:
+          domain: sensor
+    light_mqtt_topic:
+      name: Light MQTT Topic
+      description: The MQTT topic to which light commands are published.
+      selector:
+        text:
+    lux_above_on:
+      name: Lux-Above On
+      description: When enabled, publish 'on' when lux becomes _above_ lux threshold. When disabled (default), publish 'on' when lux becomes _below_ lux threshold.
+      default: false
+      selector:
+        boolean:
+    lux_threshold:
+      name: Lux Threshold
+      description: The lux value used to trigger the automation.
+      default: 100
+      selector:
+        number: 
+          min: 0
+          max: 1500
+          mode: box
+          step: 1
+          unit_of_measurement: lux
+    on_delay:
+      name: On Delay
+      description: The amount of time to wait before publishing 'on'. Cancels if lux re-crosses threshold.
+      default: 0
+      selector:
+        number:
+          min: 0
+          mode: box
+          step: 1
+          unit_of_measurement: seconds
+    off_delay:
+      name: Off Delay
+      description: The amount of time to wait before publishing 'off'. Cancels if lux re-crosses threshold.
+      default: 0
+      selector:
+        number:
+          min: 0
+          mode: box
+          step: 1
+          unit_of_measurement: seconds
+    do_not_publish_phases:
+      name: Do-Not-Publish Phases
+      description: The comma separated phases in which not to publish 'on' or 'off' messages to the MQTT topic.
+      selector:
+        text:
+    phase_entity:
+      name: Phase entity
+      description: The entity which holds current phase. This entity's state will be compared when do_not_publish_phases is set.
+mode: restart
+trigger:
+- platform: event
+  id: Automation-Reloaded
+  event_type: automation_reloaded
+- platform: numeric_state
+  entity_id: !input lux_sensor
+  above: !input lux_threshold
+- platform: numeric_state
+  entity_id: !input lux_sensor
+  below: !input lux_sensor
+variables:
+  do_no_publish_phase_list: "{{ str.split(',') }}"
+condition:
+- not:
