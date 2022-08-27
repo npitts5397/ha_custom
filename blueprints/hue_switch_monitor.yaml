@@ -1,5 +1,5 @@
 blueprint:
-  name: Hue Switch Monitor (MQTT)
+  name: Hue Switch Monitor
   description: Publishes an MQTT message when an events occurs with the monitored switch.
   domain: automation
   input:
