@@ -316,7 +316,7 @@ action:
       # Could add optional night / away shifts to this condition as well - will allow delayed off on changes
       - conditions:
           - condition: template
-            value_template: "{{ illuminance_entity != {} }}"
+            value_template: "{{ (illuminance_entity != {} ) and (illuminance_entity != none) }}"
           - condition: state
             entity_id: !input light_entity
             state: 'on'
@@ -339,7 +339,7 @@ action:
       # Could add optional night / away shifts to this condition as well - will allow delayed off on changes
       - conditions:
           - condition: template
-            value_template: "{{ illuminance_entity != {} }}"
+            value_template: "{{ (illuminance_entity != {} ) and (illuminance_entity != none) }}"
           - condition: state
             entity_id: !input light_entity
             state: 'on'
@@ -361,7 +361,7 @@ action:
       # Delayed off when 
       - conditions:
           - condition: template
-            value_template: "{{ illuminance_entity != {} }}"
+            value_template: "{{ (illuminance_entity != {} ) and (illuminance_entity != none) }}"
           - condition: template
             value_template: "{{ illuminance_night_trigger_delayed_off == true }}"
           - condition: state
@@ -406,7 +406,7 @@ action:
               - condition: and
                 conditions:
                   - condition: template
-                    value_template: "{{ illuminance_entity != {} }}"
+                    value_template: "{{ (illuminance_entity != {} ) and (illuminance_entity != none) }}"
                   - condition: numeric_state
                     entity_id: !input 'illuminance_entity'
                     below: !input 'illuminance_lux_threshold'
@@ -416,7 +416,7 @@ action:
               - condition: and
                 conditions:
                   - condition: template
-                    value_template: "{{ illuminance_entity != {} }}"
+                    value_template: "{{ (illuminance_entity != {} ) and (illuminance_entity != none) }}"
                   - condition: numeric_state
                     entity_id: !input 'illuminance_entity'
                     above: !input 'illuminance_lux_threshold'
