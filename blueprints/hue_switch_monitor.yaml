@@ -1,0 +1,96 @@
+blueprint:
+  name: Hue Switch Monitor (MQTT)
+  description: Publishes an MQTT message when an events occurs with the monitored switch.
+  domain: automation
+  input:
+    switch_mqtt_topic:
+      name: Switch MQTT Topic
+      description: The MQTT topic to which switch events are published.
+      selector:
+        text:
+    light_mqtt_topic:
+      name: Light MQTT Topic
+      description: The MQTT topic to which light commands are published.
+      selector:
+        text:
+    on_press_command:
+      name: On-Press Command
+      description: The string that will be published to the MQTT topic for an 'on_press' event.
+      default: 'on'
+      selector:
+        text:
+    on_hold_command:
+      name: On-Hold Command
+      description: The string that will be published to the MQTT topic for an 'on_hold' event.
+      default: 'on'
+      selector:
+        text:
+    off_press_command:
+      name: Off-Press Command
+      description: The string that will be published to the MQTT topic for an 'off_press' event.
+      default: 'off'
+      selector:
+        text:
+    off_hold_command:
+      name: Off-Hold Command
+      description: The string that will be published to the MQTT topic for an 'off_hold' event.
+      default: 'off'
+      selector:
+        text:
+trigger:
+  - platform: mqtt
+    topic: !input switch_mqtt_topic
+    payload: on_press
+    id: trigger_on_press
+  - platform: mqtt
+    topic: !input switch_mqtt_topic
+    payload: on_hold
+    id: trigger_on_hold
+  - platform: mqtt
+    topic: !input switch_mqtt_topic
+    payload: off_press
+    id: trigger_off_press
+  - platform: mqtt
+    topic: !input switch_mqtt_topic
+    payload: off_hold
+    id: trigger_off_hold
+mode: restart
+condition: []
+action:
+- choose:
+  - conditions:
+    - condition: trigger
+      id: trigger_on_press
+    sequence:
+    - service: mqtt.publish
+      data:
+        qos: "1"
+        topic: !input light_mqtt_topic
+        payload: !input on_press_command
+  - conditions:
+    - condition: trigger
+      id: trigger_on_hold
+    sequence:
+    - service: mqtt.publish
+      data:
+        qos: "1"
+        topic: !input light_mqtt_topic
+        payload: !input on_hold_command
+  - conditions:
+    - condition: trigger
+      id: trigger_off_press
+    sequence:
+    - service: mqtt.publish
+      data:
+        qos: "1"
+        topic: !input light_mqtt_topic
+        payload: !input off_press_command
+  - conditions:
+    - condition: trigger
+      id: trigger_off_hold
+    sequence:
+    - service: mqtt.publish
+      data:
+        qos: "1"
+        topic: !input light_mqtt_topic
+        payload: !input off_hold_command
