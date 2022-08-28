@@ -125,18 +125,23 @@ variables:
       {{ on_delay }}
     {%- endif %}
 condition:
-# if defined, make sure current phase is not in do_not_publish_phase_list
-- condition: !input phase_helper
-  sequence:
-  - not: 
-    - condition: template
-      value_template: "{{ states(phase_helper) in do_not_publish_phase_list }}"
-# if defined, make sure current mode is not in do_not_publish_mode_list
-- condition: !input mode_helper
-  sequence:
-  - not: 
-    - condition: template
-      value_template: "{{ states(mode_helper) in do_not_publish_mode_list }}"
+- and:
+  # phase_helper is not set OR make sure current phase is not in do_not_publish_phase_list
+  - or:
+    - condition: "{{ phase_helper == none }}"
+    - and:
+      - condition: !input phase_helper
+      - not: 
+        - condition: template
+          value_template: "{{ states(phase_helper) in do_not_publish_phase_list }}"
+  # mode_helper is not set OR make sure current mode is not in do_not_publish_mode_list
+  - or:
+    - condition: "{{ mode_helper == none }}"
+    - and:
+      - condition: !input mode_helper
+      - not: 
+        - condition: template
+          value_template: "{{ states(mode_helper) in do_not_publish_mode_list }}"
 action:
 - choose:
   # publish 'on'
