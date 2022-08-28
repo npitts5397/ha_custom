@@ -66,9 +66,9 @@ blueprint:
       description: The comma separated phases in which not to publish 'on' or 'off' messages to the MQTT topic.
       selector:
         text:
-    phase_entity:
-      name: Phase Entity
-      description: The entity which holds current phase. This entity's state will be compared when do_not_publish_phases is set.
+    phase_helper:
+      name: Phase Helper
+      description: The helper which holds current phase. This helper's state will be compared when do_not_publish_phases is set.
       default: {}
       selector:
         entity:
@@ -78,9 +78,9 @@ blueprint:
       description: The comma separated modes in which not to publush 'on' or 'off' messages to the MQTT topic.
       selector:
         text:
-    mode_entity:
+    mode_helper:
       name: Mode Entity
-      description: The entity which hold current mode. This entity's state will be compared when do_not_publish_modes is set.
+      description: The helper which hold current mode. This helper's state will be compared when do_not_publish_modes is set.
       default: {}
       selector:
         entity:
@@ -97,16 +97,16 @@ trigger:
   entity_id: !input lux_sensor
   below: !input lux_sensor
 - platform: state
-  entity_id: !input phase_entity
+  entity_id: !input phase_helper
 - platform: state
-  entity_id: !input mode_entity
+  entity_id: !input mode_helper
 variables:
   do_not_publish_phases: !input do_not_publish_phases
   do_not_publish_phase_list: "{{ do_not_publish_phases.split(',') }}"
-  phase_entity: !input phase_entity
+  phase_helper: !input phase_helper
   do_not_publish_modes: !input do_not_publish_modes
   do_not_publish_mode_list: "{{ do_not_publish_modes.split(',') }}"
-  mode_entity: !input mode_entity
+  mode_helper: !input mode_helper
   on_message: 'on'
   off_message: 'off'
   random_offset_percentage: !input random_offset_percentage
@@ -126,17 +126,17 @@ variables:
     {%- endif %}
 condition:
 # if defined, make sure current phase is not in do_not_publish_phase_list
-- condition: "{{ phase_entity }}"
+- condition: !input phase_helper
   sequence:
   - not: 
     - condition: template
-      value_template: "{{ states(phase_entity) in do_not_publish_phase_list }}"
+      value_template: "{{ states(phase_helper) in do_not_publish_phase_list }}"
 # if defined, make sure current mode is not in do_not_publish_mode_list
-- condition: "{{ mode_entity }}"
+- condition: !input mode_helper
   sequence:
   - not: 
     - condition: template
-      value_template: "{{ states(mode_entity) in do_not_publish_mode_list }}"
+      value_template: "{{ states(mode_helper) in do_not_publish_mode_list }}"
 action:
 - choose:
   # publish 'on'
