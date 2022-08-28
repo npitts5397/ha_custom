@@ -27,7 +27,7 @@ blueprint:
       selector:
         number: 
           min: 0
-          max: 1500
+          max: 100000
           mode: box
           step: 1
           unit_of_measurement: lux
