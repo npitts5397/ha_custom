@@ -152,7 +152,7 @@ action:
           entity: !input lux_sensor
           above: !input lux_threshold
         - condition: state
-          entity: !input lux_above_threshold
+          entity: !input on_above_lux_threshold
           state: true
     sequence:
     - delay:
@@ -175,7 +175,7 @@ action:
           entity: !input lux_sensor
           below: !input lux_threshold
         - condition: state
-          entity: !input lux_above_threshold
+          entity: !input on_above_lux_threshold
           state: true
     sequence:
     - delay:
