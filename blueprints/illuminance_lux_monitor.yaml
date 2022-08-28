@@ -14,8 +14,8 @@ blueprint:
       description: The MQTT topic to which light commands are published.
       selector:
         text:
-    lux_above_on:
-      name: Lux-Above On
+    on_above_lux_threshold:
+      name: On Above Lux Threshold
       description: When enabled, publish 'on' when lux becomes _above_ lux threshold. When disabled (default), publish 'on' when lux becomes _below_ lux threshold.
       default: false
       selector:
@@ -31,7 +31,7 @@ blueprint:
           mode: box
           step: 1
           unit_of_measurement: lux
-    on_delay:
+    on_delay_seconds:
       name: On Delay
       description: The amount of time to wait before publishing 'on'. Cancels if lux re-crosses threshold.
       default: 0
@@ -41,7 +41,7 @@ blueprint:
           mode: box
           step: 1
           unit_of_measurement: seconds
-    off_delay:
+    off_delay_seconds:
       name: Off Delay
       description: The amount of time to wait before publishing 'off'. Cancels if lux re-crosses threshold.
       default: 0
@@ -51,14 +51,40 @@ blueprint:
           mode: box
           step: 1
           unit_of_measurement: seconds
+    random_offset_percentage:
+      name: Random Offset Percentage
+      description: The percentage above and below the specified delays to randomly wait before taking action.
+      default: 0
+      selector:
+        number:
+          min: 0
+          max: 100
+          step: 1
+          unit_of_measurement: '%'
     do_not_publish_phases:
       name: Do-Not-Publish Phases
       description: The comma separated phases in which not to publish 'on' or 'off' messages to the MQTT topic.
       selector:
         text:
     phase_entity:
-      name: Phase entity
+      name: Phase Entity
       description: The entity which holds current phase. This entity's state will be compared when do_not_publish_phases is set.
+      default: {}
+      selector:
+        entity:
+          domain: input_select
+    do_not_publish_modes:
+      name: Do-Not-Publish Modes
+      description: The comma separated modes in which not to publush 'on' or 'off' messages to the MQTT topic.
+      selector:
+        text:
+    mode_entity:
+      name: Mode Entity
+      description: The entity which hold current mode. This entity's state will be compared when do_not_publish_modes is set.
+      default: {}
+      selector:
+        entity:
+          domain: input_select
 mode: restart
 trigger:
 - platform: event
@@ -70,7 +96,93 @@ trigger:
 - platform: numeric_state
   entity_id: !input lux_sensor
   below: !input lux_sensor
+- platform: state
+  entity_id: !input phase_entity
+- platform: state
+  entity_id: !input mode_entity
 variables:
-  do_no_publish_phase_list: "{{ str.split(',') }}"
+  do_not_publish_phases: !input do_not_publish_phases
+  do_not_publish_phase_list: "{{ do_not_publish_phases.split(',') }}"
+  phase_entity: !input phase_entity
+  do_not_publish_modes: !input do_not_publish_modes
+  do_not_publish_mode_list: "{{ do_not_publish_modes.split(',') }}"
+  mode_entity: !input mode_entity
+  on_message: 'on'
+  off_message: 'off'
+  random_offset_percentage: !input random_offset_percentage
+  on_delay_seconds: !input on_delay_seconds
+  on_wait_seconds: >-
+    {%- if random_offset_percentage > 0 %}
+      {{ range(on_delay_seconds * (random_offset_percentage/100)|int, on_delay_seconds * (1 + (random_offset_percentage/100))|int)|random }}
+    {%- else %}
+      {{ on_delay }}
+    {%- endif %}
+  off_delay_seconds: !input off_delay_seconds
+  off_wait_seconds: >-
+    {%- if random_offset_percentage > 0 %}
+      {{ range(off_delay_seconds * (random_offset_percentage/100)|int, off_delay_seconds * (1 + (random_offset_percentage/100))|int)|random }}
+    {%- else %}
+      {{ on_delay }}
+    {%- endif %}
 condition:
-- not:
+# if defined, make sure current phase is not in do_not_publish_phase_list
+- condition: "{{ phase_entity }}"
+  sequence:
+  - not: 
+    - condition: template
+      value_template: "{{ states(phase_entity) in do_not_publish_phase_list }}"
+# if defined, make sure current mode is not in do_not_publish_mode_list
+- condition: "{{ mode_entity }}"
+  sequence:
+  - not: 
+    - condition: template
+      value_template: "{{ states(mode_entity) in do_not_publish_mode_list }}"
+action:
+- choose:
+  # publish 'on'
+  - conditions:
+    - condition: or
+      conditions:
+      - condition: numeric_state
+        entity: !input lux_sensor
+        below: !input lux_threshold
+      - condition: and
+        conditions:
+        - condition: numeric_state
+          entity: !input lux_sensor
+          above: !input lux_threshold
+        - condition: state
+          entity: !input lux_above_threshold
+          state: true
+    sequence:
+    - delay:
+        seconds: "{{ on_wait_seconds }}"
+    - service: mqtt.publish
+      data:
+        qos: "1"
+        topic: !input light_mqtt_topic
+        payload: "{{ on_message }}"
+  # publish 'off'
+  - conditions:
+    - condition: or
+      conditions:
+      - condition: numeric_state
+        entity: !input lux_sensor
+        above: !input lux_threshold
+      - condition: and
+        conditions:
+        - condition: numeric_state
+          entity: !input lux_sensor
+          below: !input lux_threshold
+        - condition: state
+          entity: !input lux_above_threshold
+          state: true
+    sequence:
+    - delay:
+        seconds: "{{ off_wait_seconds }}"
+    - service: mqtt.publish
+      data:
+        qos: "1"
+        topic: !input light_mqtt_topic
+        payload: "{{ off_message }}"
+        
