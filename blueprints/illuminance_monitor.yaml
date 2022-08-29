@@ -69,7 +69,7 @@ blueprint:
         text:
     publish_off_phases:
       name: Publish Off Only Phases
-      description: The comma separated phases in which 'off' is published to the MQTT topic with respect to off_delay_seconds and will not publish 'on' until the phase changes. Example- When phase becomes 'Night', publish off after normal wait time.
+      description: The comma separated phases in which 'off' is published to the MQTT topic with respect to off_delay_seconds and will not publish 'on' until the phase changes. Example- When phase is 'Night', publish 'off' after normal wait time.
       default: ""
       selector:
         text:
@@ -83,6 +83,12 @@ blueprint:
     do_not_publish_modes:
       name: Do-Not-Publish Modes
       description: The comma separated modes in which not to publush 'on' or 'off' messages to the MQTT topic.
+      default: ""
+      selector:
+        text:
+    publish_off_modes:
+      name: Publish Off Only Modes
+      description: The comma separated modes in which 'off' is published to the MQTT topic with respect to off_delay_seconds and will not publish 'on' until the mode changes. Example- When mode is 'Away', publish 'off' after normal wait time.
       default: ""
       selector:
         text:
@@ -115,6 +121,8 @@ variables:
   do_not_publish_phases: !input do_not_publish_phases
   do_not_publish_phase_list: "{{ (do_not_publish_phases | replace(', ',',') | replace(' ,',',')).split(',') }}"
   phase_helper: !input phase_helper
+  publish_off_modes: !input publish_off_modes
+  publish_off_modes_list: "{{ (publish_off_modes | replace(', ',',') | replace(' ,',',')).split(',') }}"
   do_not_publish_modes: !input do_not_publish_modes
   do_not_publish_mode_list: "{{ (do_not_publish_modes | replace(', ',',') | replace(' ,',',')).split(',') }}"
   mode_helper: !input mode_helper
@@ -171,6 +179,8 @@ action:
       conditions:
       - condition: template
         value_template: "{{ states(phase_helper) not in publish_off_phases_list }}"
+      - condition: template
+        value_template: "{{ states(mode_helper) not in publish_off_modes_list }}"
       - condition: or
         conditions:
         - condition: numeric_state
@@ -197,6 +207,8 @@ action:
       conditions:
       - condition: template
         value_template: "{{ states(phase_helper) in publish_off_phases_list }}"
+      - condition: template
+        value_template: "{{ states(mode_helper) in publish_off_modes_list }}"
       - condition: numeric_state
         entity_id: !input lux_sensor
         above: !input lux_threshold
