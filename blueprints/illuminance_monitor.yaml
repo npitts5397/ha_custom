@@ -67,6 +67,12 @@ blueprint:
       default: ""
       selector:
         text:
+    publish_off_phases:
+      name: Publish Off Only Phases
+      description: The comma separated phases in which 'off' is published to the MQTT topic with respect to off_delay_seconds and will not publish 'on' until the phase changes. Example- When phase becomes 'Night', publish off after normal wait time.
+      default: ""
+      selector:
+        text:
     phase_helper:
       name: Phase Helper
       description: The helper which holds current phase. This helper's state will be compared when do_not_publish_phases is set.
@@ -104,6 +110,8 @@ trigger:
   entity_id: !input mode_helper
 variables:
   on_above_lux_threshold: !input on_above_lux_threshold
+  publish_off_phases: !input publish_off_phases
+  publish_off_phases_list: "{{ (publish_off_phases | replace(', ',',') | replace(' ,',',')).split(',') }}"
   do_not_publish_phases: !input do_not_publish_phases
   do_not_publish_phase_list: "{{ (do_not_publish_phases | replace(', ',',') | replace(' ,',',')).split(',') }}"
   phase_helper: !input phase_helper
@@ -118,9 +126,9 @@ variables:
   on_delay_seconds: "{{ on_delay_seconds_input | default(0,true) }}"
   on_wait_seconds: >-
     {%- if (on_delay_seconds != 0) and (random_offset_percentage > 0) %}
-      {%- set on_low_end = (on_delay_seconds * random_offset_percentage/100)|int %}
-      {%- set on_high_end = (on_delay_seconds * (1 + random_offset_percentage/100))|int %}
-      {{ range(on_low_end, on_high_end) | random }}
+      {%- set on_low_end = (on_delay_seconds - (on_delay_seconds * (random_offset_percentage/100))) %}
+      {%- set on_high_end = (on_delay_seconds * (1 + (random_offset_percentage/100))) %}
+      {{ range(on_low_end|int, on_high_end|int) | random }}
     {%- else %}
       {{ on_delay_seconds }}
     {%- endif %}
@@ -128,9 +136,9 @@ variables:
   off_delay_seconds: "{{ off_delay_seconds_input | default(0,true) }}"
   off_wait_seconds: >-
     {%- if (off_delay_seconds != 0) and (random_offset_percentage > 0) %}
-      {%- set off_low_end = (off_delay_seconds * random_offset_percentage/100)|int %}
-      {%- set off_high_end = (off_delay_seconds * (1 + random_offset_percentage/100))|int %}
-      {{ range(off_low_end, off_high_end) | random }}
+      {%- set off_low_end = (off_delay_seconds - (off_delay_seconds * (random_offset_percentage/100))) %}
+      {%- set off_high_end = (off_delay_seconds * (1 + (random_offset_percentage/100))) %}
+      {{ range(off_low_end|int, off_high_end|int) | random }}
     {%- else %}
       {{ off_delay_seconds }}
     {%- endif %}
@@ -159,18 +167,22 @@ action:
 - choose:
   # publish 'on'
   - conditions:
-    - condition: or
+    - condition: and
       conditions:
-      - condition: numeric_state
-        entity_id: !input lux_sensor
-        below: !input lux_threshold
-      - condition: and
+      - condition: template
+        value_template: "{{ states(phase_helper) not in publish_off_phases_list }}"
+      - condition: or
         conditions:
-        - condition: template
-          value_template: "{{ on_above_lux_threshold == true }}"
         - condition: numeric_state
           entity_id: !input lux_sensor
-          above: !input lux_threshold
+          below: !input lux_threshold
+        - condition: and
+          conditions:
+          - condition: template
+            value_template: "{{ on_above_lux_threshold == true }}"
+          - condition: numeric_state
+            entity_id: !input lux_sensor
+            above: !input lux_threshold
     sequence:
     - delay:
         seconds: "{{ on_wait_seconds }}"
@@ -183,6 +195,8 @@ action:
   - conditions:
     - condition: or
       conditions:
+      - condition: template
+        value_template: "{{ states(phase_helper) in publish_off_phases_list }}"
       - condition: numeric_state
         entity_id: !input lux_sensor
         above: !input lux_threshold
