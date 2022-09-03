@@ -73,6 +73,7 @@ trigger:
   entity_id: !input light_entity
   from: 'off'
   to: 'on'
+  id: trigger_light_off_to_on
 variables:
   light_entity: !input light_entity
   primary_scene_helper: !input primary_scene_helper
@@ -89,6 +90,8 @@ action:
         id: trigger_primary_scene
       - condition: trigger
         id: trigger_secondary_scene
+      - condition: trigger
+        id: trigger_light_off_to_on
     sequence:
     - choose:
       # light is on or was triggered to turn on
