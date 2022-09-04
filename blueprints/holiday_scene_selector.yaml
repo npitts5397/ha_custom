@@ -1,0 +1,514 @@
+blueprint:
+  name: Holiday Scene Selector
+  description: Monitors for holidays based on a selected calendar and sets scene names to a Home Assistant helper.
+  domain: automation
+  input:
+    calendar_entity:
+      name: Holiday Calendar
+      description: The calendar entity that holds holiday dates.
+      selector:
+        entity:
+          domain: calendar
+    holiday_scene_helper:
+      name: Holiday Scene Helper
+      description: The Home Assistant helper which holds the current holiday-determined scene name.
+      selector:
+        entity:
+          domain: input_text
+    new_years_day_scene:
+      name: New Year's Day Scene
+      description: Scene for New Year's Day.
+      default: NO_SCENE_SPECIFIED
+      selector:
+        text:
+    new_years_day_scene_days_before:
+      name: New Year's Day- Days Before
+      description: The number of days before New Year's Day to set the scene.
+      default: 0
+      selector:
+        number: 
+          min: 0
+          max: 30
+          mode: box
+          step: 1
+          unit_of_measurement: days
+    new_years_day_scene_days_after:
+      name: New Year's Day- Days After
+      description: The number of days after New Year's Day to set the scene.
+      default: 0
+      selector:
+        number: 
+          min: 0
+          max: 30
+          mode: box
+          step: 1
+          unit_of_measurement: days
+    valentines_day_scene:
+      name: Valentine's Day Scene
+      description: Scene for Valentine's Day.
+      default: NO_SCENE_SPECIFIED
+      selector:
+        text:
+    valentines_day_scene_days_before:
+      name: Valentine's Day- Days Before
+      description: The number of days before Valentine's Day to set the scene.
+      default: 0
+      selector:
+        number: 
+          min: 0
+          max: 30
+          mode: box
+          step: 1
+          unit_of_measurement: days
+    valentines_day_scene_days_after:
+      name: Valentine's Day- Days After
+      description: The number of days after Valentine's Day to set the scene.
+      default: 0
+      selector:
+        number: 
+          min: 0
+          max: 30
+          mode: box
+          step: 1
+          unit_of_measurement: days
+    st_patricks_day_scene:
+      name: St. Patrick's Day Scene
+      description: Scene for St. Patrick's Day.
+      default: NO_SCENE_SPECIFIED
+      selector:
+        text:
+    st_patricks_day_scene_days_before:
+      name: St. Patrick's Day- Days Before
+      description: The number of days before St. Patrick's Day to set the scene.
+      default: 0
+      selector:
+        number: 
+          min: 0
+          max: 30
+          mode: box
+          step: 1
+          unit_of_measurement: days
+    st_patricks_day_scene_days_after:
+      name: St. Patrick's Day- Days After
+      description: The number of days after St. Patrick's Day to set the scene.
+      default: 0
+      selector:
+        number: 
+          min: 0
+          max: 30
+          mode: box
+          step: 1
+          unit_of_measurement: days
+    mothers_day_scene:
+      name: Mother's Day Scene
+      description: Scene for Mother's Day.
+      default: NO_SCENE_SPECIFIED
+      selector:
+        text:
+    mothers_day_scene_days_before:
+      name: Mother's Day- Days Before
+      description: The number of days before Mother's Day to set the scene.
+      default: 0
+      selector:
+        number: 
+          min: 0
+          max: 30
+          mode: box
+          step: 1
+          unit_of_measurement: days
+    mothers_day_scene_days_after:
+      name: Mother's Day- Days After
+      description: The number of days after Mother's Day to set the scene.
+      default: 0
+      selector:
+        number: 
+          min: 0
+          max: 30
+          mode: box
+          step: 1
+          unit_of_measurement: days
+    memorial_day_scene:
+      name: Memorial Day Scene
+      description: Scene for Memorial Day.
+      default: NO_SCENE_SPECIFIED
+      selector:
+        text:
+    memorial_day_scene_days_before:
+      name: Memorial Day- Days Before
+      description: The number of days before Memorial Day to set the scene.
+      default: 0
+      selector:
+        number: 
+          min: 0
+          max: 30
+          mode: box
+          step: 1
+          unit_of_measurement: days
+    memorial_day_scene_days_after:
+      name: Memorial Day- Days After
+      description: The number of days after Memorial Day to set the scene.
+      default: 0
+      selector:
+        number: 
+          min: 0
+          max: 30
+          mode: box
+          step: 1
+          unit_of_measurement: days
+    fathers_day_scene:
+      name: Father's Day Scene
+      description: Scene for Father's Day.
+      default: NO_SCENE_SPECIFIED
+      selector:
+        text:
+    fathers_day_scene_days_before:
+      name: Father's Day- Days Before
+      description: The number of days before Father's Day to set the scene.
+      default: 0
+      selector:
+        number: 
+          min: 0
+          max: 30
+          mode: box
+          step: 1
+          unit_of_measurement: days
+    fathers_day_scene_days_after:
+      name: Father's Day- Days After
+      description: The number of days after Father's Day to set the scene.
+      default: 0
+      selector:
+        number: 
+          min: 0
+          max: 30
+          mode: box
+          step: 1
+          unit_of_measurement: days
+    juneteenth_day_scene:
+      name: Juneteenth Day Scene
+      description: Scene for Juneteenth Day.
+      default: NO_SCENE_SPECIFIED
+      selector:
+        text:
+    juneteenth_day_scene_days_before:
+      name: Juneteenth Day- Days Before
+      description: The number of days before Juneteenth Day to set the scene.
+      default: 0
+      selector:
+        number: 
+          min: 0
+          max: 30
+          mode: box
+          step: 1
+          unit_of_measurement: days
+    juneteenth_day_scene_days_after:
+      name: Juneteenth Day- Days After
+      description: The number of days after Juneteenth Day to set the scene.
+      default: 0
+      selector:
+        number: 
+          min: 0
+          max: 30
+          mode: box
+          step: 1
+          unit_of_measurement: days
+    us_independence_day_scene:
+      name: US Independence Day Scene
+      description: Scene for US Independence Day.
+      default: NO_SCENE_SPECIFIED
+      selector:
+        text:
+    us_independence_day_scene_days_before:
+      name: US Independence Day- Days Before
+      description: The number of days before US Independence Day to set the scene.
+      default: 0
+      selector:
+        number: 
+          min: 0
+          max: 30
+          mode: box
+          step: 1
+          unit_of_measurement: days
+    us_independence_day_scene_days_after:
+      name: US Independence Day- Days After
+      description: The number of days after US Independence Day to set the scene.
+      default: 0
+      selector:
+        number: 
+          min: 0
+          max: 30
+          mode: box
+          step: 1
+          unit_of_measurement: days
+    labor_day_scene:
+      name: Labor Day Scene
+      description: Scene for Labor Day.
+      default: NO_SCENE_SPECIFIED
+      selector:
+        text:
+    labor_day_scene_days_before:
+      name: Labor Day- Days Before
+      description: The number of days before Labor Day to set the scene.
+      default: 0
+      selector:
+        number: 
+          min: 0
+          max: 30
+          mode: box
+          step: 1
+          unit_of_measurement: days
+    labor_day_scene_days_after:
+      name: Labor Day- Days After
+      description: The number of days after Labor Day to set the scene.
+      default: 0
+      selector:
+        number: 
+          min: 0
+          max: 30
+          mode: box
+          step: 1
+          unit_of_measurement: days
+    indigenous_peoples_day_scene:
+      name: Indigenous People's Day Scene
+      description: Scene for Indigenous People's Day.
+      default: NO_SCENE_SPECIFIED
+      selector:
+        text:
+    indigenous_peoples_day_scene_days_before:
+      name: Indigenous People's Day- Days Before
+      description: The number of days before Indigenous People's Day to set the scene.
+      default: 0
+      selector:
+        number: 
+          min: 0
+          max: 30
+          mode: box
+          step: 1
+          unit_of_measurement: days
+    indigenous_peoples_day_scene_days_after:
+      name: Indigenous People's Day- Days After
+      description: The number of days after Indigenous People's Day to set the scene.
+      default: 0
+      selector:
+        number: 
+          min: 0
+          max: 30
+          mode: box
+          step: 1
+          unit_of_measurement: days
+    halloween_day_scene:
+      name: Halloween Day Scene
+      description: Scene for Halloween Day.
+      default: NO_SCENE_SPECIFIED
+      selector:
+        text:
+    halloween_day_scene_days_before:
+      name: Halloween Day- Days Before
+      description: The number of days before Halloween Day to set the scene.
+      default: 0
+      selector:
+        number: 
+          min: 0
+          max: 30
+          mode: box
+          step: 1
+          unit_of_measurement: days
+    halloween_day_scene_days_after:
+      name: Halloween Day- Days After
+      description: The number of days after Halloween Day to set the scene.
+      default: 0
+      selector:
+        number: 
+          min: 0
+          max: 30
+          mode: box
+          step: 1
+          unit_of_measurement: days
+    election_day_scene:
+      name: Election Day Scene
+      description: Scene for Election Day.
+      default: NO_SCENE_SPECIFIED
+      selector:
+        text:
+    election_day_scene_days_before:
+      name: Election Day- Days Before
+      description: The number of days before Election Day to set the scene.
+      default: 0
+      selector:
+        number: 
+          min: 0
+          max: 30
+          mode: box
+          step: 1
+          unit_of_measurement: days
+    election_day_scene_days_after:
+      name: Election Day- Days After
+      description: The number of days after Election Day to set the scene.
+      default: 0
+      selector:
+        number: 
+          min: 0
+          max: 30
+          mode: box
+          step: 1
+          unit_of_measurement: days
+    veterans_day_scene:
+      name: Veterans Day Scene
+      description: Scene for Veterans Day.
+      default: NO_SCENE_SPECIFIED
+      selector:
+        text:
+    veterans_day_scene_days_before:
+      name: Veterans Day- Days Before
+      description: The number of days before Veterans Day to set the scene.
+      default: 0
+      selector:
+        number: 
+          min: 0
+          max: 30
+          mode: box
+          step: 1
+          unit_of_measurement: days
+    veterans_day_scene_days_after:
+      name: Veterans Day- Days After
+      description: The number of days after Veterans Day to set the scene.
+      default: 0
+      selector:
+        number: 
+          min: 0
+          max: 30
+          mode: box
+          step: 1
+          unit_of_measurement: days
+    thanksgiving_day_scene:
+      name: Thanksgiving Day Scene
+      description: Scene for Thanksgiving Day.
+      default: NO_SCENE_SPECIFIED
+      selector:
+        text:
+    thanksgiving_day_scene_days_before:
+      name: Thanksgiving Day- Days Before
+      description: The number of days before Thanksgiving Day to set the scene.
+      default: 0
+      selector:
+        number: 
+          min: 0
+          max: 30
+          mode: box
+          step: 1
+          unit_of_measurement: days
+    thanksgiving_day_scene_days_after:
+      name: Thanksgiving Day- Days After
+      description: The number of days after Thanksgiving Day to set the scene.
+      default: 0
+      selector:
+        number: 
+          min: 0
+          max: 30
+          mode: box
+          step: 1
+          unit_of_measurement: days
+    christmas_day_scene:
+      name: Christmas Day Scene
+      description: Scene for Christmas Day.
+      default: NO_SCENE_SPECIFIED
+      selector:
+        text:
+    christmas_day_scene_days_before:
+      name: Christmas Day- Days Before
+      description: The number of days before Christmas Day to set the scene.
+      default: 0
+      selector:
+        number: 
+          min: 0
+          max: 30
+          mode: box
+          step: 1
+          unit_of_measurement: days
+    christmas_day_scene_days_after:
+      name: Christmas Day- Days After
+      description: The number of days after Christmas Day to set the scene.
+      default: 0
+      selector:
+        number: 
+          min: 0
+          max: 30
+          mode: box
+          step: 1
+          unit_of_measurement: days
+mode: single
+trigger:
+- platform: time
+  at: "03:45:00"
+variables:
+  calendar_entity: !input calendar_entity
+  today: "{{ now() }}"
+  next_holiday: "{{ state_attr(calendar_entity, 'message') }}"
+  next_holiday_start: "{{ state_attr(calendar_entity, 'start_time') }}"
+  next_holiday_end: "{{ state_attr(calendar_entity, 'end_time') }}"
+  holiday_scene_helper: !input holiday_scene_helper
+  new_years_day_scene_days_before: !input new_years_day_scene_days_before
+  new_years_day_scene_days_after: !input new_years_day_scene_days_after
+  valentines_day_scene_days_before: !input valentines_day_scene_days_before
+  valentines_day_scene_days_after: !input valentines_day_scene_days_after
+  st_patricks_day_scene_days_before: !input st_patricks_day_scene_days_before
+  st_patricks_day_scene_days_after: !input st_patricks_day_scene_days_after
+  mothers_day_scene_days_before: !input mothers_day_scene_days_before
+  mothers_day_scene_days_after: !input mothers_day_scene_days_after
+  memorial_day_scene_days_before: !input memorial_day_scene_days_before
+  memorial_day_scene_days_after: !input memorial_day_scene_days_after
+  fathers_day_scene_days_before: !input fathers_day_scene_days_before
+  fathers_day_scene_days_after: !input fathers_day_scene_days_after
+  juneteenth_day_scene_days_before: !input juneteenth_day_scene_days_before
+  juneteenth_day_scene_days_after: !input juneteenth_day_scene_days_after
+  us_independence_day_scene_days_before: !input us_independence_day_scene_days_before
+  us_independence_day_scene_days_after: !input us_independence_day_scene_days_after
+  labor_day_scene_days_before: !input labor_day_scene_days_before
+  labor_day_scene_days_after: !input labor_day_scene_days_after
+  indigenous_peoples_day_scene_days_before: !input indigenous_peoples_day_scene_days_before
+  indigenous_peoples_day_scene_days_after: !input indigenous_peoples_day_scene_days_after
+  halloween_day_scene_days_before: !input halloween_day_scene_days_before
+  halloween_day_scene_days_after: !input halloween_day_scene_days_after
+  election_day_scene_days_before: !input election_day_scene_days_before
+  election_day_scene_days_after: !input election_day_scene_days_after
+  veterans_day_scene_days_before: !input veterans_day_scene_days_before
+  veterans_day_scene_days_after: !input veterans_day_scene_days_after
+  thanksgiving_day_scene_days_before: !input thanksgiving_day_scene_days_before
+  thanksgiving_day_scene_days_after: !input thanksgiving_day_scene_days_after
+  christmas_day_scene_days_before: !input christmas_day_scene_days_before
+  christmas_day_scene_days_after: !input christmas_day_scene_days_after
+action:
+- choose:
+  # New Year's Day
+  - conditions:
+    - condition: and
+      conditions:
+      - condition: template
+        value_template: "{{ next_holiday == 'New Year''s Day' }}"
+      - condition: template
+        value_template: "{{ as_timestamp(as_datetime(next_holiday_start)-timedelta(days=new_years_day_scene_days_before)) < as_timestamp(today) < as_timestamp((as_datetime(next_holiday_end) - timedelta(days=new_years_day_scene_days_after))) }}"
+    sequence:
+    - service: input_text.set_value
+      data:
+        value: "{{ new_years_day_scene }}"
+      target:
+        entity_id: "{{ holiday_scene_helper }}"
+  # Labor Day
+  - conditions:
+    - condition: and
+      conditions:
+      - condition: template
+        value_template: "{{ next_holiday == 'Labor Day' }}"
+      - condition: template
+        value_template: "{{ as_timestamp(as_datetime(next_holiday_start)-timedelta(days=labor_day_scene_days_before)) < as_timestamp(today) < as_timestamp((as_datetime(next_holiday_end) - timedelta(days=labor_day_scene_days_after))) }}"
+    sequence:
+    - service: input_text.set_value
+      data:
+        value: !input labor_day_scene
+      target:
+        entity_id: "{{ holiday_scene_helper }}" 
+  default:
+  - service: input_text.set_value
+    data:
+      value: NO_SCENE_SPECIFIED
+    target:
+      entity_id: "{{ holiday_scene_helper }}"
