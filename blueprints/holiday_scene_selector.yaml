@@ -513,14 +513,23 @@ variables:
       {%- if i['holiday'] == next_holiday -%}
         {%- if as_timestamp(as_datetime(next_holiday_start)-timedelta(days=i['days_before'])) < as_timestamp(today) < as_timestamp((as_datetime(next_holiday_end)+timedelta(days=i['days_after']))) -%}
           {{ i['scene'] }}
-        {%- else -%}
-          NO_SCENE_SPECIFIED
         {%- endif -%}
       {%- endif -%}
     {%- endfor %}
 action:
-- service: input_text.set_value
-  data:
-    value: "{{ holiday_scene }}"
-  target:
-    entity_id: "{{ holiday_scene_helper }}"
+- choose:
+  - conditions:
+    - condition: template
+      value_template: "{{ holiday_scene }}"
+    sequence:
+    - service: input_text.set_value
+      data:
+        value: "{{ holiday_scene }}"
+      target:
+        entity_id: "{{ holiday_scene_helper }}"
+  default:
+  - service: input_text.set_value
+    data:
+      value: 'NO_SCENE_SPECIFIED'
+    target:
+      entity_id: "{{ holiday_scene_helper }}"
