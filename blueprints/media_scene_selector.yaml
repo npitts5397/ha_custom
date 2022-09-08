@@ -196,79 +196,6 @@ trigger:
 - platform: state
   entity_id: !input mode_helper
   id: trigger_mode_state
-variables:
-  media_entity: !input media_entity
-  media_state: "{{ states(media_entity) }}"
-  media_type: "{{ state_attr(media_entity, 'media_content_type') | default('default',true) }}"
-  media_scene_helper: !input media_scene_helper
-  phase_helper: !input phase_helper
-  no_exec_phases: !input no_exec_phases
-  no_exec_phases_list: "{{ (no_exec_phases | replace(', ',',') | replace(' ,',',')).split(',') }}"
-  mode_helper: !input mode_helper
-  no_exec_modes: !input no_exec_modes
-  no_exec_modes_list: "{{ (no_exec_modes | replace(', ',',') | replace(' ,',',')).split(',') }}"
-  current_phase: "{{ states(phase_helper) }}"
-  morning_playing_movie_scene: !input morning_playing_movie_scene
-  morning_playing_tvshow_scene: !input morning_playing_tvshow_scene
-  morning_playing_default_scene: !input morning_playing_default_scene
-  morning_paused_movie_scene: !input morning_paused_movie_scene
-  morning_paused_tvshow_scene: !input morning_paused_tvshow_scene
-  morning_paused_default_scene: !input morning_paused_default_scene
-  day_playing_movie_scene: !input day_playing_movie_scene
-  day_playing_tvshow_scene: !input day_playing_tvshow_scene
-  day_playing_default_scene: !input day_playing_default_scene
-  day_paused_movie_scene: !input day_paused_movie_scene
-  day_paused_tvshow_scene: !input day_paused_tvshow_scene
-  day_paused_default_scene: !input day_paused_default_scene
-  evening_playing_movie_scene: !input evening_playing_movie_scene
-  evening_playing_tvshow_scene: !input evening_playing_tvshow_scene
-  evening_playing_default_scene: !input evening_playing_default_scene
-  evening_paused_movie_scene: !input evening_paused_movie_scene
-  evening_paused_tvshow_scene: !input evening_paused_tvshow_scene
-  evening_paused_default_scene: !input evening_paused_default_scene
-  night_playing_movie_scene: !input night_playing_movie_scene
-  night_playing_tvshow_scene: !input night_playing_tvshow_scene
-  night_playing_default_scene: !input night_playing_default_scene
-  night_paused_movie_scene: !input night_paused_movie_scene
-  night_paused_tvshow_scene: !input night_paused_tvshow_scene
-  night_paused_default_scene: !input night_paused_default_scene
-  media_scene: >-
-    {%- set media_scene_list = [
-      {'phase':'Morning','media_state':'playing','media_type':'movie','scene':morning_playing_movie_scene},
-      {'phase':'Morning','media_state':'playing','media_type':'tvshow','scene':morning_playing_tvshow_scene},
-      {'phase':'Morning','media_state':'playing','media_type':'default','scene':morning_playing_default_scene},
-      {'phase':'Morning','media_state':'paused','media_type':'movie','scene':morning_paused_movie_scene},
-      {'phase':'Morning','media_state':'paused','media_type':'tvshow','scene':morning_paused_tvshow_scene},
-      {'phase':'Day','media_state':'playing','media_type':'movie','scene':day_playing_movie_scene},
-      {'phase':'Day','media_state':'playing','media_type':'tvshow','scene':day_playing_tvshow_scene},
-      {'phase':'Day','media_state':'playing','media_type':'default','scene':day_playing_default_scene},
-      {'phase':'Day','media_state':'paused','media_type':'movie','scene':day_paused_movie_scene},
-      {'phase':'Day','media_state':'paused','media_type':'tvshow','scene':day_paused_tvshow_scene},
-      {'phase':'Evening','media_state':'playing','media_type':'movie','scene':evening_playing_movie_scene},
-      {'phase':'Evening','media_state':'playing','media_type':'tvshow','scene':evening_paused_tvshow_scene},
-      {'phase':'Evening','media_state':'playing','media_type':'default','scene':evening_playing_default_scene},
-      {'phase':'Evening','media_state':'paused','media_type':'movie','scene':evening_paused_movie_scene},
-      {'phase':'Evening','media_state':'paused','media_type':'tvshow','scene':evening_paused_tvshow_scene},
-      {'phase':'Night','media_state':'playing','media_type':'movie','scene':night_playing_movie_scene},
-      {'phase':'Night','media_state':'playing','media_type':'tvshow','scene':night_playing_tvshow_scene},
-      {'phase':'Night','media_state':'playing','media_type':'default','scene':night_playing_default_scene},
-      {'phase':'Night','media_state':'paused','media_type':'movie','scene':night_paused_movie_scene},
-      {'phase':'Night','media_state':'paused','media_type':'tvshow','scene':night_paused_tvshow_scene}
-    ] %}
-    {%- set scene = '' -%}
-    {%- if (media_state == 'playing') or (media_state == 'paused') -%}
-      {%- for i in media_scene_list -%}
-        {%- if i['phase'] == current_phase -%}
-          {%- if i['media_state'] == media_state -%}
-            {%- if i['media_type'] == media_type -%}
-              {{ i['scene'] }}
-            {%- endif -%}
-          {%- endif -%}
-        {%- endif -%}
-      {%- endfor -%}
-    {%- else -%}
-      {{ 'NO_SCENE_SPECIFIED' }}
-    {%- endif -%}
 condition:
 - condition: and
   conditions:
@@ -315,9 +242,94 @@ condition:
       conditions:
       - condition: template
         value_template: "{{ states(mode_helper) in no_exec_modes_list }}"
+variables:
+  media_entity: !input media_entity
+  media_state: "{{ states(media_entity) }}"
+  media_type: "{{ state_attr(media_entity, 'media_content_type') | default('default',true) }}"
+  media_scene_helper: !input media_scene_helper
+  phase_helper: !input phase_helper
+  no_exec_phases: !input no_exec_phases
+  no_exec_phases_list: "{{ (no_exec_phases | replace(', ',',') | replace(' ,',',')).split(',') }}"
+  mode_helper: !input mode_helper
+  no_exec_modes: !input no_exec_modes
+  no_exec_modes_list: "{{ (no_exec_modes | replace(', ',',') | replace(' ,',',')).split(',') }}"
+  current_phase: "{{ states(phase_helper) }}"
+  morning_playing_movie_scene: !input morning_playing_movie_scene
+  morning_playing_tvshow_scene: !input morning_playing_tvshow_scene
+  morning_playing_default_scene: !input morning_playing_default_scene
+  morning_paused_movie_scene: !input morning_paused_movie_scene
+  morning_paused_tvshow_scene: !input morning_paused_tvshow_scene
+  morning_paused_default_scene: !input morning_paused_default_scene
+  day_playing_movie_scene: !input day_playing_movie_scene
+  day_playing_tvshow_scene: !input day_playing_tvshow_scene
+  day_playing_default_scene: !input day_playing_default_scene
+  day_paused_movie_scene: !input day_paused_movie_scene
+  day_paused_tvshow_scene: !input day_paused_tvshow_scene
+  day_paused_default_scene: !input day_paused_default_scene
+  evening_playing_movie_scene: !input evening_playing_movie_scene
+  evening_playing_tvshow_scene: !input evening_playing_tvshow_scene
+  evening_playing_default_scene: !input evening_playing_default_scene
+  evening_paused_movie_scene: !input evening_paused_movie_scene
+  evening_paused_tvshow_scene: !input evening_paused_tvshow_scene
+  evening_paused_default_scene: !input evening_paused_default_scene
+  night_playing_movie_scene: !input night_playing_movie_scene
+  night_playing_tvshow_scene: !input night_playing_tvshow_scene
+  night_playing_default_scene: !input night_playing_default_scene
+  night_paused_movie_scene: !input night_paused_movie_scene
+  night_paused_tvshow_scene: !input night_paused_tvshow_scene
+  night_paused_default_scene: !input night_paused_default_scene
+  media_scene: >-
+    {%- set media_scene_list = [
+      {'phase':'Morning','media_state':'playing','media_type':'movie','scene':morning_playing_movie_scene},
+      {'phase':'Morning','media_state':'playing','media_type':'tvshow','scene':morning_playing_tvshow_scene},
+      {'phase':'Morning','media_state':'playing','media_type':'default','scene':morning_playing_default_scene},
+      {'phase':'Morning','media_state':'paused','media_type':'movie','scene':morning_paused_movie_scene},
+      {'phase':'Morning','media_state':'paused','media_type':'tvshow','scene':morning_paused_tvshow_scene},
+      {'phase':'Morning','media_state':'paused','media_type':'default','scene':morning_paused_default_scene},
+      {'phase':'Day','media_state':'playing','media_type':'movie','scene':day_playing_movie_scene},
+      {'phase':'Day','media_state':'playing','media_type':'tvshow','scene':day_playing_tvshow_scene},
+      {'phase':'Day','media_state':'playing','media_type':'default','scene':day_playing_default_scene},
+      {'phase':'Day','media_state':'paused','media_type':'movie','scene':day_paused_movie_scene},
+      {'phase':'Day','media_state':'paused','media_type':'tvshow','scene':day_paused_tvshow_scene},
+      {'phase':'Day','media_state':'paused','media_type':'default','scene':day_paused_default_scene},
+      {'phase':'Evening','media_state':'playing','media_type':'movie','scene':evening_playing_movie_scene},
+      {'phase':'Evening','media_state':'playing','media_type':'tvshow','scene':evening_playing_tvshow_scene},
+      {'phase':'Evening','media_state':'playing','media_type':'default','scene':evening_playing_default_scene},
+      {'phase':'Evening','media_state':'paused','media_type':'movie','scene':evening_paused_movie_scene},
+      {'phase':'Evening','media_state':'paused','media_type':'tvshow','scene':evening_paused_tvshow_scene},
+      {'phase':'Evening','media_state':'paused','media_type':'default','scene':evening_paused_default_scene},
+      {'phase':'Night','media_state':'playing','media_type':'movie','scene':night_playing_movie_scene},
+      {'phase':'Night','media_state':'playing','media_type':'tvshow','scene':night_playing_tvshow_scene},
+      {'phase':'Night','media_state':'playing','media_type':'default','scene':night_playing_default_scene},
+      {'phase':'Night','media_state':'paused','media_type':'movie','scene':night_paused_movie_scene},
+      {'phase':'Night','media_state':'paused','media_type':'tvshow','scene':night_paused_tvshow_scene},
+      {'phase':'Night','media_state':'paused','media_type':'default','scene':night_paused_default_scene}
+    ] -%}
+    {%- if (media_state == 'playing') or (media_state == 'paused') -%}
+      {%- for i in media_scene_list -%}
+        {%- if i['phase'] == current_phase -%}
+          {%- if i['media_state'] == media_state -%}
+            {%- if i['media_type'] == media_type -%}
+              {{ i['scene'] }}
+            {%- endif -%}
+          {%- endif -%}
+        {%- endif -%}
+      {%- endfor -%}
+    {%- endif -%}
 action:
-- service: input_text.set_value
-  data:
-    value: "{{ media_scene }}"
-  target:
-    entity_id: "{{ media_scene_helper }}"
+- choose:
+  - conditions:
+    - condition: template
+      value_template: "{{ media_scene }}"
+    sequence:
+    - service: input_text.set_value
+      data:
+        value: "{{ media_scene }}"
+      target:
+        entity_id: "{{ media_scene_helper }}"
+  default:
+  - service: input_text.set_value
+    data:
+      value: 'NO_SCENE_SPECIFIED'
+    target:
+      entity_id: "{{ media_scene_helper }}"
