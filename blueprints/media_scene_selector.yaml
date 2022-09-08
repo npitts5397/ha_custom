@@ -9,8 +9,8 @@ blueprint:
       selector:
         entity:
           domain: media_player
-    media_scene_helper:
-      name: Media Scene Helper
+    scene_helper:
+      name: Scene Helper
       description: The Home Assistant helper which holds the current playback-determined scene name.
       selector:
         entity:
@@ -196,64 +196,18 @@ trigger:
 - platform: state
   entity_id: !input mode_helper
   id: trigger_mode_state
-condition:
-- condition: and
-  conditions:
-  # (trigger_phase_state changed AND media is not stopped/unknown) OR trigger_media_state
-  - condition: or
-    conditions:
-    - condition: and
-      conditions:
-      - condition: trigger
-        id: trigger_phase_state
-      - condition: not
-        conditions:
-        - condition: state
-          entity_id: !input media_entity
-          state: stopped
-        - condition: state
-          entity_id: !input media_entity
-          state: unavailable 
-    - condition: and
-      conditions:
-      - condition: trigger
-        id: trigger_mode_state
-      - condition: not
-        conditions:
-        - condition: state
-          entity_id: !input media_entity
-          state: stopped
-        - condition: state
-          entity_id: !input media_entity
-          state: unavailable 
-    - condition: trigger
-      id: trigger_media_state
-  # current phase is _not_ in no_exec_phases_list
-  - condition: not
-    conditions:
-    - condition: template
-      value_template: "{{ current_phase in no_exec_phases_list }}"
-  # mode_helper is not set OR make sure current mode is not in no_exec_modes_list
-  - condition: or
-    conditions:
-    - condition: template
-      value_template: "{{ mode_helper == none }}"
-    - condition: not
-      conditions:
-      - condition: template
-        value_template: "{{ states(mode_helper) in no_exec_modes_list }}"
 variables:
   media_entity: !input media_entity
   media_state: "{{ states(media_entity) }}"
   media_type: "{{ state_attr(media_entity, 'media_content_type') | default('default',true) }}"
-  media_scene_helper: !input media_scene_helper
+  scene_helper: !input scene_helper
   phase_helper: !input phase_helper
   no_exec_phases: !input no_exec_phases
-  no_exec_phases_list: "{{ (no_exec_phases | replace(', ',',') | replace(' ,',',')).split(',') }}"
+  no_exec_phases_list: "{{ (no_exec_phases | lower | replace(', ',',') | replace(' ,',',')).split(',') }}"
   mode_helper: !input mode_helper
   no_exec_modes: !input no_exec_modes
-  no_exec_modes_list: "{{ (no_exec_modes | replace(', ',',') | replace(' ,',',')).split(',') }}"
-  current_phase: "{{ states(phase_helper) }}"
+  no_exec_modes_list: "{{ (no_exec_modes | lower | replace(', ',',') | replace(' ,',',')).split(',') }}"
+  current_phase: "{{ states(phase_helper) | lower }}"
   morning_playing_movie_scene: !input morning_playing_movie_scene
   morning_playing_tvshow_scene: !input morning_playing_tvshow_scene
   morning_playing_default_scene: !input morning_playing_default_scene
@@ -278,58 +232,88 @@ variables:
   night_paused_movie_scene: !input night_paused_movie_scene
   night_paused_tvshow_scene: !input night_paused_tvshow_scene
   night_paused_default_scene: !input night_paused_default_scene
-  media_scene: >-
-    {%- set media_scene_list = [
-      {'phase':'Morning','media_state':'playing','media_type':'movie','scene':morning_playing_movie_scene},
-      {'phase':'Morning','media_state':'playing','media_type':'tvshow','scene':morning_playing_tvshow_scene},
-      {'phase':'Morning','media_state':'playing','media_type':'default','scene':morning_playing_default_scene},
-      {'phase':'Morning','media_state':'paused','media_type':'movie','scene':morning_paused_movie_scene},
-      {'phase':'Morning','media_state':'paused','media_type':'tvshow','scene':morning_paused_tvshow_scene},
-      {'phase':'Morning','media_state':'paused','media_type':'default','scene':morning_paused_default_scene},
-      {'phase':'Day','media_state':'playing','media_type':'movie','scene':day_playing_movie_scene},
-      {'phase':'Day','media_state':'playing','media_type':'tvshow','scene':day_playing_tvshow_scene},
-      {'phase':'Day','media_state':'playing','media_type':'default','scene':day_playing_default_scene},
-      {'phase':'Day','media_state':'paused','media_type':'movie','scene':day_paused_movie_scene},
-      {'phase':'Day','media_state':'paused','media_type':'tvshow','scene':day_paused_tvshow_scene},
-      {'phase':'Day','media_state':'paused','media_type':'default','scene':day_paused_default_scene},
-      {'phase':'Evening','media_state':'playing','media_type':'movie','scene':evening_playing_movie_scene},
-      {'phase':'Evening','media_state':'playing','media_type':'tvshow','scene':evening_playing_tvshow_scene},
-      {'phase':'Evening','media_state':'playing','media_type':'default','scene':evening_playing_default_scene},
-      {'phase':'Evening','media_state':'paused','media_type':'movie','scene':evening_paused_movie_scene},
-      {'phase':'Evening','media_state':'paused','media_type':'tvshow','scene':evening_paused_tvshow_scene},
-      {'phase':'Evening','media_state':'paused','media_type':'default','scene':evening_paused_default_scene},
-      {'phase':'Night','media_state':'playing','media_type':'movie','scene':night_playing_movie_scene},
-      {'phase':'Night','media_state':'playing','media_type':'tvshow','scene':night_playing_tvshow_scene},
-      {'phase':'Night','media_state':'playing','media_type':'default','scene':night_playing_default_scene},
-      {'phase':'Night','media_state':'paused','media_type':'movie','scene':night_paused_movie_scene},
-      {'phase':'Night','media_state':'paused','media_type':'tvshow','scene':night_paused_tvshow_scene},
-      {'phase':'Night','media_state':'paused','media_type':'default','scene':night_paused_default_scene}
-    ] -%}
-    {%- if (media_state == 'playing') or (media_state == 'paused') -%}
-      {%- for i in media_scene_list -%}
-        {%- if i['phase'] == current_phase -%}
-          {%- if i['media_state'] == media_state -%}
-            {%- if i['media_type'] == media_type -%}
-              {{ i['scene'] }}
-            {%- endif -%}
-          {%- endif -%}
-        {%- endif -%}
-      {%- endfor -%}
-    {%- endif -%}
+  scene_pattern: "{{ current_phase + '-' + media_state + '-' + media_type }}"
+  scene_list: >
+    {{ [
+      {'name':'morning-playing-movie','scene':morning_playing_movie_scene},
+      {'name':'morning-playing-tvshow','scene':morning_playing_tvshow_scene},
+      {'name':'morning-playing-default','scene':morning_playing_default_scene},
+      {'name':'morning-paused-movie','scene':morning_paused_movie_scene},
+      {'name':'morning-paused-tvshow','scene':morning_paused_tvshow_scene},
+      {'name':'morning-paused-default','scene':morning_paused_default_scene},
+      {'name':'day-playing-movie','scene':day_playing_movie_scene},
+      {'name':'day-playing-tvshow','scene':day_playing_tvshow_scene},
+      {'name':'day-playing-default','scene':day_playing_default_scene},
+      {'name':'day-paused-movie','scene':day_paused_movie_scene},
+      {'name':'day-paused-tvshow','scene':day_paused_tvshow_scene},
+      {'name':'day-paused-default','scene':day_paused_default_scene},
+      {'name':'evening-playing-movie','scene':evening_playing_movie_scene},
+      {'name':'evening-playing-tvshow','scene':evening_playing_tvshow_scene},
+      {'name':'evening-playing-default','scene':evening_playing_default_scene},
+      {'name':'evening-paused-movie','scene':evening_paused_movie_scene},
+      {'name':'evening-paused-tvshow','scene':evening_paused_tvshow_scene},
+      {'name':'evening-paused-default','scene':evening_paused_default_scene},
+      {'name':'night-playing-movie','scene':night_playing_movie_scene},
+      {'name':'night-playing-tvshow','scene':night_playing_tvshow_scene},
+      {'name':'night-playing-default','scene':night_playing_default_scene},
+      {'name':'night-paused-movie','scene':night_paused_movie_scene},
+      {'name':'night-paused-tvshow','scene':night_paused_tvshow_scene},
+      {'name':'night-paused-default','scene':night_paused_default_scene}
+    ] }}
+  scene: >
+    {%- for i in scene_list -%}
+      {%- if i['name'] == scene_pattern -%}
+        {{ i['scene'] }}
+      {%- endif -%}
+    {%- endfor %}
+condition:
+- condition: and
+  conditions:
+  # (trigger_phase_state changed AND media is playing/paused) OR trigger_media_state
+  - condition: or
+    conditions:
+    - condition: and
+      conditions:
+      - condition: trigger
+        id: trigger_phase_state
+      - condition: template
+        value_template: "{{ media_state == 'playing' or media_state == 'paused' }}"
+    - condition: and
+      conditions:
+      - condition: trigger
+        id: trigger_mode_state
+      - condition: template
+        value_template: "{{ media_state == 'playing' or media_state == 'paused' }}"
+    - condition: trigger
+      id: trigger_media_state
+  # current phase is _not_ in no_exec_phases_list
+  - condition: not
+    conditions:
+    - condition: template
+      value_template: "{{ current_phase in no_exec_phases_list }}"
+  # mode_helper is not set OR make sure current mode is not in no_exec_modes_list
+  - condition: or
+    conditions:
+    - condition: template
+      value_template: "{{ mode_helper == none }}"
+    - condition: not
+      conditions:
+      - condition: template
+        value_template: "{{ states(mode_helper) in no_exec_modes_list }}"
 action:
 - choose:
   - conditions:
     - condition: template
-      value_template: "{{ media_scene }}"
+      value_template: "{{ scene != '' and scene != None }}"
     sequence:
     - service: input_text.set_value
       data:
-        value: "{{ media_scene }}"
+        value: "{{ scene }}"
       target:
-        entity_id: "{{ media_scene_helper }}"
+        entity_id: "{{ scene_helper }}"
   default:
   - service: input_text.set_value
     data:
       value: 'NO_SCENE_SPECIFIED'
     target:
-      entity_id: "{{ media_scene_helper }}"
+      entity_id: "{{ scene_helper }}"
