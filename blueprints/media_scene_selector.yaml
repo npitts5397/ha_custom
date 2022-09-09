@@ -262,7 +262,7 @@ variables:
     ] }}
   scene: >
     {%- for i in scene_list -%}
-      {%- if i['name'] == scene_pattern -%}
+      {%- if (i['name'] == scene_pattern) -%}
         {{ i['scene'] }}
       {%- endif -%}
     {%- endfor %}
