@@ -269,19 +269,17 @@ variables:
 condition:
 - condition: and
   conditions:
-  # (trigger_phase_state changed AND media is playing/paused) OR trigger_media_state
+  # ((trigger_phase_state OR trigger_mode_state changed) AND media is playing/paused) OR trigger_media_state
   - condition: or
     conditions:
     - condition: and
       conditions:
-      - condition: trigger
-        id: trigger_phase_state
-      - condition: template
-        value_template: "{{ media_state == 'playing' or media_state == 'paused' }}"
-    - condition: and
-      conditions:
-      - condition: trigger
-        id: trigger_mode_state
+      - condition: or
+        conditions:
+        - condition: trigger
+          id: trigger_phase_state
+        - condition: trigger
+          id: trigger_mode_state
       - condition: template
         value_template: "{{ media_state == 'playing' or media_state == 'paused' }}"
     - condition: trigger
