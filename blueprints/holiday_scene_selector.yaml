@@ -503,7 +503,6 @@ variables:
       {'name':'juneteenth','scene':juneteenth_day_scene,'days_before':juneteenth_day_days_before,'days_after':juneteenth_day_days_after},
       {'name':'independence-day','scene':us_independence_day_scene,'days_before':us_independence_day_days_before,'days_after':us_independence_day_days_after},
       {'name':'labor-day','scene':labor_day_scene,'days_before':labor_day_days_before,'days_after':labor_day_days_after},
-      {'name':'first-day-of-hispanic-heritage-month','scene':'first_day_of_hispanic_heritage_month_scene','days_before':30,'days_after':0},
       {'name':'indigenous-peoples-day','scene':indigenous_peoples_day_scene,'days_before':indigenous_peoples_day_days_before,'days_after':indigenous_peoples_day_days_after},
       {'name':'halloween','scene':halloween_day_scene,'days_before':halloween_day_days_before,'days_after':halloween_day_days_after},
       {'name':'election-day','scene':election_day_scene,'days_before':election_day_days_before,'days_after':election_day_days_after},
