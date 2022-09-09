@@ -9,7 +9,7 @@ blueprint:
       selector:
         entity:
           domain: calendar
-    holiday_scene_helper:
+    scene_helper:
       name: Holiday Scene Helper
       description: The Home Assistant helper which holds the current holiday-determined scene name.
       selector:
@@ -442,10 +442,11 @@ trigger:
 variables:
   calendar_entity: !input calendar_entity
   today: "{{ now() }}"
-  next_holiday: "{{ state_attr(calendar_entity, 'message') }}"
+  next_holiday: > 
+    {{ state_attr(calendar_entity, 'message') | lower | replace("'",'') | replace(' ','-') | replace('.','') }}
   next_holiday_start: "{{ state_attr(calendar_entity, 'start_time') }}"
   next_holiday_end: "{{ state_attr(calendar_entity, 'end_time') }}"
-  holiday_scene_helper: !input holiday_scene_helper
+  scene_helper: !input scene_helper
   new_years_day_scene: !input new_years_day_scene
   new_years_day_days_before: !input new_years_day_scene_days_before
   new_years_day_days_after: !input new_years_day_scene_days_after
@@ -491,45 +492,45 @@ variables:
   christmas_day_scene: !input christmas_day_scene
   christmas_day_days_before: !input christmas_day_scene_days_before
   christmas_day_days_after: !input christmas_day_scene_days_after
-  holiday_scene: >-
-    {%- set holiday_scene_list = [
-      {'holiday':'New Year''s Day','scene':new_years_day_scene,'days_before':new_years_day_days_before,'days_after':new_years_day_days_after},
-      {'holiday':'Valentine''s Day','scene':valentines_day_scene,'days_before':valentines_day_days_before,'days_after':valentines_day_days_after},
-      {'holiday':'St. Patrick''s Day','scene':st_patricks_day_scene,'days_before':st_patricks_day_days_before,'days_after':st_patricks_day_days_after},
-      {'holiday':'Mother''s Day','scene':mothers_day_scene,'days_before':mothers_day_days_before,'days_after':mothers_day_days_after},
-      {'holiday':'Memorial Day','scene':memorial_day_scene,'days_before':memorial_day_days_before,'days_after':memorial_day_days_after},
-      {'holiday':'Father''s Day','scene':fathers_day_scene,'days_before':fathers_day_days_before,'days_after':fathers_day_days_after},
-      {'holiday':'Juneteenth','scene':juneteenth_day_scene,'days_before':juneteenth_day_days_before,'days_after':juneteenth_day_days_after},
-      {'holiday':'Independence Day','scene':us_independence_day_scene,'days_before':us_independence_day_days_before,'days_after':us_independence_day_days_after},
-      {'holiday':'Labor Day','scene':labor_day_scene,'days_before':labor_day_days_before,'days_after':labor_day_days_after},
-      {'holiday':'Indigenous Peoples'' Day','scene':indigenous_peoples_day_scene,'days_before':indigenous_peoples_day_days_before,'days_after':indigenous_peoples_day_days_after},
-      {'holiday':'Halloween','scene':halloween_day_scene,'days_before':halloween_day_days_before,'days_after':halloween_day_days_after},
-      {'holiday':'Election Day','scene':election_day_scene,'days_before':election_day_days_before,'days_after':election_day_days_after},
-      {'holiday':'Veterans Day','scene':veterans_day_scene,'days_before':veterans_day_days_before,'days_after':veterans_day_days_after},
-      {'holiday':'Thanksgiving Day','scene':thanksgiving_day_scene,'days_before':thanksgiving_day_days_before,'days_after':thanksgiving_day_days_after},
-      {'holiday':'Christmas Day','scene':christmas_day_scene,'days_before':christmas_day_days_before,'days_after':christmas_day_days_after}
-    ] %}
-    {%- for i in holiday_scene_list -%}
-      {%- if i['holiday'] == next_holiday -%}
-        {%- if as_timestamp(as_datetime(next_holiday_start)-timedelta(days=i['days_before'])) < as_timestamp(today) < as_timestamp((as_datetime(next_holiday_end)+timedelta(days=i['days_after']))) -%}
+  scene_list: >
+    {{ [
+      {'name':'new-years-day','scene':new_years_day_scene,'days_before':new_years_day_days_before,'days_after':new_years_day_days_after},
+      {'name':'valentines-day','scene':valentines_day_scene,'days_before':valentines_day_days_before,'days_after':valentines_day_days_after},
+      {'name':'st-patricks-day','scene':st_patricks_day_scene,'days_before':st_patricks_day_days_before,'days_after':st_patricks_day_days_after},
+      {'name':'mothers-day','scene':mothers_day_scene,'days_before':mothers_day_days_before,'days_after':mothers_day_days_after},
+      {'name':'memorial-day','scene':memorial_day_scene,'days_before':memorial_day_days_before,'days_after':memorial_day_days_after},
+      {'name':'fathers-day','scene':fathers_day_scene,'days_before':fathers_day_days_before,'days_after':fathers_day_days_after},
+      {'name':'juneteenth','scene':juneteenth_day_scene,'days_before':juneteenth_day_days_before,'days_after':juneteenth_day_days_after},
+      {'name':'independence-day','scene':us_independence_day_scene,'days_before':us_independence_day_days_before,'days_after':us_independence_day_days_after},
+      {'name':'labor-day','scene':labor_day_scene,'days_before':labor_day_days_before,'days_after':labor_day_days_after},
+      {'name':'first-day-of-hispanic-heritage-month','scene':'first_day_of_hispanic_heritage_month_scene','days_before':30,'days_after':0},
+      {'name':'indigenous-peoples-day','scene':indigenous_peoples_day_scene,'days_before':indigenous_peoples_day_days_before,'days_after':indigenous_peoples_day_days_after},
+      {'name':'halloween','scene':halloween_day_scene,'days_before':halloween_day_days_before,'days_after':halloween_day_days_after},
+      {'name':'election-day','scene':election_day_scene,'days_before':election_day_days_before,'days_after':election_day_days_after},
+      {'name':'veterans-day','scene':veterans_day_scene,'days_before':veterans_day_days_before,'days_after':veterans_day_days_after},
+      {'name':'thanksgiving-day','scene':thanksgiving_day_scene,'days_before':thanksgiving_day_days_before,'days_after':thanksgiving_day_days_after},
+      {'name':'christmas-day','scene':christmas_day_scene,'days_before':christmas_day_days_before,'days_after':christmas_day_days_after}
+    ] }}
+  scene: >
+    {%- for i in scene_list -%}
+      {%- if (i['name'] == next_holiday) and (as_timestamp(as_datetime(next_holiday_start)-timedelta(days=i['days_before'])) < as_timestamp(today) < as_timestamp((as_datetime(next_holiday_end)+timedelta(days=i['days_after'])))) -%}
           {{ i['scene'] }}
-        {%- endif -%}
       {%- endif -%}
     {%- endfor %}
 action:
 - choose:
   - conditions:
     - condition: template
-      value_template: "{{ holiday_scene }}"
+      value_template: "{{ scene != '' and scene != None }}"
     sequence:
     - service: input_text.set_value
       data:
-        value: "{{ holiday_scene }}"
+        value: "{{ scene }}"
       target:
-        entity_id: "{{ holiday_scene_helper }}"
+        entity_id: "{{ scene_helper }}"
   default:
   - service: input_text.set_value
     data:
       value: 'NO_SCENE_SPECIFIED'
     target:
-      entity_id: "{{ holiday_scene_helper }}"
+      entity_id: "{{ scene_helper }}"
