@@ -1,0 +1,96 @@
+blueprint:
+  name: Inovelli VZM31-SN Monitor
+  description: Publishes an MQTT message when an events occurs with the monitored switch.
+  domain: automation
+  input:
+    switch_mqtt_topic:
+      name: Switch MQTT Topic
+      description: The MQTT topic to which switch events are published.
+      selector:
+        text:
+    light_mqtt_topic:
+      name: Light MQTT Topic
+      description: The MQTT topic to which light commands are published.
+      selector:
+        text:
+    up_single_command:
+      name: Up-Press Command
+      description: The string that will be published to the MQTT topic for an 'up_single' event.
+      default: 'on'
+      selector:
+        text:
+    up_held_command:
+      name: Up-Hold Command
+      description: The string that will be published to the MQTT topic for an 'up_held' event.
+      default: 'on'
+      selector:
+        text:
+    down_single_command:
+      name: Down-Press Command
+      description: The string that will be published to the MQTT topic for an 'down_single' event.
+      default: 'off'
+      selector:
+        text:
+    down_held_command:
+      name: Down-Hold Command
+      description: The string that will be published to the MQTT topic for an 'down_held' event.
+      default: 'off'
+      selector:
+        text:
+trigger:
+  - platform: mqtt
+    topic: !input switch_mqtt_topic
+    payload: up_single
+    id: trigger_up_single
+  - platform: mqtt
+    topic: !input switch_mqtt_topic
+    payload: up_held
+    id: trigger_up_held
+  - platform: mqtt
+    topic: !input switch_mqtt_topic
+    payload: down_single
+    id: trigger_down_single
+  - platform: mqtt
+    topic: !input switch_mqtt_topic
+    payload: down_held
+    id: trigger_down_held
+mode: restart
+condition: []
+action:
+- choose:
+  - conditions:
+    - condition: trigger
+      id: trigger_up_single
+    sequence:
+    - service: mqtt.publish
+      data:
+        qos: "1"
+        topic: !input light_mqtt_topic
+        payload: !input up_single_command
+  - conditions:
+    - condition: trigger
+      id: trigger_up_held
+    sequence:
+    - service: mqtt.publish
+      data:
+        qos: "1"
+        topic: !input light_mqtt_topic
+        payload: !input up_held_command
+  - conditions:
+    - condition: trigger
+      id: trigger_down_single
+    sequence:
+    - service: mqtt.publish
+      data:
+        qos: "1"
+        topic: !input light_mqtt_topic
+        payload: !input down_single_command
+  - conditions:
+    - condition: trigger
+      id: trigger_down_held
+    sequence:
+    - service: mqtt.publish
+      data:
+        qos: "1"
+        topic: !input light_mqtt_topic
+        payload: !input down_held_command
