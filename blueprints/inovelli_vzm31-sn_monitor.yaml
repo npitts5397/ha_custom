@@ -166,7 +166,7 @@ trigger:
     id: trigger_up_4x
   - platform: mqtt
     topic: !input switch_mqtt_topic
-    payload: up_quadruple
+    payload: up_quintuple
     id: trigger_up_5x
   - platform: mqtt
     topic: !input switch_mqtt_topic
@@ -194,7 +194,7 @@ trigger:
     id: trigger_down_4x
   - platform: mqtt
     topic: !input switch_mqtt_topic
-    payload: down_quadruple
+    payload: down_quintuple
     id: trigger_down_5x
   - platform: mqtt
     topic: !input switch_mqtt_topic
@@ -222,7 +222,7 @@ trigger:
     id: trigger_config_4x
   - platform: mqtt
     topic: !input switch_mqtt_topic
-    payload: config_quadruple
+    payload: config_quintuple
     id: trigger_config_5x
 mode: restart
 condition: []
