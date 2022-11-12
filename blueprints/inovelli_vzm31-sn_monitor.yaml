@@ -170,7 +170,7 @@ trigger:
     id: trigger_up_5x
   - platform: mqtt
     topic: !input switch_mqtt_topic
-    payload: down_1x
+    payload: down_single
     id: trigger_down_1x
   - platform: mqtt
     topic: !input switch_mqtt_topic
@@ -198,7 +198,7 @@ trigger:
     id: trigger_down_5x
   - platform: mqtt
     topic: !input switch_mqtt_topic
-    payload: config_1x
+    payload: config_single
     id: trigger_config_1x
   - platform: mqtt
     topic: !input switch_mqtt_topic
