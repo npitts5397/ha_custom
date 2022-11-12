@@ -49,7 +49,7 @@ blueprint:
       default: ''
       selector:
         text:
-    up_quintuple_string:
+    up_5x_string:
       name: Up Quintruple-Press (x5) String
       description: The string to publish to the 'Switch MQTT Topic' for an 'up_quintruple' switch event. Only supported when buttonDelay > 0 ms.
       default: ''
