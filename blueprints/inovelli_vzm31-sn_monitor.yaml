@@ -98,7 +98,7 @@ blueprint:
       selector:
         text: 
     config_1x_string:
-      name: Config Single-Press String
+      name: Config Single-Press (1x) String
       description: The string to publish to the 'Switch MQTT Topic' for an 'config_single' switch event.
       default: ''
       selector:
