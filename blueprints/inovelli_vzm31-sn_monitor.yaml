@@ -1,72 +1,242 @@
 blueprint:
-  name: Inovelli VZM31-SN Monitor
-  description: Publishes an MQTT message when an events occurs with the monitored switch.
+  name: Inovelli VZM31-SN Monitor (MQTT)
+  description: Publishes an MQTT message when events are published in a specified VZM31-SN's MQTT topic.
   domain: automation
   input:
     switch_mqtt_topic:
       name: Switch MQTT Topic
-      description: The MQTT topic to which switch events are published.
+      description: The MQTT topic to monitor for switch events. Events published to this topic trigger this automation.
       selector:
         text:
     light_mqtt_topic:
       name: Light MQTT Topic
-      description: The MQTT topic to which light commands are published.
+      description: The MQTT topic to which light commands are published by this automation.
       selector:
         text:
-    up_single_command:
-      name: Up-Press Command
-      description: The string that will be published to the MQTT topic for an 'up_single' event.
+    up_1x_string:
+      name: Up Single-Press (x1) String
+      description: The string to publish to the 'Switch MQTT Topic' for an 'up_single' switch event. Default is 'on'.
       default: 'on'
       selector:
         text:
-    up_held_command:
-      name: Up-Hold Command
-      description: The string that will be published to the MQTT topic for an 'up_held' event.
-      default: 'on'
+    up_held_string:
+      name: Up Held String
+      description: The string to publish to the 'Switch MQTT Topic' for an 'up_held' switch event.
+      default: ''
       selector:
         text:
-    down_single_command:
-      name: Down-Press Command
-      description: The string that will be published to the MQTT topic for an 'down_single' event.
+    up_release_string:
+      name: Up Release String
+      description: The string to publish to the 'Switch MQTT Topic' for an 'up_release' switch event. Occurs after an 'up_held' event.
+      default: ''
+      selector:
+        text:
+    up_2x_string:
+      name: Up Double-Press (x2) String
+      description: The string to publish to the 'Switch MQTT Topic' for an 'up_double' switch event. Only supported when buttonDelay > 0 ms.
+      default: ''
+      selector:
+        text:
+    up_3x_string:
+      name: Up Triple-Press (x3) String
+      description: The string to publish to the 'Switch MQTT Topic' for an 'up_triple' switch event. Only supported when buttonDelay > 0 ms.
+      default: ''
+      selector:
+        text:
+    up_4x_string:
+      name: Up Quadruple-Press (x4) String
+      description: The string to publish to the 'Switch MQTT Topic' for an 'up_quadruple' switch event. Only supported when buttonDelay > 0 ms.
+      default: ''
+      selector:
+        text:
+    up_quintuple_string:
+      name: Up Quintruple-Press (x5) String
+      description: The string to publish to the 'Switch MQTT Topic' for an 'up_quintruple' switch event. Only supported when buttonDelay > 0 ms.
+      default: ''
+      selector:
+        text:
+    down_1x_string:
+      name: Down Single-Press (x1) String
+      description: The string to publish to the 'Switch MQTT Topic' for an 'down_single' switch event. Default is 'off'.
       default: 'off'
       selector:
         text:
-    down_held_command:
-      name: Down-Hold Command
-      description: The string that will be published to the MQTT topic for an 'down_held' event.
-      default: 'off'
+    down_held_string:
+      name: Down Held String
+      description: The string to publish to the 'Switch MQTT Topic' for an 'down_held' switch event.
+      default: ''
+      selector:
+        text:
+    down_release_string:
+      name: Down Release String
+      description: The string to publish to the 'Switch MQTT Topic' for an 'down_release' switch event. Occurs after a 'down_held' event.
+      default: ''
+      selector:
+        text:
+    down_2x_string:
+      name: Down Double-Press (x2) String
+      description: The string to publish to the 'Switch MQTT Topic' for an 'down_double' switch event. Only supported when buttonDelay > 0 ms.
+      default: ''
+      selector:
+        text:
+    down_3x_string:
+      name: Down Triple-Press (x3) String
+      description: The string to publish to the 'Switch MQTT Topic' for an 'down_triple' switch event. Only supported when buttonDelay > 0 ms.
+      default: ''
+      selector:
+        text: 
+    down_4x_string:
+      name: Down Quadruple-Press (x4) String
+      description: The string to publish to the 'Switch MQTT Topic' for an 'down_quadruple' switch event. Only supported when buttonDelay > 0 ms.
+      default: ''
+      selector:
+        text: 
+    down_5x_string:
+      name: Down Quintuple-Press (x5) String
+      description: The string to publish to the 'Switch MQTT Topic' for an 'down_quintuple' switch event. Only supported when buttonDelay > 0 ms.
+      default: ''
+      selector:
+        text: 
+    config_1x_string:
+      name: Config Single-Press String
+      description: The string to publish to the 'Switch MQTT Topic' for an 'config_single' switch event.
+      default: ''
+      selector:
+        text:
+    config_held_string:
+      name: Config Held String
+      description: The string to publish to the 'Switch MQTT Topic' for an 'config_held' switch event.
+      default: ''
+      selector:
+        text:
+    config_release_string:
+      name: Config Release String
+      description: The string to publish to the 'Switch MQTT Topic' for an 'config_release' switch event.
+      default: ''
+      selector:
+        text:
+    config_2x_string:
+      name: Config Double-Press (x2) String
+      description: The string to publish to the 'Switch MQTT Topic' for an 'config_double' switch event. Only supported when buttonDelay > 0 ms.
+      default: ''
+      selector:
+        text:
+    config_3x_string:
+      name: Config Triple-Press (x3) String
+      description: The string to publish to the 'Switch MQTT Topic' for an 'config_triple' switch event. Only supported when buttonDelay > 0 ms.
+      default: ''
+      selector:
+        text:
+    config_4x_string:
+      name: Config Quadruple-Press (x4) Command
+      description: The string to publish to the 'Switch MQTT Topic' for an 'config_quadruple' switch event. Only supported when buttonDelay > 0 ms.
+      default: ''
+      selector:
+        text:
+    config_5x_string:
+      name: Config Quintuple-Press (x5) Command
+      description: The string to publish to the 'Switch MQTT Topic' for an 'config_quintuple' switch event. Only supported when buttonDelay > 0 ms.
+      default: ''
       selector:
         text:
 trigger:
   - platform: mqtt
     topic: !input switch_mqtt_topic
     payload: up_single
-    id: trigger_up_single
+    id: trigger_up_1x
   - platform: mqtt
     topic: !input switch_mqtt_topic
     payload: up_held
     id: trigger_up_held
   - platform: mqtt
     topic: !input switch_mqtt_topic
-    payload: down_single
-    id: trigger_down_single
+    payload: up_release
+    id: trigger_up_release
+  - platform: mqtt
+    topic: !input switch_mqtt_topic
+    payload: up_double
+    id: trigger_up_2x
+  - platform: mqtt
+    topic: !input switch_mqtt_topic
+    payload: up_triple
+    id: trigger_up_3x
+  - platform: mqtt
+    topic: !input switch_mqtt_topic
+    payload: up_quadruple
+    id: trigger_up_4x
+  - platform: mqtt
+    topic: !input switch_mqtt_topic
+    payload: up_quadruple
+    id: trigger_up_5x
+  - platform: mqtt
+    topic: !input switch_mqtt_topic
+    payload: down_1x
+    id: trigger_down_1x
   - platform: mqtt
     topic: !input switch_mqtt_topic
     payload: down_held
     id: trigger_down_held
+  - platform: mqtt
+    topic: !input switch_mqtt_topic
+    payload: down_release
+    id: trigger_down_release
+  - platform: mqtt
+    topic: !input switch_mqtt_topic
+    payload: down_double
+    id: trigger_down_2x
+  - platform: mqtt
+    topic: !input switch_mqtt_topic
+    payload: down_triple
+    id: trigger_down_3x
+  - platform: mqtt
+    topic: !input switch_mqtt_topic
+    payload: down_quadruple
+    id: trigger_down_4x
+  - platform: mqtt
+    topic: !input switch_mqtt_topic
+    payload: down_quadruple
+    id: trigger_down_5x
+  - platform: mqtt
+    topic: !input switch_mqtt_topic
+    payload: config_1x
+    id: trigger_config_1x
+  - platform: mqtt
+    topic: !input switch_mqtt_topic
+    payload: config_held
+    id: trigger_config_held
+  - platform: mqtt
+    topic: !input switch_mqtt_topic
+    payload: config_release
+    id: trigger_config_release
+  - platform: mqtt
+    topic: !input switch_mqtt_topic
+    payload: config_double
+    id: trigger_config_2x
+  - platform: mqtt
+    topic: !input switch_mqtt_topic
+    payload: config_triple
+    id: trigger_config_3x
+  - platform: mqtt
+    topic: !input switch_mqtt_topic
+    payload: config_quadruple
+    id: trigger_config_4x
+  - platform: mqtt
+    topic: !input switch_mqtt_topic
+    payload: config_quadruple
+    id: trigger_config_5x
 mode: restart
 condition: []
 action:
 - choose:
   - conditions:
     - condition: trigger
-      id: trigger_up_single
+      id: trigger_up_1x
     sequence:
     - service: mqtt.publish
       data:
         qos: "1"
         topic: !input light_mqtt_topic
-        payload: !input up_single_command
+        payload: !input up_1x_string
   - conditions:
     - condition: trigger
       id: trigger_up_held
@@ -75,16 +245,61 @@ action:
       data:
         qos: "1"
         topic: !input light_mqtt_topic
-        payload: !input up_held_command
+        payload: !input up_held_string
   - conditions:
     - condition: trigger
-      id: trigger_down_single
+      id: trigger_up_release
     sequence:
     - service: mqtt.publish
       data:
         qos: "1"
         topic: !input light_mqtt_topic
-        payload: !input down_single_command
+        payload: !input up_release_string
+  - conditions:
+    - condition: trigger
+      id: trigger_up_2x
+    sequence:
+    - service: mqtt.publish
+      data:
+        qos: "1"
+        topic: !input light_mqtt_topic
+        payload: !input up_2x_string
+  - conditions:
+    - condition: trigger
+      id: trigger_up_3x
+    sequence:
+    - service: mqtt.publish
+      data:
+        qos: "1"
+        topic: !input light_mqtt_topic
+        payload: !input up_3x_string
+  - conditions:
+    - condition: trigger
+      id: trigger_up_4x
+    sequence:
+    - service: mqtt.publish
+      data:
+        qos: "1"
+        topic: !input light_mqtt_topic
+        payload: !input up_4x_string
+  - conditions:
+    - condition: trigger
+      id: trigger_up_5x
+    sequence:
+    - service: mqtt.publish
+      data:
+        qos: "1"
+        topic: !input light_mqtt_topic
+        payload: !input up_5x_string
+  - conditions:
+    - condition: trigger
+      id: trigger_down_1x
+    sequence:
+    - service: mqtt.publish
+      data:
+        qos: "1"
+        topic: !input light_mqtt_topic
+        payload: !input down_1x_string
   - conditions:
     - condition: trigger
       id: trigger_down_held
@@ -93,4 +308,112 @@ action:
       data:
         qos: "1"
         topic: !input light_mqtt_topic
-        payload: !input down_held_command
+        payload: !input down_held_string
+  - conditions:
+    - condition: trigger
+      id: trigger_down_release
+    sequence:
+    - service: mqtt.publish
+      data:
+        qos: "1"
+        topic: !input light_mqtt_topic
+        payload: !input down_release_string
+  - conditions:
+    - condition: trigger
+      id: trigger_down_2x
+    sequence:
+    - service: mqtt.publish
+      data:
+        qos: "1"
+        topic: !input light_mqtt_topic
+        payload: !input down_2x_string
+  - conditions:
+    - condition: trigger
+      id: trigger_down_3x
+    sequence:
+    - service: mqtt.publish
+      data:
+        qos: "1"
+        topic: !input light_mqtt_topic
+        payload: !input down_3x_string
+  - conditions:
+    - condition: trigger
+      id: trigger_down_4x
+    sequence:
+    - service: mqtt.publish
+      data:
+        qos: "1"
+        topic: !input light_mqtt_topic
+        payload: !input down_4x_string
+  - conditions:
+    - condition: trigger
+      id: trigger_down_5x
+    sequence:
+    - service: mqtt.publish
+      data:
+        qos: "1"
+        topic: !input light_mqtt_topic
+        payload: !input down_5x_string
+  - conditions:
+    - condition: trigger
+      id: trigger_config_1x
+    sequence:
+    - service: mqtt.publish
+      data:
+        qos: "1"
+        topic: !input light_mqtt_topic
+        payload: !input config_1x_string
+  - conditions:
+    - condition: trigger
+      id: trigger_config_held
+    sequence:
+    - service: mqtt.publish
+      data:
+        qos: "1"
+        topic: !input light_mqtt_topic
+        payload: !input config_held_string
+  - conditions:
+    - condition: trigger
+      id: trigger_config_release
+    sequence:
+    - service: mqtt.publish
+      data:
+        qos: "1"
+        topic: !input light_mqtt_topic
+        payload: !input config_release_string
+  - conditions:
+    - condition: trigger
+      id: trigger_config_2x
+    sequence:
+    - service: mqtt.publish
+      data:
+        qos: "1"
+        topic: !input light_mqtt_topic
+        payload: !input config_2x_string
+  - conditions:
+    - condition: trigger
+      id: trigger_config_3x
+    sequence:
+    - service: mqtt.publish
+      data:
+        qos: "1"
+        topic: !input light_mqtt_topic
+        payload: !input config_3x_string
+  - conditions:
+    - condition: trigger
+      id: trigger_config_4x
+    sequence:
+    - service: mqtt.publish
+      data:
+        qos: "1"
+        topic: !input light_mqtt_topic
+        payload: !input config_4x_string
+  - conditions:
+    - condition: trigger
+      id: trigger_config_5x
+    sequence:
+    - service: mqtt.publish
+      data:
+        qos: "1"
+        topic: !input light_mqtt_topic
+        payload: !input config_5x_string
