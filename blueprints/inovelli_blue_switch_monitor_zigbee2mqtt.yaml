@@ -1,10 +1,10 @@
 blueprint:
-  name: Inovelli VZM31-SN Monitor (MQTT)
-  description: Publishes an MQTT message when events are published in a specified VZM31-SN's MQTT topic.
+  name: Inovelli Blue Switch Monitor (zigbee2mqtt)
+  description: Publishes an MQTT message when events are published in a specified Inovelli Blue Series switch's MQTT topic.
   domain: automation
   input:
     switch_mqtt_topic:
-      name: Switch MQTT Topic
+      name: Blue Series Switch MQTT Topic
       description: The MQTT topic to monitor for switch events. Events published to this topic trigger this automation.
       selector:
         text:
