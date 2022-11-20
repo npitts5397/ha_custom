@@ -1,0 +1,76 @@
+blueprint:
+  name: Set Inovelli Blue LED to Entity State
+  description: Calls script.inovelli_blue_led_zigbee2mqtt for state matching with specified entity with on/off states. Requires script has been created. See https://github.com/zanix/home-assistant-config/blob/master/scripts/inovelli_blue/inovelli_blue_led.yaml
+  domain: automation
+  input:
+    entity_with_on_off:
+      name: Source Entity
+      description: The entity to which switch LED should be set (must report as on/off).
+      selector: 
+        entity: null
+    switch_led: 
+      name: Inovelli Dimmer/Switch LED
+      description: Inovelli switch device with customizable LED.
+      selector: 
+        entity: null
+trigger:
+  - platform: state
+    entity_id: !input 'entity_with_on_off'
+variables:
+  switch_led: !input 'switch_led'
+  on_off_entity: !input 'entity_with_on_off'
+mode: restart
+action:
+  - choose:
+      - conditions:
+          - condition: state
+            entity_id: !input 'entity_with_on_off'
+            state: 'on'
+        sequence:
+          - service: script.inovelli_blue_led_zigbee2mqtt
+            data:
+              entity_id:
+                - '{{ switch_led }}'
+              led: "0"
+              color: Green
+              level: 30
+              effect: Open/Close
+              duration: 1
+          - delay:
+              hours: 0
+              minutes: 0
+              seconds: 0
+              milliseconds: 500
+          - service: script.inovelli_blue_led_zigbee2mqtt
+            data:
+              entity_id:
+                - '{{ switch_led }}'
+              led: "0"
+              color: Green
+              level: 30
+              effect: Solid
+              duration: Indefinitely
+    default:
+          - service: script.inovelli_blue_led_zigbee2mqtt
+            data:
+              entity_id:
+                - '{{ switch_led }}'
+              led: "0"
+              color: Blue
+              level: 30
+              effect: Open/Close
+              duration: 1
+          - delay:
+              hours: 0
+              minutes: 0
+              seconds: 0
+              milliseconds: 500
+          - service: script.inovelli_blue_led_zigbee2mqtt
+            data:
+              entity_id:
+                - '{{ switch_led }}'
+              led: "0"
+              color: Blue
+              level: 10
+              effect: Solid
+              duration: Indefinitely
