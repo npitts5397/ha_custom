@@ -37,7 +37,29 @@ blueprint:
       description: Effect played when `source_state_entity` changes to `on`.
       default: Open/Close
       selector:
-        text:
+        select:
+          options:
+            - 'Off'
+            - 'Clear'
+            - 'Solid'
+            - 'Aurora'
+            - 'Chase'
+            - 'Fast Blink'
+            - 'Fast Chase'
+            - 'Fast Falling'
+            - 'Fast Rising'
+            - 'Fast Siren'
+            - 'Medium Blink'
+            - 'Medium Falling'
+            - 'Medium Rising'
+            - 'Open/Close'
+            - 'Pulse'
+            - 'Slow Blink'
+            - 'Slow Chase'
+            - 'Slow Falling'
+            - 'Slow Rising'
+            - 'Slow Siren'
+            - 'Small to Big'
     off_color:
       name: Off Color
       description: Color of the LED bar when `source_state_entity` is `off`.
@@ -55,7 +77,29 @@ blueprint:
       description: Effect played when `source_state_entity` changes to `off`.
       default: Open/Close
       selector:
-        text:
+        select:
+          options:
+            - 'Off'
+            - 'Clear'
+            - 'Solid'
+            - 'Aurora'
+            - 'Chase'
+            - 'Fast Blink'
+            - 'Fast Chase'
+            - 'Fast Falling'
+            - 'Fast Rising'
+            - 'Fast Siren'
+            - 'Medium Blink'
+            - 'Medium Falling'
+            - 'Medium Rising'
+            - 'Open/Close'
+            - 'Pulse'
+            - 'Slow Blink'
+            - 'Slow Chase'
+            - 'Slow Falling'
+            - 'Slow Rising'
+            - 'Slow Siren'
+            - 'Small to Big'
 trigger:
   - platform: state
     entity_id: !input 'source_state_entity'
