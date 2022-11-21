@@ -10,28 +10,45 @@ blueprint:
         entity:
           domain:
             - light
-    switch_entity: 
-      name: Inovelli Dimmer/Switch LED
+    switch_target: 
+      name: Inovelli Blue Switch LED
       description: Inovelli switch device with customizable LED.
-      selector: 
-        entity:
-          domain:
-            - light
-            - switch
-          integration: mqtt
-          multiple: false
+      selector:
+        target:
+          device:
+            integration: mqtt
+            manufacturer: Inovelli
+          entity:
+            integration: mqtt
+            domain: light  
     on_color:
       name: On Color
       description: Color of the LED bar when `source_state_entity` is `on`.
       default: Green
       selector:
-        text:
+        select:
+          custom_value: true
+          options:
+            - "Off"
+            - Red
+            - Orange
+            - Yellow
+            - Green
+            - Cyan
+            - Teal
+            - Blue
+            - Purple
+            - Light Pink
+            - Pink
+            - White
     on_level:
       name: On Level
-      description: Intensity of the LED bar when `source_state_entity` is `on`.
+      description: Intensity (percent) of the LED bar when `source_state_entity` is `on`.
       default: 30
       selector:
-        text:
+        number:
+          min: 0
+          max: 100
     on_transition_effect:
       name: On Transition Effect
       description: Effect played when `source_state_entity` changes to `on`.
@@ -65,13 +82,29 @@ blueprint:
       description: Color of the LED bar when `source_state_entity` is `off`.
       default: Blue
       selector:
-        text:
+        select:
+          custom_value: true
+          options:
+            - "Off"
+            - Red
+            - Orange
+            - Yellow
+            - Green
+            - Cyan
+            - Teal
+            - Blue
+            - Purple
+            - Light Pink
+            - Pink
+            - White
     off_level:
       name: Off Level
-      description: Intensity of the LED bar when `source_state_entity` is `off`.
+      description: Intensity (percent) of the LED bar when `source_state_entity` is `off`.
       default: 10
       selector:
-        text:
+        number:
+          min: 0
+          max: 100
     off_transition_effect:
       name: Off Transition Effect
       description: Effect played when `source_state_entity` changes to `off`.
@@ -105,7 +138,8 @@ trigger:
     entity_id: !input 'source_state_entity'
 variables:
   source_state_entity: !input 'source_state_entity'
-  switch_entity: !input 'switch_entity'
+  switch_target: !input 'switch_target'
+  switch_target_entity: '{{ switch_target.entity_id }}'
   on_color: !input 'on_color'
   on_level: !input 'on_level'
   on_transition_effect: !input 'on_transition_effect'
@@ -123,7 +157,7 @@ action:
           - service: script.inovelli_blue_led_zigbee2mqtt
             data:
               entity_id:
-                - '{{ switch_entity }}'
+                - '{{ switch_target_entity }}'
               led: "0"
               color: '{{ on_color }}'
               level: '{{ on_level }}'
@@ -137,7 +171,7 @@ action:
           - service: script.inovelli_blue_led_zigbee2mqtt
             data:
               entity_id:
-                - '{{ switch_entity }}'
+                - '{{ switch_target_entity }}'
               led: "0"
               color: '{{ on_color }}'
               level: '{{ on_level }}'
@@ -147,7 +181,7 @@ action:
           - service: script.inovelli_blue_led_zigbee2mqtt
             data:
               entity_id:
-                - '{{ switch_entity }}'
+                - '{{ switch_target_entity }}'
               led: "0"
               color: '{{ off_color }}'
               level: '{{ off_level }}'
@@ -161,7 +195,7 @@ action:
           - service: script.inovelli_blue_led_zigbee2mqtt
             data:
               entity_id:
-                - '{{ switch_entity }}'
+                - '{{ switch_target_entity }}'
               led: "0"
               color: '{{ off_color }}'
               level: '{{ off_level }}'
