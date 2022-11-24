@@ -21,8 +21,36 @@ blueprint:
           entity:
             integration: mqtt
             domain: light
-    on_color:
-      name: On Color
+    on_led_effect:
+      name: On LED Effect
+      description: Effect played when 'Source-State Entity' is `on`. Default is `Solid`.
+      default: Solid
+      selector:
+        select:
+          options:
+            - "Off"
+            - "Clear"
+            - "Solid"
+            - "Aurora"
+            - "Chase"
+            - "Fast Blink"
+            - "Fast Chase"
+            - "Fast Falling"
+            - "Fast Rising"
+            - "Fast Siren"
+            - "Medium Blink"
+            - "Medium Falling"
+            - "Medium Rising"
+            - "Open/Close"
+            - "Pulse"
+            - "Slow Blink"
+            - "Slow Chase"
+            - "Slow Falling"
+            - "Slow Rising"
+            - "Slow Siren"
+            - "Small to Big"
+    on_led_color:
+      name: On LED Color
       description: Color of the LED bar when 'Source-State Entity' is `on`. Default is `Green`.
       default: Green
       selector:
@@ -41,8 +69,8 @@ blueprint:
             - Light Pink
             - Pink
             - White
-    on_level:
-      name: On Level
+    on_led_level:
+      name: On LED Level
       description: Intensity percentage of the LED bar when 'Source-State Entity' is `on`. Default is `10`.
       default: 10
       selector:
@@ -52,7 +80,46 @@ blueprint:
           mode: box
           step: 1
           unit_of_measurement: percent
-    off_color:
+    on_delay:
+      name: On Delay
+      description: Delay in milliseconds before the LED bar is set when 'Source-State Entity' is `on` to allow LED effects from other automations to run before setting LED bar. Default is `200`.
+      default: 200
+      selector:
+        number:
+          min: 0
+          max: 31536000000
+          mode: box
+          step: 1
+          unit_of_measurement: ms
+    off_led_effect:
+      name: Off LED Effect
+      description: Effect played when 'Source-State Entity' is `off`. Default is `Solid`.
+      default: Solid
+      selector:
+        select:
+          options:
+            - "Off"
+            - "Clear"
+            - "Solid"
+            - "Aurora"
+            - "Chase"
+            - "Fast Blink"
+            - "Fast Chase"
+            - "Fast Falling"
+            - "Fast Rising"
+            - "Fast Siren"
+            - "Medium Blink"
+            - "Medium Falling"
+            - "Medium Rising"
+            - "Open/Close"
+            - "Pulse"
+            - "Slow Blink"
+            - "Slow Chase"
+            - "Slow Falling"
+            - "Slow Rising"
+            - "Slow Siren"
+            - "Small to Big"
+    off_led_color:
       name: Off Color
       description: Color of the LED bar when 'Source-State Entity' is `off`. Default is `Blue`.
       default: Blue
@@ -72,7 +139,7 @@ blueprint:
             - Light Pink
             - Pink
             - White
-    off_level:
+    off_led_level:
       name: Off Level
       description: Intensity percentage of the LED bar when 'Source-State Entity' is `off`. Default is `10`.
       default: 10
@@ -83,16 +150,31 @@ blueprint:
           mode: box
           step: 1
           unit_of_measurement: percent
+    off_delay:
+      name: Off Delay
+      description: Delay in milliseconds before the LED bar is set when 'Source-State Entity' is `off` to allow LED effects from other automations to run before setting LED bar. Default is `200`.
+      default: 200
+      selector:
+        number:
+          min: 0
+          max: 31536000000
+          mode: box
+          step: 1
+          unit_of_measurement: ms
 trigger:
   - platform: state
     entity_id: !input 'source_state_entity'
 variables:
   source_state_entity: !input 'source_state_entity'
   switch_led_target: !input 'switch_led_target'
-  on_color: !input 'on_color'
-  on_level: !input 'on_level'
-  off_color: !input 'off_color'
-  off_level: !input 'off_level'
+  on_led_effect: !input 'on_led_effect'
+  on_led_color: !input 'on_led_color'
+  on_led_level: !input 'on_led_level'
+  on_delay: !input 'on_delay'
+  off_led_effect: !input 'off_led_effect'
+  off_led_color: !input 'off_led_color'
+  off_led_level: !input 'off_led_level'
+  off_delay: !input 'off_delay'
 mode: restart
 action:
   - choose:
@@ -105,28 +187,28 @@ action:
               hours: 0
               minutes: 0
               seconds: 0
-              milliseconds: 200
+              milliseconds: '{{ on_delay }}'
           - service: script.inovelli_blue_led_zigbee2mqtt
             data:
               entity_id:
                 - '{{ switch_led_target.entity_id }}'
               led: "0"
-              color: '{{ on_color }}'
-              level: '{{ on_level }}'
-              effect: Solid
+              effect: '{{ on_led_effect }}'
+              color: '{{ on_led_color }}'
+              level: '{{ on_led_level }}'
               duration: Indefinitely
     default:
       - delay:
           hours: 0
           minutes: 0
           seconds: 0
-          milliseconds: 200
+          milliseconds: '{{ off_delay }}'
       - service: script.inovelli_blue_led_zigbee2mqtt
         data:
           entity_id:
             - '{{ switch_led_target.entity_id }}'
           led: "0"
-          color: '{{ off_color }}'
-          level: '{{ off_level }}'
-          effect: Solid
+          effect: '{{ off_led_effect }}'
+          color: '{{ off_led_color }}'
+          level: '{{ off_led_level }}'
           duration: Indefinitely
