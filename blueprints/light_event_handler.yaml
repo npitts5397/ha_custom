@@ -11,7 +11,7 @@ blueprint:
           domain: light
     mqtt_topic:
       name: MQTT Topic
-      description: The MQTT topic to which 'on' and 'off' messages are published.
+      description: The watched MQTT topic to which light state payloads are published.
       selector:
         text:
     primary_scene_helper:
@@ -57,12 +57,7 @@ trigger:
   event_type: automation_reloaded
 - platform: mqtt
   topic: !input mqtt_topic
-  payload: 'on'
-  id: trigger_on
-- platform: mqtt
-  topic: !input mqtt_topic
-  payload: 'off'
-  id: trigger_off
+  id: trigger_mqtt
 - platform: state
   entity_id: !input primary_scene_helper
   id: trigger_primary_scene
@@ -79,6 +74,8 @@ variables:
   primary_scene_helper: !input primary_scene_helper
   secondary_scene_helper: !input secondary_scene_helper
   scene_prefix: "{{ (light_entity | replace('light.','scene.')) + '_' }}"
+  primary_scene: "{{ states(primary_scene_helper) | lower | replace(' ','_') }}"
+  secondary_scene: "{{ states(secondary_scene_helper) | lower  | replace(' ','_') }}"
 condition:
 # block execution if trigger_light_becomes_on happens within 5 seconds of the previous automation execution
 - condition: not
@@ -88,14 +85,22 @@ condition:
     - condition: trigger
       id: trigger_light_becomes_on
     - condition: template
-      value_template: "{{ now() - state_attr(this.entity_id,'last_triggered') < timedelta(seconds=5) }}"
+      value_template: "{{ now() - state_attr(this.entity_id,'last_triggered') < timedelta(seconds=1) }}"
 action:
 - choose:
   - conditions:
     - condition: or
       conditions:
-      - condition: trigger
-        id: trigger_on
+      - condition: and
+        conditions:
+        - condition: trigger
+          id: trigger_mqtt
+        - condition: or
+          conditions:
+          - condition: template
+            value_template: "{{ trigger.payload == 'on' }}"
+          - condition: template
+            value_template: "{{ trigger.payload_json.state == 'on' }}"
       - condition: trigger
         id: trigger_primary_scene
       - condition: trigger
@@ -114,7 +119,13 @@ action:
               entity_id: !input light_entity
               state: 'off'
             - condition: trigger
-              id: trigger_on
+              id: trigger_mqtt
+            - condition: or
+              conditions:
+              - condition: template
+                value_template: "{{ trigger.payload == 'on' }}"
+              - condition: template
+                value_template: "{{ trigger.payload_json.state == 'on' }}"
           - condition: state
             entity_id: !input light_entity
             state: 'on'
@@ -130,7 +141,7 @@ action:
             sequence:
             - service: hue.activate_scene
               target:
-                entity_id: "{{ scene_prefix + states(secondary_scene_helper) | lower }}"
+                entity_id: "{{ scene_prefix + secondary_scene }}"
               data:
                 transition: !input secondary_scene_transition_seconds
           # if secondary helper has no scene specified but triggered the automation, use primary with secondary transition time
@@ -145,21 +156,29 @@ action:
             sequence:
               service: hue.activate_scene
               target:
-                entity_id: "{{ scene_prefix + states(primary_scene_helper) | lower }}"
+                entity_id: "{{ scene_prefix + primary_scene }}"
               data:
                 transition: !input secondary_scene_transition_seconds
           # secondary helper has no scene specified and did not trigger the automation
           default:
           - service: hue.activate_scene
             target:
-              entity_id: "{{ scene_prefix + states(primary_scene_helper) | lower }}"
+              entity_id: "{{ scene_prefix + primary_scene }}"
             data:
               transition: !input primary_scene_transition_seconds
       default: []
   # turn light off
   - conditions:
-    - condition: trigger
-      id: trigger_off
+    - condition: and
+      conditions:
+      - condition: trigger
+        id: trigger_mqtt
+      - condition: or
+        conditions:
+        - condition: template
+          value_template: "{{ trigger.payload == 'off' }}"
+        - condition: template
+          value_template: "{{ trigger.payload_json.state == 'off' }}"
     sequence:
     - service: light.turn_off
       target:
