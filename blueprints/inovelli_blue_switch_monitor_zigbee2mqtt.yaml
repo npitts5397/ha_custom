@@ -5,25 +5,19 @@ blueprint:
   input:
     switch_mqtt_topic:
       name: Blue Series Switch MQTT Topic
-      description: The MQTT topic to monitor for switch events. Events published to this topic trigger this automation.
+      description: MQTT topic monitored for switch events. Events published to this topic trigger this automation.
       selector:
         text:
     entity_mqtt_topic:
       name: Entity MQTT Topic
-      description: The MQTT topic to which payloads are published by this automation, triggered by switch events.
+      description: MQTT topic to which payloads are published by this automation, triggered by switch events.
       selector:
         text:
-    switch_led_target:
-      name: Inovelli Blue Switch LED
-      description: Inovelli Blue switch device with customizable LED. NOTE- THIS ATTRIBUTE SHOULD BE GENERATED AUTOMATICALLY BASED ON SWITCH_MQTT_TOPIC (OR VISE-VERSA).
+    led_effect_mqtt_topic:
+      name: LED Effect MQTT Topic
+      description: MQTT topic to which switch LED effect payloads are published, triggered by switch events.
       selector:
-        target:
-          device:
-            integration: mqtt
-            manufacturer: Inovelli
-          entity:
-            integration: mqtt
-            domain: light
+        text:
     up_1x_payload:
       name: Up Single-Press (1x) MQTT Payload
       description: "Payload to publish to the 'Switch MQTT Topic' for an `up_single` switch event. Default is `{ \"state\": \"on\" }`."
@@ -58,8 +52,8 @@ blueprint:
             - "Slow Rising"
             - "Slow Siren"
             - "Small to Big"
-    up_1x_led_color:
-      name: Up Single-Press (1x) LED Color
+    up_1x_led_effect_color:
+      name: Up Single-Press (1x) LED Effect Color
       description: Color of the LED bar while `up_1x_led_effect` plays. Default is `Green`.
       default: Green
       selector:
@@ -78,8 +72,8 @@ blueprint:
             - Light Pink
             - Pink
             - White
-    up_1x_led_level:
-      name: Up Single-Press (1x) LED Level
+    up_1x_led_effect_level:
+      name: Up Single-Press (1x) LED Effect Level
       description: Intensity percentage of the LED bar while `up_1x_led_effect` plays. Default is `10`.
       default: 10
       selector:
@@ -89,8 +83,8 @@ blueprint:
           mode: box
           step: 1
           unit_of_measurement: percent
-    up_1x_led_duration:
-      name: Up Single-Press (1x) LED Duration
+    up_1x_led_effect_duration:
+      name: Up Single-Press (1x) LED Effect Duration
       description: Duration of the LED bar while `up_1x_led_effect` plays. Values 1-60 is in seconds. Values 61-120 is in minutes, calculated by (value-60); example a value of 65 would be 65-60 = 5 minutes. Values 120-254 is in hours, calculated by (value-120); example a value of 132 would be 132-120 would be 12 hours. - 255 Indefinitely. Default is `1`.
       default: 1
       selector:
@@ -133,8 +127,8 @@ blueprint:
             - "Slow Rising"
             - "Slow Siren"
             - "Small to Big"
-    up_2x_led_color:
-      name: Up Double-Press (2x) LED Color
+    up_2x_led_effect_color:
+      name: Up Double-Press (2x) LED Effect Color
       description: Color of the LED bar while `up_2x_led_effect` plays. Default is `White`.
       default: White
       selector:
@@ -153,8 +147,8 @@ blueprint:
             - Light Pink
             - Pink
             - White
-    up_2x_led_level:
-      name: Up Double-Press (2x) LED Level
+    up_2x_led_effect_level:
+      name: Up Double-Press (2x) LED Effect Level
       description: Intensity percentage of the LED bar while `up_2x_led_effect` plays. Default is `10`.
       default: 10
       selector:
@@ -164,8 +158,8 @@ blueprint:
           mode: box
           step: 1
           unit_of_measurement: percent
-    up_2x_led_duration:
-      name: Up Double-Press (2x) LED Duration
+    up_2x_led_effect_duration:
+      name: Up Double-Press (2x) LED Effect Duration
       description: Duration of the LED bar while `up_2x_led_effect` plays. Values 1-60 is in seconds. Values 61-120 is in minutes, calculated by (value-60); example a value of 65 would be 65-60 = 5 minutes. Values 120-254 is in hours, calculated by (value-120); example a value of 132 would be 132-120 would be 12 hours. - 255 Indefinitely. Default is `1`.
       default: 1
       selector:
@@ -208,8 +202,8 @@ blueprint:
             - "Slow Rising"
             - "Slow Siren"
             - "Small to Big"
-    up_3x_led_color:
-      name: Up Triple-Press (3x) LED Color
+    up_3x_led_effect_color:
+      name: Up Triple-Press (3x) LED Effect Color
       description: Color of the LED bar while `up_3x_led_effect` plays. Default is `White`.
       default: White
       selector:
@@ -228,8 +222,8 @@ blueprint:
             - Light Pink
             - Pink
             - White
-    up_3x_led_level:
-      name: Up Triple-Press (3x) LED Level
+    up_3x_led_effect_level:
+      name: Up Triple-Press (3x) LED Effect Level
       description: Intensity percentage of the LED bar while `up_3x_led_effect` plays. Default is `10`.
       default: 10
       selector:
@@ -239,8 +233,8 @@ blueprint:
           mode: box
           step: 1
           unit_of_measurement: percent
-    up_3x_led_duration:
-      name: Up Triple-Press (3x) LED Duration
+    up_3x_led_effect_duration:
+      name: Up Triple-Press (3x) LED Effect Duration
       description: Duration of the LED bar while `up_3x_led_effect` plays. Values 1-60 is in seconds. Values 61-120 is in minutes, calculated by (value-60); example a value of 65 would be 65-60 = 5 minutes. Values 120-254 is in hours, calculated by (value-120); example a value of 132 would be 132-120 would be 12 hours. - 255 Indefinitely. Default is `1`.
       default: 1
       selector:
@@ -283,8 +277,8 @@ blueprint:
             - "Slow Rising"
             - "Slow Siren"
             - "Small to Big"
-    up_4x_led_color:
-      name: Up Quadruple-Press (4x) LED Color
+    up_4x_led_effect_color:
+      name: Up Quadruple-Press (4x) LED Effect Color
       description: Color of the LED bar while `up_4x_led_effect` plays. Default is `White`.
       default: White
       selector:
@@ -303,8 +297,8 @@ blueprint:
             - Light Pink
             - Pink
             - White
-    up_4x_led_level:
-      name: Up Quadruple-Press (4x) LED Level
+    up_4x_led_effect_level:
+      name: Up Quadruple-Press (4x) LED Effect Level
       description: Intensity percentage of the LED bar while `up_4x_led_effect` plays. Default is `10`.
       default: 10
       selector:
@@ -314,8 +308,8 @@ blueprint:
           mode: box
           step: 1
           unit_of_measurement: percent
-    up_4x_led_duration:
-      name: Up Quadruple-Press (4x) LED Duration
+    up_4x_led_effect_duration:
+      name: Up Quadruple-Press (4x) LED Effect Duration
       description: Duration of the LED bar while `up_4x_led_effect` plays. Values 1-60 is in seconds. Values 61-120 is in minutes, calculated by (value-60); example a value of 65 would be 65-60 = 5 minutes. Values 120-254 is in hours, calculated by (value-120); example a value of 132 would be 132-120 would be 12 hours. - 255 Indefinitely. Default is `1`.
       default: 1
       selector:
@@ -358,8 +352,8 @@ blueprint:
             - "Slow Rising"
             - "Slow Siren"
             - "Small to Big"
-    up_5x_led_color:
-      name: Up Quintruple-Press (5x) LED Color
+    up_5x_led_effect_color:
+      name: Up Quintruple-Press (5x) LED Effect Color
       description: Color of the LED bar while `up_5x_led_effect` plays. Default is `White`.
       default: White
       selector:
@@ -378,8 +372,8 @@ blueprint:
             - Light Pink
             - Pink
             - White
-    up_5x_led_level:
-      name: Up Quintruple-Press (5x) LED Level
+    up_5x_led_effect_level:
+      name: Up Quintruple-Press (5x) LED Effect Level
       description: Intensity percentage of the LED bar while `up_5x_led_effect` plays. Default is `10`.
       default: 10
       selector:
@@ -389,8 +383,8 @@ blueprint:
           mode: box
           step: 1
           unit_of_measurement: percent
-    up_5x_led_duration:
-      name: Up Quintruple-Press (5x) LED Duration
+    up_5x_led_effect_duration:
+      name: Up Quintruple-Press (5x) LED Effect Duration
       description: Duration of the LED bar while `up_5x_led_effect` plays. Values 1-60 is in seconds. Values 61-120 is in minutes, calculated by (value-60); example a value of 65 would be 65-60 = 5 minutes. Values 120-254 is in hours, calculated by (value-120); example a value of 132 would be 132-120 would be 12 hours. - 255 Indefinitely. Default is `1`.
       default: 1
       selector:
@@ -433,8 +427,8 @@ blueprint:
             - "Slow Rising"
             - "Slow Siren"
             - "Small to Big"
-    up_held_led_color:
-      name: Up Held LED Color
+    up_held_led_effect_color:
+      name: Up Held LED Effect Color
       description: Color of the LED bar while `up_held_led_effect` plays. Default is `White`.
       default: White
       selector:
@@ -453,8 +447,8 @@ blueprint:
             - Light Pink
             - Pink
             - White
-    up_held_led_level:
-      name: Up Held LED Level
+    up_held_led_effect_level:
+      name: Up Held  LED Effect Level
       description: Intensity percentage of the LED bar while `up_held_led_effect` plays. Default is `10`.
       default: 10
       selector:
@@ -464,8 +458,8 @@ blueprint:
           mode: box
           step: 1
           unit_of_measurement: percent
-    up_held_led_duration:
-      name: Up Held LED Duration
+    up_held_led_effect_duration:
+      name: Up Held  LED Effect Duration
       description: Duration of the LED bar while `up_held_led_effect` plays. Values 1-60 is in seconds. Values 61-120 is in minutes, calculated by (value-60); example a value of 65 would be 65-60 = 5 minutes. Values 120-254 is in hours, calculated by (value-120); example a value of 132 would be 132-120 would be 12 hours. - 255 Indefinitely. Default is `1`.
       default: 1
       selector:
@@ -508,8 +502,8 @@ blueprint:
             - "Slow Rising"
             - "Slow Siren"
             - "Small to Big"
-    up_release_led_color:
-      name: Up Release LED Color
+    up_release_led_effect_color:
+      name: Up Release LED Effect Color
       description: Color of the LED bar while `up_release_led_effect` plays. Default is `White`.
       default: White
       selector:
@@ -528,8 +522,8 @@ blueprint:
             - Light Pink
             - Pink
             - White
-    up_release_led_level:
-      name: Up Release LED Level
+    up_release_led_effect_level:
+      name: Up Release  LED Effect Level
       description: Intensity percentage of the LED bar while `up_release_led_effect` plays. Default is `10`.
       default: 10
       selector:
@@ -539,8 +533,8 @@ blueprint:
           mode: box
           step: 1
           unit_of_measurement: percent
-    up_release_led_duration:
-      name: Up Release LED Duration
+    up_release_led_effect_duration:
+      name: Up Release  LED Effect Duration
       description: Duration of the LED bar while `up_release_led_effect` plays. Values 1-60 is in seconds. Values 61-120 is in minutes, calculated by (value-60); example a value of 65 would be 65-60 = 5 minutes. Values 120-254 is in hours, calculated by (value-120); example a value of 132 would be 132-120 would be 12 hours. - 255 Indefinitely. Default is `1`.
       default: 1
       selector:
@@ -583,8 +577,8 @@ blueprint:
             - "Slow Rising"
             - "Slow Siren"
             - "Small to Big"
-    down_1x_led_color:
-      name: Down Single-Press (1x) LED Color
+    down_1x_led_effect_color:
+      name: Down Single-Press (1x) LED Effect Color
       description: Color of the LED bar while `down_1x_led_effect` plays. Default is `Blue`.
       default: Blue
       selector:
@@ -603,8 +597,8 @@ blueprint:
             - Light Pink
             - Pink
             - White
-    down_1x_led_level:
-      name: Down Single-Press (1x) LED Level
+    down_1x_led_effect_level:
+      name: Down Single-Press (1x) LED Effect Level
       description: Intensity percentage of the LED bar while `down_1x_led_effect` plays. Default is `10`.
       default: 10
       selector:
@@ -614,8 +608,8 @@ blueprint:
           mode: box
           step: 1
           unit_of_measurement: percent
-    down_1x_led_duration:
-      name: Down Single-Press (1x) LED Duration
+    down_1x_led_effect_duration:
+      name: Down Single-Press (1x) LED Effect Duration
       description: Duration of the LED bar while `down_1x_led_effect` plays. Values 1-60 is in seconds. Values 61-120 is in minutes, calculated by (value-60); example a value of 65 would be 65-60 = 5 minutes. Values 120-254 is in hours, calculated by (value-120); example a value of 132 would be 132-120 would be 12 hours. - 255 Indefinitely. Default is `1`.
       default: 1
       selector:
@@ -658,8 +652,8 @@ blueprint:
             - "Slow Rising"
             - "Slow Siren"
             - "Small to Big"
-    down_2x_led_color:
-      name: Down Double-Press (2x) LED Color
+    down_2x_led_effect_color:
+      name: Down Double-Press (2x) LED Effect Color
       description: Color of the LED bar while `down_2x_led_effect` plays. Default is `White`.
       default: White
       selector:
@@ -678,8 +672,8 @@ blueprint:
             - Light Pink
             - Pink
             - White
-    down_2x_led_level:
-      name: Down Double-Press (2x) LED Level
+    down_2x_led_effect_level:
+      name: Down Double-Press (2x) LED Effect Level
       description: Intensity percentage of the LED bar while `down_2x_led_effect` plays. Default is `10`.
       default: 10
       selector:
@@ -689,8 +683,8 @@ blueprint:
           mode: box
           step: 1
           unit_of_measurement: percent
-    down_2x_led_duration:
-      name: Down Double-Press (2x) LED Duration
+    down_2x_led_effect_duration:
+      name: Down Double-Press (2x) LED Effect Duration
       description: Duration of the LED bar while `down_2x_led_effect` plays. Values 1-60 is in seconds. Values 61-120 is in minutes, calculated by (value-60); example a value of 65 would be 65-60 = 5 minutes. Values 120-254 is in hours, calculated by (value-120); example a value of 132 would be 132-120 would be 12 hours. - 255 Indefinitely. Default is `1`.
       default: 1
       selector:
@@ -733,8 +727,8 @@ blueprint:
             - "Slow Rising"
             - "Slow Siren"
             - "Small to Big"
-    down_3x_led_color:
-      name: Down Triple-Press (3x) LED Color
+    down_3x_led_effect_color:
+      name: Down Triple-Press (3x) LED Effect Color
       description: Color of the LED bar while `down_3x_led_effect` plays. Default is `White`.
       default: White
       selector:
@@ -753,8 +747,8 @@ blueprint:
             - Light Pink
             - Pink
             - White
-    down_3x_led_level:
-      name: Down Triple-Press (3x) LED Level
+    down_3x_led_effect_level:
+      name: Down Triple-Press (3x) LED Effect Level
       description: Intensity percentage of the LED bar while `down_3x_led_effect` plays. Default is `10`.
       default: 10
       selector:
@@ -764,8 +758,8 @@ blueprint:
           mode: box
           step: 1
           unit_of_measurement: percent
-    down_3x_led_duration:
-      name: Down Triple-Press (3x) LED Duration
+    down_3x_led_effect_duration:
+      name: Down Triple-Press (3x) LED Effect Duration
       description: Duration of the LED bar while `down_3x_led_effect` plays. Values 1-60 is in seconds. Values 61-120 is in minutes, calculated by (value-60); example a value of 65 would be 65-60 = 5 minutes. Values 120-254 is in hours, calculated by (value-120); example a value of 132 would be 132-120 would be 12 hours. - 255 Indefinitely. Default is `1`.
       default: 1
       selector:
@@ -808,8 +802,8 @@ blueprint:
             - "Slow Rising"
             - "Slow Siren"
             - "Small to Big"
-    down_4x_led_color:
-      name: Down Quadruple-Press (4x) LED Color
+    down_4x_led_effect_color:
+      name: Down Quadruple-Press (4x) LED Effect Color
       description: Color of the LED bar while `down_4x_led_effect` plays. Default is `White`.
       default: White
       selector:
@@ -828,8 +822,8 @@ blueprint:
             - Light Pink
             - Pink
             - White
-    down_4x_led_level:
-      name: Down Quadruple-Press (4x) LED Level
+    down_4x_led_effect_level:
+      name: Down Quadruple-Press (4x) LED Effect Level
       description: Intensity percentage of the LED bar while `down_4x_led_effect` plays. Default is `10`.
       default: 10
       selector:
@@ -839,8 +833,8 @@ blueprint:
           mode: box
           step: 1
           unit_of_measurement: percent
-    down_4x_led_duration:
-      name: Down Quadruple-Press (4x) LED Duration
+    down_4x_led_effect_duration:
+      name: Down Quadruple-Press (4x) LED Effect Duration
       description: Duration of the LED bar while `down_4x_led_effect` plays. Values 1-60 is in seconds. Values 61-120 is in minutes, calculated by (value-60); example a value of 65 would be 65-60 = 5 minutes. Values 120-254 is in hours, calculated by (value-120); example a value of 132 would be 132-120 would be 12 hours. - 255 Indefinitely. Default is `1`.
       default: 1
       selector:
@@ -883,8 +877,8 @@ blueprint:
             - "Slow Rising"
             - "Slow Siren"
             - "Small to Big"
-    down_5x_led_color:
-      name: Down Quintruple-Press (5x) LED Color
+    down_5x_led_effect_color:
+      name: Down Quintruple-Press (5x) LED Effect Color
       description: Color of the LED bar while `down_5x_led_effect` plays. Default is `White`.
       default: White
       selector:
@@ -903,8 +897,8 @@ blueprint:
             - Light Pink
             - Pink
             - White
-    down_5x_led_level:
-      name: Down Quintruple-Press (5x) LED Level
+    down_5x_led_effect_level:
+      name: Down Quintruple-Press (5x) LED Effect Level
       description: Intensity percentage of the LED bar while `down_5x_led_effect` plays. Default is `10`.
       default: 10
       selector:
@@ -914,8 +908,8 @@ blueprint:
           mode: box
           step: 1
           unit_of_measurement: percent
-    down_5x_led_duration:
-      name: Down Quintruple-Press (5x) LED Duration
+    down_5x_led_effect_duration:
+      name: Down Quintruple-Press (5x) LED Effect Duration
       description: Duration of the LED bar while `down_5x_led_effect` plays. Values 1-60 is in seconds. Values 61-120 is in minutes, calculated by (value-60); example a value of 65 would be 65-60 = 5 minutes. Values 120-254 is in hours, calculated by (value-120); example a value of 132 would be 132-120 would be 12 hours. - 255 Indefinitely. Default is `1`.
       default: 1
       selector:
@@ -958,8 +952,8 @@ blueprint:
             - "Slow Rising"
             - "Slow Siren"
             - "Small to Big"
-    down_held_led_color:
-      name: Down Held LED Color
+    down_held_led_effect_color:
+      name: Down Held LED Effect Color
       description: Color of the LED bar while `down_held_led_effect` plays. Default is `White`.
       default: White
       selector:
@@ -978,8 +972,8 @@ blueprint:
             - Light Pink
             - Pink
             - White
-    down_held_led_level:
-      name: Down Held LED Level
+    down_held_led_effect_level:
+      name: Down Held  LED Effect Level
       description: Intensity percentage of the LED bar while `down_held_led_effect` plays. Default is `10`.
       default: 10
       selector:
@@ -989,8 +983,8 @@ blueprint:
           mode: box
           step: 1
           unit_of_measurement: percent
-    down_held_led_duration:
-      name: Down Held LED Duration
+    down_held_led_effect_duration:
+      name: Down Held  LED Effect Duration
       description: Duration of the LED bar while `down_held_led_effect` plays. Values 1-60 is in seconds. Values 61-120 is in minutes, calculated by (value-60); example a value of 65 would be 65-60 = 5 minutes. Values 120-254 is in hours, calculated by (value-120); example a value of 132 would be 132-120 would be 12 hours. - 255 Indefinitely. Default is `1`.
       default: 1
       selector:
@@ -1033,8 +1027,8 @@ blueprint:
             - "Slow Rising"
             - "Slow Siren"
             - "Small to Big"
-    down_release_led_color:
-      name: Down Release LED Color
+    down_release_led_effect_color:
+      name: Down Release LED Effect Color
       description: Color of the LED bar while `down_release_led_effect` plays. Default is `White`.
       default: White
       selector:
@@ -1053,8 +1047,8 @@ blueprint:
             - Light Pink
             - Pink
             - White
-    down_release_led_level:
-      name: Down Release LED Level
+    down_release_led_effect_level:
+      name: Down Release  LED Effect Level
       description: Intensity percentage of the LED bar while `down_release_led_effect` plays. Default is `10`.
       default: 10
       selector:
@@ -1064,8 +1058,8 @@ blueprint:
           mode: box
           step: 1
           unit_of_measurement: percent
-    down_release_led_duration:
-      name: Down Release LED Duration
+    down_release_led_effect_duration:
+      name: Down Release  LED Effect Duration
       description: Duration of the LED bar while `down_release_led_effect` plays. Values 1-60 is in seconds. Values 61-120 is in minutes, calculated by (value-60); example a value of 65 would be 65-60 = 5 minutes. Values 120-254 is in hours, calculated by (value-120); example a value of 132 would be 132-120 would be 12 hours. - 255 Indefinitely. Default is `1`.
       default: 1
       selector:
@@ -1108,8 +1102,8 @@ blueprint:
             - "Slow Rising"
             - "Slow Siren"
             - "Small to Big"
-    config_1x_led_color:
-      name: Config Single-Press (1x) LED Color
+    config_1x_led_effect_color:
+      name: Config Single-Press (1x) LED Effect Color
       description: Color of the LED bar while `config_1x_led_effect` plays. Default is `White`.
       default: White
       selector:
@@ -1128,8 +1122,8 @@ blueprint:
             - Light Pink
             - Pink
             - White
-    config_1x_led_level:
-      name: Config Single-Press (1x) LED Level
+    config_1x_led_effect_level:
+      name: Config Single-Press (1x) LED Effect Level
       description: Intensity percentage of the LED bar while `config_1x_led_effect` plays. Default is `10`.
       default: 10
       selector:
@@ -1139,8 +1133,8 @@ blueprint:
           mode: box
           step: 1
           unit_of_measurement: percent
-    config_1x_led_duration:
-      name: Config Single-Press (1x) LED Duration
+    config_1x_led_effect_duration:
+      name: Config Single-Press (1x) LED Effect Duration
       description: Duration of the LED bar while `config_1x_led_effect` plays. Values 1-60 is in seconds. Values 61-120 is in minutes, calculated by (value-60); example a value of 65 would be 65-60 = 5 minutes. Values 120-254 is in hours, calculated by (value-120); example a value of 132 would be 132-120 would be 12 hours. - 255 Indefinitely. Default is `1`.
       default: 1
       selector:
@@ -1183,8 +1177,8 @@ blueprint:
             - "Slow Rising"
             - "Slow Siren"
             - "Small to Big"
-    config_2x_led_color:
-      name: Config Double-Press (2x) LED Color
+    config_2x_led_effect_color:
+      name: Config Double-Press (2x) LED Effect Color
       description: Color of the LED bar while `config_2x_led_effect` plays. Default is `White`.
       default: White
       selector:
@@ -1203,8 +1197,8 @@ blueprint:
             - Light Pink
             - Pink
             - White
-    config_2x_led_level:
-      name: Config Double-Press (2x) LED Level
+    config_2x_led_effect_level:
+      name: Config Double-Press (2x) LED Effect Level
       description: Intensity percentage of the LED bar while `config_2x_led_effect` plays. Default is `10`.
       default: 10
       selector:
@@ -1214,8 +1208,8 @@ blueprint:
           mode: box
           step: 1
           unit_of_measurement: percent
-    config_2x_led_duration:
-      name: Config Double-Press (2x) LED Duration
+    config_2x_led_effect_duration:
+      name: Config Double-Press (2x) LED Effect Duration
       description: Duration of the LED bar while `config_2x_led_effect` plays. Values 1-60 is in seconds. Values 61-120 is in minutes, calculated by (value-60); example a value of 65 would be 65-60 = 5 minutes. Values 120-254 is in hours, calculated by (value-120); example a value of 132 would be 132-120 would be 12 hours. - 255 Indefinitely. Default is `1`.
       default: 1
       selector:
@@ -1258,8 +1252,8 @@ blueprint:
             - "Slow Rising"
             - "Slow Siren"
             - "Small to Big"
-    config_3x_led_color:
-      name: Config Triple-Press (3x) LED Color
+    config_3x_led_effect_color:
+      name: Config Triple-Press (3x) LED Effect Color
       description: Color of the LED bar while `config_3x_led_effect` plays. Default is `White`.
       default: White
       selector:
@@ -1278,8 +1272,8 @@ blueprint:
             - Light Pink
             - Pink
             - White
-    config_3x_led_level:
-      name: Config Triple-Press (3x) LED Level
+    config_3x_led_effect_level:
+      name: Config Triple-Press (3x) LED Effect Level
       description: Intensity percentage of the LED bar while `config_3x_led_effect` plays. Default is `10`.
       default: 10
       selector:
@@ -1289,8 +1283,8 @@ blueprint:
           mode: box
           step: 1
           unit_of_measurement: percent
-    config_3x_led_duration:
-      name: Config Triple-Press (3x) LED Duration
+    config_3x_led_effect_duration:
+      name: Config Triple-Press (3x) LED Effect Duration
       description: Duration of the LED bar while `config_3x_led_effect` plays. Values 1-60 is in seconds. Values 61-120 is in minutes, calculated by (value-60); example a value of 65 would be 65-60 = 5 minutes. Values 120-254 is in hours, calculated by (value-120); example a value of 132 would be 132-120 would be 12 hours. - 255 Indefinitely. Default is `1`.
       default: 1
       selector:
@@ -1333,8 +1327,8 @@ blueprint:
             - "Slow Rising"
             - "Slow Siren"
             - "Small to Big"
-    config_4x_led_color:
-      name: Config Quadruple-Press (4x) LED Color
+    config_4x_led_effect_color:
+      name: Config Quadruple-Press (4x) LED Effect Color
       description: Color of the LED bar while `config_4x_led_effect` plays. Default is `White`.
       default: White
       selector:
@@ -1353,8 +1347,8 @@ blueprint:
             - Light Pink
             - Pink
             - White
-    config_4x_led_level:
-      name: Config Quadruple-Press (4x) LED Level
+    config_4x_led_effect_level:
+      name: Config Quadruple-Press (4x) LED Effect Level
       description: Intensity percentage of the LED bar while `config_4x_led_effect` plays. Default is `10`.
       default: 10
       selector:
@@ -1364,8 +1358,8 @@ blueprint:
           mode: box
           step: 1
           unit_of_measurement: percent
-    config_4x_led_duration:
-      name: Config Quadruple-Press (4x) LED Duration
+    config_4x_led_effect_duration:
+      name: Config Quadruple-Press (4x) LED Effect Duration
       description: Duration of the LED bar while `config_4x_led_effect` plays. Values 1-60 is in seconds. Values 61-120 is in minutes, calculated by (value-60); example a value of 65 would be 65-60 = 5 minutes. Values 120-254 is in hours, calculated by (value-120); example a value of 132 would be 132-120 would be 12 hours. - 255 Indefinitely. Default is `1`.
       default: 1
       selector:
@@ -1408,8 +1402,8 @@ blueprint:
             - "Slow Rising"
             - "Slow Siren"
             - "Small to Big"
-    config_5x_led_color:
-      name: Config Quintruple-Press (5x) LED Color
+    config_5x_led_effect_color:
+      name: Config Quintruple-Press (5x) LED Effect Color
       description: Color of the LED bar while `config_5x_led_effect` plays. Default is `White`.
       default: White
       selector:
@@ -1428,8 +1422,8 @@ blueprint:
             - Light Pink
             - Pink
             - White
-    config_5x_led_level:
-      name: Config Quintruple-Press (5x) LED Level
+    config_5x_led_effect_level:
+      name: Config Quintruple-Press (5x) LED Effect Level
       description: Intensity percentage of the LED bar while `config_5x_led_effect` plays. Default is `10`.
       default: 10
       selector:
@@ -1439,8 +1433,8 @@ blueprint:
           mode: box
           step: 1
           unit_of_measurement: percent
-    config_5x_led_duration:
-      name: Config Quintruple-Press (5x) LED Duration
+    config_5x_led_effect_duration:
+      name: Config Quintruple-Press (5x) LED Effect Duration
       description: Duration of the LED bar while `config_5x_led_effect` plays. Values 1-60 is in seconds. Values 61-120 is in minutes, calculated by (value-60); example a value of 65 would be 65-60 = 5 minutes. Values 120-254 is in hours, calculated by (value-120); example a value of 132 would be 132-120 would be 12 hours. - 255 Indefinitely. Default is `1`.
       default: 1
       selector:
@@ -1483,8 +1477,8 @@ blueprint:
             - "Slow Rising"
             - "Slow Siren"
             - "Small to Big"
-    config_held_led_color:
-      name: Config Held LED Color
+    config_held_led_effect_color:
+      name: Config Held LED Effect Color
       description: Color of the LED bar while `config_held_led_effect` plays. Default is `White`.
       default: White
       selector:
@@ -1503,8 +1497,8 @@ blueprint:
             - Light Pink
             - Pink
             - White
-    config_held_led_level:
-      name: Config Held LED Level
+    config_held_led_effect_level:
+      name: Config Held  LED Effect Level
       description: Intensity percentage of the LED bar while `config_held_led_effect` plays. Default is `10`.
       default: 10
       selector:
@@ -1514,8 +1508,8 @@ blueprint:
           mode: box
           step: 1
           unit_of_measurement: percent
-    config_held_led_duration:
-      name: Config Held LED Duration
+    config_held_led_effect_duration:
+      name: Config Held  LED Effect Duration
       description: Duration of the LED bar while `config_held_led_effect` plays. Values 1-60 is in seconds. Values 61-120 is in minutes, calculated by (value-60); example a value of 65 would be 65-60 = 5 minutes. Values 120-254 is in hours, calculated by (value-120); example a value of 132 would be 132-120 would be 12 hours. - 255 Indefinitely. Default is `1`.
       default: 1
       selector:
@@ -1558,8 +1552,8 @@ blueprint:
             - "Slow Rising"
             - "Slow Siren"
             - "Small to Big"
-    config_release_led_color:
-      name: Config Release LED Color
+    config_release_led_effect_color:
+      name: Config Release LED Effect Color
       description: Color of the LED bar while `config_release_led_effect` plays. Default is `White`.
       default: White
       selector:
@@ -1578,8 +1572,8 @@ blueprint:
             - Light Pink
             - Pink
             - White
-    config_release_led_level:
-      name: Config Release LED Level
+    config_release_led_effect_level:
+      name: Config Release  LED Effect Level
       description: Intensity percentage of the LED bar while `config_release_led_effect` plays. Default is `10`.
       default: 10
       selector:
@@ -1589,8 +1583,8 @@ blueprint:
           mode: box
           step: 1
           unit_of_measurement: percent
-    config_release_led_duration:
-      name: Config Release LED Duration
+    config_release_led_effect_duration:
+      name: Config Release  LED Effect Duration
       description: Duration of the LED bar while `config_release_led_effect` plays. Values 1-60 is in seconds. Values 61-120 is in minutes, calculated by (value-60); example a value of 65 would be 65-60 = 5 minutes. Values 120-254 is in hours, calculated by (value-120); example a value of 132 would be 132-120 would be 12 hours. - 255 Indefinitely. Default is `1`.
       default: 1
       selector:
@@ -1688,112 +1682,112 @@ trigger:
 variables:
   switch_mqtt_topic: !input switch_mqtt_topic
   entity_mqtt_topic: !input entity_mqtt_topic
-  switch_led_target: !input switch_led_target
+  led_effect_mqtt_topic: !input led_effect_mqtt_topic
   up_1x_payload: !input up_1x_payload
   up_1x_led_effect: !input up_1x_led_effect
-  up_1x_led_color: !input up_1x_led_color
-  up_1x_led_level: !input up_1x_led_level
-  up_1x_led_duration: !input up_1x_led_duration
+  up_1x_led_effect_color: !input up_1x_led_effect_color
+  up_1x_led_effect_level: !input up_1x_led_effect_level
+  up_1x_led_effect_duration: !input up_1x_led_effect_duration
   up_2x_payload: !input up_2x_payload
   up_2x_led_effect: !input up_2x_led_effect
-  up_2x_led_color: !input up_2x_led_color
-  up_2x_led_level: !input up_2x_led_level
-  up_2x_led_duration: !input up_2x_led_duration
+  up_2x_led_effect_color: !input up_2x_led_effect_color
+  up_2x_led_effect_level: !input up_2x_led_effect_level
+  up_2x_led_effect_duration: !input up_2x_led_effect_duration
   up_3x_payload: !input up_3x_payload
   up_3x_led_effect: !input up_3x_led_effect
-  up_3x_led_color: !input up_3x_led_color
-  up_3x_led_level: !input up_3x_led_level
-  up_3x_led_duration: !input up_3x_led_duration
+  up_3x_led_effect_color: !input up_3x_led_effect_color
+  up_3x_led_effect_level: !input up_3x_led_effect_level
+  up_3x_led_effect_duration: !input up_3x_led_effect_duration
   up_4x_payload: !input up_4x_payload
   up_4x_led_effect: !input up_4x_led_effect
-  up_4x_led_color: !input up_4x_led_color
-  up_4x_led_level: !input up_4x_led_level
-  up_4x_led_duration: !input up_4x_led_duration
+  up_4x_led_effect_color: !input up_4x_led_effect_color
+  up_4x_led_effect_level: !input up_4x_led_effect_level
+  up_4x_led_effect_duration: !input up_4x_led_effect_duration
   up_5x_payload: !input up_5x_payload
   up_5x_led_effect: !input up_5x_led_effect
-  up_5x_led_color: !input up_5x_led_color
-  up_5x_led_level: !input up_5x_led_level
-  up_5x_led_duration: !input up_5x_led_duration
+  up_5x_led_effect_color: !input up_5x_led_effect_color
+  up_5x_led_effect_level: !input up_5x_led_effect_level
+  up_5x_led_effect_duration: !input up_5x_led_effect_duration
   up_held_payload: !input up_held_payload
   up_held_led_effect: !input up_held_led_effect
-  up_held_led_color: !input up_held_led_color
-  up_held_led_level: !input up_held_led_level
-  up_held_led_duration: !input up_held_led_duration
+  up_held_led_effect_color: !input up_held_led_effect_color
+  up_held_led_effect_level: !input up_held_led_effect_level
+  up_held_led_effect_duration: !input up_held_led_effect_duration
   up_release_payload: !input up_release_payload
   up_release_led_effect: !input up_release_led_effect
-  up_release_led_color: !input up_release_led_color
-  up_release_led_level: !input up_release_led_level
-  up_release_led_duration: !input up_release_led_duration
+  up_release_led_effect_color: !input up_release_led_effect_color
+  up_release_led_effect_level: !input up_release_led_effect_level
+  up_release_led_effect_duration: !input up_release_led_effect_duration
   down_1x_payload: !input down_1x_payload
   down_1x_led_effect: !input down_1x_led_effect
-  down_1x_led_color: !input down_1x_led_color
-  down_1x_led_level: !input down_1x_led_level
-  down_1x_led_duration: !input down_1x_led_duration
+  down_1x_led_effect_color: !input down_1x_led_effect_color
+  down_1x_led_effect_level: !input down_1x_led_effect_level
+  down_1x_led_effect_duration: !input down_1x_led_effect_duration
   down_2x_payload: !input down_2x_payload
   down_2x_led_effect: !input down_2x_led_effect
-  down_2x_led_color: !input down_2x_led_color
-  down_2x_led_level: !input down_2x_led_level
-  down_2x_led_duration: !input down_2x_led_duration
+  down_2x_led_effect_color: !input down_2x_led_effect_color
+  down_2x_led_effect_level: !input down_2x_led_effect_level
+  down_2x_led_effect_duration: !input down_2x_led_effect_duration
   down_3x_payload: !input down_3x_payload
   down_3x_led_effect: !input down_3x_led_effect
-  down_3x_led_color: !input down_3x_led_color
-  down_3x_led_level: !input down_3x_led_level
-  down_3x_led_duration: !input down_3x_led_duration
+  down_3x_led_effect_color: !input down_3x_led_effect_color
+  down_3x_led_effect_level: !input down_3x_led_effect_level
+  down_3x_led_effect_duration: !input down_3x_led_effect_duration
   down_4x_payload: !input down_4x_payload
   down_4x_led_effect: !input down_4x_led_effect
-  down_4x_led_color: !input down_4x_led_color
-  down_4x_led_level: !input down_4x_led_level
-  down_4x_led_duration: !input down_4x_led_duration
+  down_4x_led_effect_color: !input down_4x_led_effect_color
+  down_4x_led_effect_level: !input down_4x_led_effect_level
+  down_4x_led_effect_duration: !input down_4x_led_effect_duration
   down_5x_payload: !input down_5x_payload
   down_5x_led_effect: !input down_5x_led_effect
-  down_5x_led_color: !input down_5x_led_color
-  down_5x_led_level: !input down_5x_led_level
-  down_5x_led_duration: !input down_5x_led_duration
+  down_5x_led_effect_color: !input down_5x_led_effect_color
+  down_5x_led_effect_level: !input down_5x_led_effect_level
+  down_5x_led_effect_duration: !input down_5x_led_effect_duration
   down_held_payload: !input down_held_payload
   down_held_led_effect: !input down_held_led_effect
-  down_held_led_color: !input down_held_led_color
-  down_held_led_level: !input down_held_led_level
-  down_held_led_duration: !input down_held_led_duration
+  down_held_led_effect_color: !input down_held_led_effect_color
+  down_held_led_effect_level: !input down_held_led_effect_level
+  down_held_led_effect_duration: !input down_held_led_effect_duration
   down_release_payload: !input down_release_payload
   down_release_led_effect: !input down_release_led_effect
-  down_release_led_color: !input down_release_led_color
-  down_release_led_level: !input down_release_led_level
-  down_release_led_duration: !input down_release_led_duration
+  down_release_led_effect_color: !input down_release_led_effect_color
+  down_release_led_effect_level: !input down_release_led_effect_level
+  down_release_led_effect_duration: !input down_release_led_effect_duration
   config_1x_payload: !input config_1x_payload
   config_1x_led_effect: !input config_1x_led_effect
-  config_1x_led_color: !input config_1x_led_color
-  config_1x_led_level: !input config_1x_led_level
-  config_1x_led_duration: !input config_1x_led_duration
+  config_1x_led_effect_color: !input config_1x_led_effect_color
+  config_1x_led_effect_level: !input config_1x_led_effect_level
+  config_1x_led_effect_duration: !input config_1x_led_effect_duration
   config_2x_payload: !input config_2x_payload
   config_2x_led_effect: !input config_2x_led_effect
-  config_2x_led_color: !input config_2x_led_color
-  config_2x_led_level: !input config_2x_led_level
-  config_2x_led_duration: !input config_2x_led_duration
+  config_2x_led_effect_color: !input config_2x_led_effect_color
+  config_2x_led_effect_level: !input config_2x_led_effect_level
+  config_2x_led_effect_duration: !input config_2x_led_effect_duration
   config_3x_payload: !input config_3x_payload
   config_3x_led_effect: !input config_3x_led_effect
-  config_3x_led_color: !input config_3x_led_color
-  config_3x_led_level: !input config_3x_led_level
-  config_3x_led_duration: !input config_3x_led_duration
+  config_3x_led_effect_color: !input config_3x_led_effect_color
+  config_3x_led_effect_level: !input config_3x_led_effect_level
+  config_3x_led_effect_duration: !input config_3x_led_effect_duration
   config_4x_payload: !input config_4x_payload
   config_4x_led_effect: !input config_4x_led_effect
-  config_4x_led_color: !input config_4x_led_color
-  config_4x_led_level: !input config_4x_led_level
-  config_4x_led_duration: !input config_4x_led_duration
+  config_4x_led_effect_color: !input config_4x_led_effect_color
+  config_4x_led_effect_level: !input config_4x_led_effect_level
+  config_4x_led_effect_duration: !input config_4x_led_effect_duration
   config_5x_payload: !input config_5x_payload
   config_5x_led_effect: !input config_5x_led_effect
-  config_5x_led_color: !input config_5x_led_color
-  config_5x_led_level: !input config_5x_led_level
-  config_5x_led_duration: !input config_5x_led_duration
+  config_5x_led_effect_color: !input config_5x_led_effect_color
+  config_5x_led_effect_level: !input config_5x_led_effect_level
+  config_5x_led_effect_duration: !input config_5x_led_effect_duration
   config_held_payload: !input config_held_payload
   config_held_led_effect: !input config_held_led_effect
-  config_held_led_color: !input config_held_led_color
-  config_held_led_level: !input config_held_led_level
-  config_held_led_duration: !input config_held_led_duration
+  config_held_led_effect_color: !input config_held_led_effect_color
+  config_held_led_effect_level: !input config_held_led_effect_level
+  config_held_led_effect_duration: !input config_held_led_effect_duration
   config_release_payload: !input config_release_payload
   config_release_led_effect: !input config_release_led_effect
-  config_release_led_color: !input config_release_led_color
-  config_release_led_level: !input config_release_led_level
-  config_release_led_duration: !input config_release_led_duration
+  config_release_led_effect_color: !input config_release_led_effect_color
+  config_release_led_effect_level: !input config_release_led_effect_level
+  config_release_led_effect_duration: !input config_release_led_effect_duration
 condition: []
 action:
   - choose:
@@ -1807,15 +1801,11 @@ action:
                   qos: "1"
                   topic: "{{ entity_mqtt_topic }}"
                   payload: "{{ up_1x_payload }}"
-              - service: script.inovelli_blue_led_zigbee2mqtt
+              - service: mqtt.publish
                 data:
-                  entity_id:
-                    - "{{ switch_led_target.entity_id }}"
-                  led: "0"
-                  effect: "{{ up_1x_led_effect }}"
-                  color: "{{ up_1x_led_color }}"
-                  level: "{{ up_1x_led_level }}"
-                  duration: "{{ up_1x_led_duration }}"
+                  qos: "1"
+                  topic: '{{ led_effect_mqtt_topic }}'
+                  payload: '{ "effect": "{{ up_1x_led_effect }}", "color": "{{ up_1x_led_effect_color }}", "level": {{ up_1x_led_effect_level }}, "duration": {{ up_1x_led_effect_duration }} }'
       - conditions:
           - condition: trigger
             id: trigger_up_2x
@@ -1826,15 +1816,11 @@ action:
                   qos: "1"
                   topic: "{{ entity_mqtt_topic }}"
                   payload: "{{ up_2x_payload }}"
-              - service: script.inovelli_blue_led_zigbee2mqtt
+              - service: mqtt.publish
                 data:
-                  entity_id:
-                    - "{{ switch_led_target.entity_id }}"
-                  led: "0"
-                  effect: "{{ up_2x_led_effect }}"
-                  color: "{{ up_2x_led_color }}"
-                  level: "{{ up_2x_led_level }}"
-                  duration: "{{ up_2x_led_duration }}"
+                  qos: "1"
+                  topic: '{{ led_effect_mqtt_topic }}'
+                  payload: '{ "effect": "{{ up_2x_led_effect }}", "color": "{{ up_2x_led_effect_color }}", "level": {{ up_2x_led_effect_level }}, "duration": {{ up_2x_led_effect_duration }} }'
       - conditions:
           - condition: trigger
             id: trigger_up_3x
@@ -1845,15 +1831,11 @@ action:
                   qos: "1"
                   topic: "{{ entity_mqtt_topic }}"
                   payload: "{{ up_3x_payload }}"
-              - service: script.inovelli_blue_led_zigbee2mqtt
+              - service: mqtt.publish
                 data:
-                  entity_id:
-                    - "{{ switch_led_target.entity_id }}"
-                  led: "0"
-                  effect: "{{ up_3x_led_effect }}"
-                  color: "{{ up_3x_led_color }}"
-                  level: "{{ up_3x_led_level }}"
-                  duration: "{{ up_3x_led_duration }}"
+                  qos: "1"
+                  topic: '{{ led_effect_mqtt_topic }}'
+                  payload: '{ "effect": "{{ up_3x_led_effect }}", "color": "{{ up_3x_led_effect_color }}", "level": {{ up_3x_led_effect_level }}, "duration": {{ up_3x_led_effect_duration }} }'
       - conditions:
           - condition: trigger
             id: trigger_up_4x
@@ -1864,15 +1846,11 @@ action:
                   qos: "1"
                   topic: "{{ entity_mqtt_topic }}"
                   payload: "{{ up_4x_payload }}"
-              - service: script.inovelli_blue_led_zigbee2mqtt
+              - service: mqtt.publish
                 data:
-                  entity_id:
-                    - "{{ switch_led_target.entity_id }}"
-                  led: "0"
-                  effect: "{{ up_4x_led_effect }}"
-                  color: "{{ up_4x_led_color }}"
-                  level: "{{ up_4x_led_level }}"
-                  duration: "{{ up_4x_led_duration }}"
+                  qos: "1"
+                  topic: '{{ led_effect_mqtt_topic }}'
+                  payload: '{ "effect": "{{ up_4x_led_effect }}", "color": "{{ up_4x_led_effect_color }}", "level": {{ up_4x_led_effect_level }}, "duration": {{ up_4x_led_effect_duration }} }'
       - conditions:
           - condition: trigger
             id: trigger_up_5x
@@ -1883,15 +1861,11 @@ action:
                   qos: "1"
                   topic: "{{ entity_mqtt_topic }}"
                   payload: "{{ up_5x_payload }}"
-              - service: script.inovelli_blue_led_zigbee2mqtt
+              - service: mqtt.publish
                 data:
-                  entity_id:
-                    - "{{ switch_led_target.entity_id }}"
-                  led: "0"
-                  effect: "{{ up_5x_led_effect }}"
-                  color: "{{ up_5x_led_color }}"
-                  level: "{{ up_5x_led_level }}"
-                  duration: "{{ up_5x_led_duration }}"
+                  qos: "1"
+                  topic: '{{ led_effect_mqtt_topic }}'
+                  payload: '{ "effect": "{{ up_5x_led_effect }}", "color": "{{ up_5x_led_effect_color }}", "level": {{ up_5x_led_effect_level }}, "duration": {{ up_5x_led_effect_duration }} }'
       - conditions:
           - condition: trigger
             id: trigger_up_held
@@ -1902,15 +1876,11 @@ action:
                   qos: "1"
                   topic: "{{ entity_mqtt_topic }}"
                   payload: "{{ up_held_payload }}"
-              - service: script.inovelli_blue_led_zigbee2mqtt
+              - service: mqtt.publish
                 data:
-                  entity_id:
-                    - "{{ switch_led_target.entity_id }}"
-                  led: "0"
-                  effect: "{{ up_held_led_effect }}"
-                  color: "{{ up_held_led_color }}"
-                  level: "{{ up_held_led_level }}"
-                  duration: "{{ up_held_led_duration }}"
+                  qos: "1"
+                  topic: '{{ led_effect_mqtt_topic }}'
+                  payload: '{ "effect": "{{ up_held_led_effect }}", "color": "{{ up_held_led_effect_color }}", "level": {{ up_held_led_effect_level }}, "duration": {{ up_held_led_effect_duration }} }'
       - conditions:
           - condition: trigger
             id: trigger_up_release
@@ -1921,15 +1891,11 @@ action:
                   qos: "1"
                   topic: "{{ entity_mqtt_topic }}"
                   payload: "{{ up_release_payload }}"
-              - service: script.inovelli_blue_led_zigbee2mqtt
+              - service: mqtt.publish
                 data:
-                  entity_id:
-                    - "{{ switch_led_target.entity_id }}"
-                  led: "0"
-                  effect: "{{ up_release_led_effect }}"
-                  color: "{{ up_release_led_color }}"
-                  level: "{{ up_release_led_level }}"
-                  duration: "{{ up_release_led_duration }}"
+                  qos: "1"
+                  topic: '{{ led_effect_mqtt_topic }}'
+                  payload: '{ "effect": "{{ up_release_led_effect }}", "color": "{{ up_release_led_effect_color }}", "level": {{ up_release_led_effect_level }}, "duration": {{ up_release_led_effect_duration }} }'
       - conditions:
           - condition: trigger
             id: trigger_down_1x
@@ -1940,15 +1906,11 @@ action:
                   qos: "1"
                   topic: "{{ entity_mqtt_topic }}"
                   payload: "{{ down_1x_payload }}"
-              - service: script.inovelli_blue_led_zigbee2mqtt
+              - service: mqtt.publish
                 data:
-                  entity_id:
-                    - "{{ switch_led_target.entity_id }}"
-                  led: "0"
-                  effect: "{{ down_1x_led_effect }}"
-                  color: "{{ down_1x_led_color }}"
-                  level: "{{ down_1x_led_level }}"
-                  duration: "{{ down_1x_led_duration }}"
+                  qos: "1"
+                  topic: '{{ led_effect_mqtt_topic }}'
+                  payload: '{ "effect": "{{ down_1x_led_effect }}", "color": "{{ down_1x_led_effect_color }}", "level": {{ down_1x_led_effect_level }}, "duration": {{ down_1x_led_effect_duration }} }'
       - conditions:
           - condition: trigger
             id: trigger_down_2x
@@ -1959,15 +1921,11 @@ action:
                   qos: "1"
                   topic: "{{ entity_mqtt_topic }}"
                   payload: "{{ down_2x_payload }}"
-              - service: script.inovelli_blue_led_zigbee2mqtt
+              - service: mqtt.publish
                 data:
-                  entity_id:
-                    - "{{ switch_led_target.entity_id }}"
-                  led: "0"
-                  effect: "{{ down_2x_led_effect }}"
-                  color: "{{ down_2x_led_color }}"
-                  level: "{{ down_2x_led_level }}"
-                  duration: "{{ down_2x_led_duration }}"
+                  qos: "1"
+                  topic: '{{ led_effect_mqtt_topic }}'
+                  payload: '{ "effect": "{{ down_2x_led_effect }}", "color": "{{ down_2x_led_effect_color }}", "level": {{ down_2x_led_effect_level }}, "duration": {{ down_2x_led_effect_duration }} }'
       - conditions:
           - condition: trigger
             id: trigger_down_3x
@@ -1978,15 +1936,11 @@ action:
                   qos: "1"
                   topic: "{{ entity_mqtt_topic }}"
                   payload: "{{ down_3x_payload }}"
-              - service: script.inovelli_blue_led_zigbee2mqtt
+              - service: mqtt.publish
                 data:
-                  entity_id:
-                    - "{{ switch_led_target.entity_id }}"
-                  led: "0"
-                  effect: "{{ down_3x_led_effect }}"
-                  color: "{{ down_3x_led_color }}"
-                  level: "{{ down_3x_led_level }}"
-                  duration: "{{ down_3x_led_duration }}"
+                  qos: "1"
+                  topic: '{{ led_effect_mqtt_topic }}'
+                  payload: '{ "effect": "{{ down_3x_led_effect }}", "color": "{{ down_3x_led_effect_color }}", "level": {{ down_3x_led_effect_level }}, "duration": {{ down_3x_led_effect_duration }} }'
       - conditions:
           - condition: trigger
             id: trigger_down_4x
@@ -1997,15 +1951,11 @@ action:
                   qos: "1"
                   topic: "{{ entity_mqtt_topic }}"
                   payload: "{{ down_4x_payload }}"
-              - service: script.inovelli_blue_led_zigbee2mqtt
+              - service: mqtt.publish
                 data:
-                  entity_id:
-                    - "{{ switch_led_target.entity_id }}"
-                  led: "0"
-                  effect: "{{ down_4x_led_effect }}"
-                  color: "{{ down_4x_led_color }}"
-                  level: "{{ down_4x_led_level }}"
-                  duration: "{{ down_4x_led_duration }}"
+                  qos: "1"
+                  topic: '{{ led_effect_mqtt_topic }}'
+                  payload: '{ "effect": "{{ down_4x_led_effect }}", "color": "{{ down_4x_led_effect_color }}", "level": {{ down_4x_led_effect_level }}, "duration": {{ down_4x_led_effect_duration }} }'
       - conditions:
           - condition: trigger
             id: trigger_down_5x
@@ -2016,15 +1966,11 @@ action:
                   qos: "1"
                   topic: "{{ entity_mqtt_topic }}"
                   payload: "{{ down_5x_payload }}"
-              - service: script.inovelli_blue_led_zigbee2mqtt
+              - service: mqtt.publish
                 data:
-                  entity_id:
-                    - "{{ switch_led_target.entity_id }}"
-                  led: "0"
-                  effect: "{{ down_5x_led_effect }}"
-                  color: "{{ down_5x_led_color }}"
-                  level: "{{ down_5x_led_level }}"
-                  duration: "{{ down_5x_led_duration }}"
+                  qos: "1"
+                  topic: '{{ led_effect_mqtt_topic }}'
+                  payload: '{ "effect": "{{ down_5x_led_effect }}", "color": "{{ down_5x_led_effect_color }}", "level": {{ down_5x_led_effect_level }}, "duration": {{ down_5x_led_effect_duration }} }'
       - conditions:
           - condition: trigger
             id: trigger_down_held
@@ -2035,15 +1981,11 @@ action:
                   qos: "1"
                   topic: "{{ entity_mqtt_topic }}"
                   payload: "{{ down_held_payload }}"
-              - service: script.inovelli_blue_led_zigbee2mqtt
+              - service: mqtt.publish
                 data:
-                  entity_id:
-                    - "{{ switch_led_target.entity_id }}"
-                  led: "0"
-                  effect: "{{ down_held_led_effect }}"
-                  color: "{{ down_held_led_color }}"
-                  level: "{{ down_held_led_level }}"
-                  duration: "{{ down_held_led_duration }}"
+                  qos: "1"
+                  topic: '{{ led_effect_mqtt_topic }}'
+                  payload: '{ "effect": "{{ down_held_led_effect }}", "color": "{{ down_held_led_effect_color }}", "level": {{ down_held_led_effect_level }}, "duration": {{ down_held_led_effect_duration }} }'
       - conditions:
           - condition: trigger
             id: trigger_down_release
@@ -2054,15 +1996,11 @@ action:
                   qos: "1"
                   topic: "{{ entity_mqtt_topic }}"
                   payload: "{{ down_release_payload }}"
-              - service: script.inovelli_blue_led_zigbee2mqtt
+              - service: mqtt.publish
                 data:
-                  entity_id:
-                    - "{{ switch_led_target.entity_id }}"
-                  led: "0"
-                  effect: "{{ down_release_led_effect }}"
-                  color: "{{ down_release_led_color }}"
-                  level: "{{ down_release_led_level }}"
-                  duration: "{{ down_release_led_duration }}"
+                  qos: "1"
+                  topic: '{{ led_effect_mqtt_topic }}'
+                  payload: '{ "effect": "{{ down_release_led_effect }}", "color": "{{ down_release_led_effect_color }}", "level": {{ down_release_led_effect_level }}, "duration": {{ down_release_led_effect_duration }} }'
       - conditions:
           - condition: trigger
             id: trigger_config_1x
@@ -2073,15 +2011,11 @@ action:
                   qos: "1"
                   topic: "{{ entity_mqtt_topic }}"
                   payload: "{{ config_1x_payload }}"
-              - service: script.inovelli_blue_led_zigbee2mqtt
+              - service: mqtt.publish
                 data:
-                  entity_id:
-                    - "{{ switch_led_target.entity_id }}"
-                  led: "0"
-                  effect: "{{ config_1x_led_effect }}"
-                  color: "{{ config_1x_led_color }}"
-                  level: "{{ config_1x_led_level }}"
-                  duration: "{{ config_1x_led_duration }}"
+                  qos: "1"
+                  topic: '{{ led_effect_mqtt_topic }}'
+                  payload: '{ "effect": "{{ config_1x_led_effect }}", "color": "{{ config_1x_led_effect_color }}", "level": {{ config_1x_led_effect_level }}, "duration": {{ config_1x_led_effect_duration }} }'
       - conditions:
           - condition: trigger
             id: trigger_config_2x
@@ -2092,15 +2026,11 @@ action:
                   qos: "1"
                   topic: "{{ entity_mqtt_topic }}"
                   payload: "{{ config_2x_payload }}"
-              - service: script.inovelli_blue_led_zigbee2mqtt
+              - service: mqtt.publish
                 data:
-                  entity_id:
-                    - "{{ switch_led_target.entity_id }}"
-                  led: "0"
-                  effect: "{{ config_2x_led_effect }}"
-                  color: "{{ config_2x_led_color }}"
-                  level: "{{ config_2x_led_level }}"
-                  duration: "{{ config_2x_led_duration }}"
+                  qos: "1"
+                  topic: '{{ led_effect_mqtt_topic }}'
+                  payload: '{ "effect": "{{ config_2x_led_effect }}", "color": "{{ config_2x_led_effect_color }}", "level": {{ config_2x_led_effect_level }}, "duration": {{ config_2x_led_effect_duration }} }'
       - conditions:
           - condition: trigger
             id: trigger_config_3x
@@ -2111,15 +2041,11 @@ action:
                   qos: "1"
                   topic: "{{ entity_mqtt_topic }}"
                   payload: "{{ config_3x_payload }}"
-              - service: script.inovelli_blue_led_zigbee2mqtt
+              - service: mqtt.publish
                 data:
-                  entity_id:
-                    - "{{ switch_led_target.entity_id }}"
-                  led: "0"
-                  effect: "{{ config_3x_led_effect }}"
-                  color: "{{ config_3x_led_color }}"
-                  level: "{{ config_3x_led_level }}"
-                  duration: "{{ config_3x_led_duration }}"
+                  qos: "1"
+                  topic: '{{ led_effect_mqtt_topic }}'
+                  payload: '{ "effect": "{{ config_3x_led_effect }}", "color": "{{ config_3x_led_effect_color }}", "level": {{ config_3x_led_effect_level }}, "duration": {{ config_3x_led_effect_duration }} }'
       - conditions:
           - condition: trigger
             id: trigger_config_4x
@@ -2130,15 +2056,11 @@ action:
                   qos: "1"
                   topic: "{{ entity_mqtt_topic }}"
                   payload: "{{ config_4x_payload }}"
-              - service: script.inovelli_blue_led_zigbee2mqtt
+              - service: mqtt.publish
                 data:
-                  entity_id:
-                    - "{{ switch_led_target.entity_id }}"
-                  led: "0"
-                  effect: "{{ config_4x_led_effect }}"
-                  color: "{{ config_4x_led_color }}"
-                  level: "{{ config_4x_led_level }}"
-                  duration: "{{ config_4x_led_duration }}"
+                  qos: "1"
+                  topic: '{{ led_effect_mqtt_topic }}'
+                  payload: '{ "effect": "{{ config_4x_led_effect }}", "color": "{{ config_4x_led_effect_color }}", "level": {{ config_4x_led_effect_level }}, "duration": {{ config_4x_led_effect_duration }} }'
       - conditions:
           - condition: trigger
             id: trigger_config_5x
@@ -2149,15 +2071,11 @@ action:
                   qos: "1"
                   topic: "{{ entity_mqtt_topic }}"
                   payload: "{{ config_5x_payload }}"
-              - service: script.inovelli_blue_led_zigbee2mqtt
+              - service: mqtt.publish
                 data:
-                  entity_id:
-                    - "{{ switch_led_target.entity_id }}"
-                  led: "0"
-                  effect: "{{ config_5x_led_effect }}"
-                  color: "{{ config_5x_led_color }}"
-                  level: "{{ config_5x_led_level }}"
-                  duration: "{{ config_5x_led_duration }}"
+                  qos: "1"
+                  topic: '{{ led_effect_mqtt_topic }}'
+                  payload: '{ "effect": "{{ config_5x_led_effect }}", "color": "{{ config_5x_led_effect_color }}", "level": {{ config_5x_led_effect_level }}, "duration": {{ config_5x_led_effect_duration }} }'
       - conditions:
           - condition: trigger
             id: trigger_config_held
@@ -2168,15 +2086,11 @@ action:
                   qos: "1"
                   topic: "{{ entity_mqtt_topic }}"
                   payload: "{{ config_held_payload }}"
-              - service: script.inovelli_blue_led_zigbee2mqtt
+              - service: mqtt.publish
                 data:
-                  entity_id:
-                    - "{{ switch_led_target.entity_id }}"
-                  led: "0"
-                  effect: "{{ config_held_led_effect }}"
-                  color: "{{ config_held_led_color }}"
-                  level: "{{ config_held_led_level }}"
-                  duration: "{{ config_held_led_duration }}"
+                  qos: "1"
+                  topic: '{{ led_effect_mqtt_topic }}'
+                  payload: '{ "effect": "{{ config_held_led_effect }}", "color": "{{ config_held_led_effect_color }}", "level": {{ config_held_led_effect_level }}, "duration": {{ config_held_led_effect_duration }} }'
       - conditions:
           - condition: trigger
             id: trigger_config_release
@@ -2187,12 +2101,8 @@ action:
                   qos: "1"
                   topic: "{{ entity_mqtt_topic }}"
                   payload: "{{ config_release_payload }}"
-              - service: script.inovelli_blue_led_zigbee2mqtt
+              - service: mqtt.publish
                 data:
-                  entity_id:
-                    - "{{ switch_led_target.entity_id }}"
-                  led: "0"
-                  effect: "{{ config_release_led_effect }}"
-                  color: "{{ config_release_led_color }}"
-                  level: "{{ config_release_led_level }}"
-                  duration: "{{ config_release_led_duration }}"
+                  qos: "1"
+                  topic: '{{ led_effect_mqtt_topic }}'
+                  payload: '{ "effect": "{{ config_release_led_effect }}", "color": "{{ config_release_led_effect_color }}", "level": {{ config_release_led_effect_level }}, "duration": {{ config_release_led_effect_duration }} }'
