@@ -16,7 +16,12 @@ blueprint:
             domain: light
     mqtt_topic:
       name: MQTT Topic
-      description: Watched MQTT topic to which LED effect payloads are published.
+      description: >
+        Monitored MQTT topic to which LED effect payloads are published. Payloads support several attributes:
+          * `effect` | string | Required. The effect applied to the LED bar.
+          * `color` | string | Optional. The color of the LED bar while the effect is applied.
+          * `intensity` | int | Optional. The brightness percentage of the LED bar while the effect is applied.
+          * `duration` | int | Optional. The length of time in seconds the effect is applied to the LED bar.
       selector:
         text:
     default_led_effect:
