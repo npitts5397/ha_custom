@@ -244,11 +244,6 @@ action:
         id: trigger_light_becomes_on
     sequence:
     - parallel:
-      - service: mqtt.publish
-        data:
-          qos: "1"
-          topic: '{{ passthrough_mqtt_topic }}'
-          payload: '{{ passthrough_mqtt_payload }}'
       - choose:
         # light is off and triggered to turn on OR is already on
         - conditions:
@@ -317,6 +312,14 @@ action:
                 transition: '{{ hue_transition }}'
                 dynamic: '{{ hue_dynamic }}'
         default: []
+      - sequence:
+        - delay:
+            seconds: '{{ hue_transition }}'
+        - service: mqtt.publish
+          data:
+            qos: "1"
+            topic: '{{ passthrough_mqtt_topic }}'
+            payload: '{{ passthrough_mqtt_payload }}'
   # turn light off
   - conditions:
     - condition: and
@@ -327,13 +330,16 @@ action:
         value_template: "{{ hue_state == 'off' }}" 
     sequence:
     - parallel:
-      - service: mqtt.publish
-        data:
-          qos: "1"
-          topic: '{{ passthrough_mqtt_topic }}'
-          payload: '{{ passthrough_mqtt_payload }}'
       - service: light.turn_off
         target:
           entity_id: '{{ hue_light_entity }}'
         data:
           transition: '{{ hue_transition }}'
+      - sequence:
+        - delay:
+            seconds: '{{ hue_transition }}'
+        - service: mqtt.publish
+          data:
+            qos: "1"
+            topic: '{{ passthrough_mqtt_topic }}'
+            payload: '{{ passthrough_mqtt_payload }}'
