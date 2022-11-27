@@ -134,7 +134,7 @@ variables:
     {%- set scene = '' -%}
     {%- if trigger is defined -%}
       {%- if trigger.payload_json is defined -%}
-        {%- if trigger.payload_json.scene -%}
+        {%- if trigger.payload_json.scene is defined -%}
           {%- set scene = trigger.payload_json.scene -%}
         {%- endif -%}
       {%- endif -%}
@@ -151,7 +151,7 @@ variables:
     {%- set transition = '' -%}
     {%- if trigger is defined -%}
       {%- if trigger.payload_json is defined -%}
-        {%- if trigger.payload_json.transition -%}
+        {%- if trigger.payload_json.transition is defined -%}
           {%- set transition = trigger.payload_json.transition -%}
         {%- endif -%}
       {%- endif -%}
@@ -172,7 +172,7 @@ variables:
     {%- set dynamic = false -%}
     {%- if trigger is defined -%}
       {%- if trigger.payload_json is defined -%}
-        {%- if trigger.payload_json.dynamic -%}
+        {%- if trigger.payload_json.dynamic is defined-%}
           {%- set dynamic = trigger.payload_json.dynamic -%}
         {%- endif -%}
       {%- endif -%}
@@ -182,7 +182,7 @@ variables:
     {%- set speed = '' -%}
     {%- if trigger is defined -%}
       {%- if trigger.payload_json is defined -%}
-        {%- if trigger.payload_json.speed -%}
+        {%- if trigger.payload_json.speed is defined -%}
           {%- set speed = trigger.payload_json.speed -%}
         {%- endif -%}
       {%- endif -%}
@@ -192,7 +192,7 @@ variables:
     {%- set brightness = '' -%}
     {%- if trigger is defined -%}
       {%- if trigger.payload_json is defined -%}
-        {%- if trigger.payload_json.brightness -%}
+        {%- if trigger.payload_json.brightness is defined -%}
           {%- set brightness = trigger.payload_json.brightness -%}
         {%- endif -%}
       {%- endif -%}
@@ -202,7 +202,7 @@ variables:
     {%- set payload = '' -%}
     {%- if trigger is defined -%}
       {%- if trigger.payload_json is defined -%}
-        {%- if trigger.payload_json.passthrough_mqtt_payload -%}
+        {%- if trigger.payload_json.passthrough_mqtt_payload is defined -%}
           {%- set payload = trigger.payload_json.passthrough_mqtt_payload -%}
         {%- endif -%}
       {%- endif -%}
