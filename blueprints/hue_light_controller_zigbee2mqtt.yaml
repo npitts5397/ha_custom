@@ -113,7 +113,7 @@ variables:
   passthrough_mqtt_topic: !input passthrough_mqtt_topic
   default_on_passthrough_mqtt_payload: !input default_on_passthrough_mqtt_payload
   default_off_passthrough_mqtt_payload: !input default_off_passthrough_mqtt_payload
-# Setting variables from MQTT payload or defaults
+# Set variables from MQTT payload if provided, otherwise use defaults
   hue_state: >
     {%- set state = '' -%}
     {%- if trigger is defined -%}
@@ -312,7 +312,10 @@ action:
                 transition: '{{ hue_transition }}'
                 dynamic: '{{ hue_dynamic }}'
         default: []
+        # send passthrough payload if pasthrough topic is set
       - sequence:
+        - condition: template
+          value_template: '{{ passthrough_mqtt_topic != "" }}'
         - delay:
             seconds: '{{ hue_transition }}'
         - service: mqtt.publish
@@ -335,7 +338,10 @@ action:
           entity_id: '{{ hue_light_entity }}'
         data:
           transition: '{{ hue_transition }}'
+        # send passthrough payload if pasthrough topic is set
       - sequence:
+        - condition: template
+          value_template: '{{ passthrough_mqtt_topic != "" }}'
         - delay:
             seconds: '{{ hue_transition }}'
         - service: mqtt.publish
