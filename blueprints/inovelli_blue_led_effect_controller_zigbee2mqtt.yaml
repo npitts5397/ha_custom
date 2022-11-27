@@ -167,7 +167,7 @@ action:
     data:
       entity_id:
         - '{{ switch_led_target.entity_id }}'
-      led: "0"
+      led: "-1"
       effect: '{{ led_effect }}'
       color: '{{ effect_color }}'
       level: '{{ effect_level }}'
