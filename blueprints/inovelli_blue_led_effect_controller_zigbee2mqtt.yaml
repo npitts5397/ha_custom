@@ -138,7 +138,7 @@ variables:
     {%- if trigger is defined -%}
       {%- if trigger.payload_json is defined -%}
         {%- if trigger.payload_json.level is defined -%}
-          {%- set color = trigger.payload_json.level -%}
+          {%- set level = trigger.payload_json.level -%}
         {%- endif -%}
       {%- endif -%}
     {%- endif -%}
