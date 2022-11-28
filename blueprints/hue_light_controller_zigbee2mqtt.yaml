@@ -70,6 +70,7 @@ blueprint:
     passthrough_mqtt_topic:
       name: Passthrough MQTT Topic
       description: Optional. MQTT topic to which `passthrough_mqtt_payload` to published.
+      default: {}
       selector:
         text:
     default_on_passthrough_mqtt_payload:
