@@ -5,644 +5,2104 @@ blueprint:
   input:
     switch_mqtt_topic:
       name: Blue Series Switch MQTT Topic
-      description: Required. MQTT topic monitored for Inovelli Blue Series switch events. Events published to this topic trigger this automation.
+      description: MQTT topic monitored for switch events. Events published to this topic trigger this automation.
       selector:
         text:
-    default_action_mqtt_topic:
-      name: Default Action MQTT Topic
-      description: Required. Default MQTT topic to which action payloads are published by this automation. Can be overridden by custom MQTT topics for each button event.
+    entity_mqtt_topic:
+      name: Entity MQTT Topic
+      description: MQTT topic to which payloads are published by this automation, triggered by switch events.
       selector:
         text:
-    up_1x_action_payload:
+    led_effect_mqtt_topic:
+      name: LED Effect MQTT Topic
+      description: MQTT topic to which switch LED effect payloads are published, triggered by switch events.
+      selector:
+        text:
+    up_1x_payload:
       name: Up Single-Press (1x) MQTT Payload
-      description: "Optional. Payload published to the 'Action MQTT Topic' for 'Up Single' events. Default is `{ \"state\": \"on\"}`."
+      description: "Payload to publish to the 'Switch MQTT Topic' for an `up_single` switch event. Default is `{ \"state\": \"on\" }`."
       default: '{ "state": "on" }'
       selector:
         text:
-    up_1x_action_mqtt_topic:
-      name: Up Single-Press (1x) Action MQTT Topic
-      description: Optional. MQTT topic to which action payloads are published for 'Up Single' events. If no value is defined, defaults to 'Default Action MQTT Topic'.
-      default: {}
+    up_1x_led_effect:
+      name: Up Single-Press (1x) LED Effect
+      description: Effect played when for `up_single` events. Default is `Open/Close`.
+      default: Open/Close
       selector:
-        text:
-    up_1x_led_payload:
-      name: Up Single-Press (1x) LED Payload
-      description: "Optional. Payload published to the `'Blue Series Switch MQTT Topic'/set` topic for 'Up Single' events. Defined value will be wrapped in `{ \"led_effect\": {} }`, so it does not need to be specified. Default is `{ \"effect\": \"Open/Close\", \"color\": 85, \"level\": 100, \"duration\": 5}`."
-      default: '{ "effect": "Open/Close", "color": 85, "level": 100, "duration": 5 }'
+        select:
+          options:
+            - "Off"
+            - "Clear"
+            - "Solid"
+            - "Aurora"
+            - "Chase"
+            - "Fast Blink"
+            - "Fast Chase"
+            - "Fast Falling"
+            - "Fast Rising"
+            - "Fast Siren"
+            - "Medium Blink"
+            - "Medium Falling"
+            - "Medium Rising"
+            - "Open/Close"
+            - "Pulse"
+            - "Slow Blink"
+            - "Slow Chase"
+            - "Slow Falling"
+            - "Slow Rising"
+            - "Slow Siren"
+            - "Small to Big"
+    up_1x_led_effect_color:
+      name: Up Single-Press (1x) LED Effect Color
+      description: Color of the LED bar while `up_1x_led_effect` plays. Default is `Green`.
+      default: Green
       selector:
-        text:
-    up_2x_action_payload:
+        select:
+          custom_value: true
+          options:
+            - "Off"
+            - Red
+            - Orange
+            - Yellow
+            - Green
+            - Cyan
+            - Teal
+            - Blue
+            - Purple
+            - Light Pink
+            - Pink
+            - White
+    up_1x_led_effect_level:
+      name: Up Single-Press (1x) LED Effect Level
+      description: Intensity percentage of the LED bar while `up_1x_led_effect` plays. Default is `10`.
+      default: 10
+      selector:
+        number:
+          min: 0
+          max: 100
+          mode: box
+          step: 1
+          unit_of_measurement: percent
+    up_1x_led_effect_duration:
+      name: Up Single-Press (1x) LED Effect Duration
+      description: Duration of the LED bar while `up_1x_led_effect` plays. Values 1-60 is in seconds. Values 61-120 is in minutes, calculated by (value-60); example a value of 65 would be 65-60 = 5 minutes. Values 120-254 is in hours, calculated by (value-120); example a value of 132 would be 132-120 would be 12 hours. - 255 Indefinitely. Default is `1`.
+      default: 1
+      selector:
+        number:
+          min: 0
+          max: 255
+          mode: box
+          step: 1
+    up_2x_payload:
       name: Up Double-Press (2x) MQTT Payload
-      description: Optional. Payload published to the 'Action MQTT Topic' for 'Up Double' events.
-      default: {}
+      description: "Payload to publish to the 'Switch MQTT Topic' for an `up_double` switch event. Default is `{ }`."
+      default: "{ }"
       selector:
         text:
-    up_2x_action_mqtt_topic:
-      name: Up Double-Press (2x) Action MQTT Topic
-      description: Optional. MQTT topic to which action payloads are published for 'Up Double' events. If no value is defined, defaults to 'Default Action MQTT Topic'.
-      default: {}
+    up_2x_led_effect:
+      name: Up Double-Press (2x) LED Effect
+      description: Effect played when for `up_double` events. Default is `Slow Blink`.
+      default: Slow Blink
       selector:
-        text:
-    up_2x_led_payload:
-      name: Up Double-Press (2x) LED Payload
-      description: "Optional. Payload published to the `'Blue Series Switch MQTT Topic'/set` topic for 'Up Double' events. Defined value will be wrapped in `{ \"led_effect\": {} }`, so it does not need to be specified."
-      default: {}
+        select:
+          options:
+            - "Off"
+            - "Clear"
+            - "Solid"
+            - "Aurora"
+            - "Chase"
+            - "Fast Blink"
+            - "Fast Chase"
+            - "Fast Falling"
+            - "Fast Rising"
+            - "Fast Siren"
+            - "Medium Blink"
+            - "Medium Falling"
+            - "Medium Rising"
+            - "Open/Close"
+            - "Pulse"
+            - "Slow Blink"
+            - "Slow Chase"
+            - "Slow Falling"
+            - "Slow Rising"
+            - "Slow Siren"
+            - "Small to Big"
+    up_2x_led_effect_color:
+      name: Up Double-Press (2x) LED Effect Color
+      description: Color of the LED bar while `up_2x_led_effect` plays. Default is `White`.
+      default: White
       selector:
-        text:
-    up_3x_action_payload:
+        select:
+          custom_value: true
+          options:
+            - "Off"
+            - Red
+            - Orange
+            - Yellow
+            - Green
+            - Cyan
+            - Teal
+            - Blue
+            - Purple
+            - Light Pink
+            - Pink
+            - White
+    up_2x_led_effect_level:
+      name: Up Double-Press (2x) LED Effect Level
+      description: Intensity percentage of the LED bar while `up_2x_led_effect` plays. Default is `10`.
+      default: 10
+      selector:
+        number:
+          min: 0
+          max: 100
+          mode: box
+          step: 1
+          unit_of_measurement: percent
+    up_2x_led_effect_duration:
+      name: Up Double-Press (2x) LED Effect Duration
+      description: Duration of the LED bar while `up_2x_led_effect` plays. Values 1-60 is in seconds. Values 61-120 is in minutes, calculated by (value-60); example a value of 65 would be 65-60 = 5 minutes. Values 120-254 is in hours, calculated by (value-120); example a value of 132 would be 132-120 would be 12 hours. - 255 Indefinitely. Default is `1`.
+      default: 1
+      selector:
+        number:
+          min: 0
+          max: 255
+          mode: box
+          step: 1
+    up_3x_payload:
       name: Up Triple-Press (3x) MQTT Payload
-      description: Optional. Payload published to the 'Action MQTT Topic' for 'Up Triple' events.
-      default: {}
+      description: "Payload to publish to the 'Switch MQTT Topic' for an `up_triple` switch event. Default is `{ }`."
+      default: "{ }"
       selector:
         text:
-    up_3x_action_mqtt_topic:
-      name: Up Triple-Press (3x) Action MQTT Topic
-      description: Optional. MQTT topic to which action payloads are published for 'Up Triple' events. If no value is defined, defaults to 'Default Action MQTT Topic'.
-      default: {}
+    up_3x_led_effect:
+      name: Up Triple-Press (3x) LED Effect
+      description: Effect played when for `up_triple` events. Default is `Slow Blink`.
+      default: Slow Blink
       selector:
-        text:
-    up_3x_led_payload:
-      name: Up Triple-Press (3x) LED Payload
-      description: "Optional. Payload published to the `'Blue Series Switch MQTT Topic'/set` topic for 'Up Triple' events. Defined value will be wrapped in `{ \"led_effect\": {} }`, so it does not need to be specified."
-      default: {}
+        select:
+          options:
+            - "Off"
+            - "Clear"
+            - "Solid"
+            - "Aurora"
+            - "Chase"
+            - "Fast Blink"
+            - "Fast Chase"
+            - "Fast Falling"
+            - "Fast Rising"
+            - "Fast Siren"
+            - "Medium Blink"
+            - "Medium Falling"
+            - "Medium Rising"
+            - "Open/Close"
+            - "Pulse"
+            - "Slow Blink"
+            - "Slow Chase"
+            - "Slow Falling"
+            - "Slow Rising"
+            - "Slow Siren"
+            - "Small to Big"
+    up_3x_led_effect_color:
+      name: Up Triple-Press (3x) LED Effect Color
+      description: Color of the LED bar while `up_3x_led_effect` plays. Default is `White`.
+      default: White
       selector:
-        text:
-    up_4x_action_payload:
+        select:
+          custom_value: true
+          options:
+            - "Off"
+            - Red
+            - Orange
+            - Yellow
+            - Green
+            - Cyan
+            - Teal
+            - Blue
+            - Purple
+            - Light Pink
+            - Pink
+            - White
+    up_3x_led_effect_level:
+      name: Up Triple-Press (3x) LED Effect Level
+      description: Intensity percentage of the LED bar while `up_3x_led_effect` plays. Default is `10`.
+      default: 10
+      selector:
+        number:
+          min: 0
+          max: 100
+          mode: box
+          step: 1
+          unit_of_measurement: percent
+    up_3x_led_effect_duration:
+      name: Up Triple-Press (3x) LED Effect Duration
+      description: Duration of the LED bar while `up_3x_led_effect` plays. Values 1-60 is in seconds. Values 61-120 is in minutes, calculated by (value-60); example a value of 65 would be 65-60 = 5 minutes. Values 120-254 is in hours, calculated by (value-120); example a value of 132 would be 132-120 would be 12 hours. - 255 Indefinitely. Default is `1`.
+      default: 1
+      selector:
+        number:
+          min: 0
+          max: 255
+          mode: box
+          step: 1
+    up_4x_payload:
       name: Up Quadruple-Press (4x) MQTT Payload
-      description: Optional. Payload published to the 'Action MQTT Topic' for 'Up Quadruple' events.
-      default: {}
+      description: "Payload to publish to the 'Switch MQTT Topic' for an `up_quadruple` switch event. Default is `{ }`."
+      default: "{ }"
       selector:
         text:
-    up_4x_action_mqtt_topic:
-      name: Up Quadruple-Press (4x) Action MQTT Topic
-      description: Optional. MQTT topic to which action payloads are published for 'Up Quadruple' events. If no value is defined, defaults to 'Default Action MQTT Topic'.
-      default: {}
+    up_4x_led_effect:
+      name: Up Quadruple-Press (4x) LED Effect
+      description: Effect played when for `up_quadruple` events. Default is `Slow Blink`.
+      default: Slow Blink
+      selector:
+        select:
+          options:
+            - "Off"
+            - "Clear"
+            - "Solid"
+            - "Aurora"
+            - "Chase"
+            - "Fast Blink"
+            - "Fast Chase"
+            - "Fast Falling"
+            - "Fast Rising"
+            - "Fast Siren"
+            - "Medium Blink"
+            - "Medium Falling"
+            - "Medium Rising"
+            - "Open/Close"
+            - "Pulse"
+            - "Slow Blink"
+            - "Slow Chase"
+            - "Slow Falling"
+            - "Slow Rising"
+            - "Slow Siren"
+            - "Small to Big"
+    up_4x_led_effect_color:
+      name: Up Quadruple-Press (4x) LED Effect Color
+      description: Color of the LED bar while `up_4x_led_effect` plays. Default is `White`.
+      default: White
+      selector:
+        select:
+          custom_value: true
+          options:
+            - "Off"
+            - Red
+            - Orange
+            - Yellow
+            - Green
+            - Cyan
+            - Teal
+            - Blue
+            - Purple
+            - Light Pink
+            - Pink
+            - White
+    up_4x_led_effect_level:
+      name: Up Quadruple-Press (4x) LED Effect Level
+      description: Intensity percentage of the LED bar while `up_4x_led_effect` plays. Default is `10`.
+      default: 10
+      selector:
+        number:
+          min: 0
+          max: 100
+          mode: box
+          step: 1
+          unit_of_measurement: percent
+    up_4x_led_effect_duration:
+      name: Up Quadruple-Press (4x) LED Effect Duration
+      description: Duration of the LED bar while `up_4x_led_effect` plays. Values 1-60 is in seconds. Values 61-120 is in minutes, calculated by (value-60); example a value of 65 would be 65-60 = 5 minutes. Values 120-254 is in hours, calculated by (value-120); example a value of 132 would be 132-120 would be 12 hours. - 255 Indefinitely. Default is `1`.
+      default: 1
+      selector:
+        number:
+          min: 0
+          max: 255
+          mode: box
+          step: 1
+    up_5x_payload:
+      name: Up Quintruple-Press (5x) MQTT Payload
+      description: "Payload to publish to the 'Switch MQTT Topic' for an `up_quintruple` switch event. Default is `{ }`."
+      default: "{ }"
       selector:
         text:
-    up_4x_led_payload:
-      name: Up Quadruple-Press (4x) LED Payload
-      description: "Optional. Payload published to the `'Blue Series Switch MQTT Topic'/set` topic for 'Up Quadruple' events. Defined value will be wrapped in `{ \"led_effect\": {} }`, so it does not need to be specified."
-      default: {}
+    up_5x_led_effect:
+      name: Up Quintruple-Press (5x) LED Effect
+      description: Effect played when for `up_quintruple` events. Default is `Slow Blink`.
+      default: Slow Blink
       selector:
-        text:
-    up_5x_action_payload:
-      name: Up Quintuple-Press (5x) MQTT Payload
-      description: Optional. Payload published to the 'Action MQTT Topic' for 'Up Quintuple' events.
-      default: {}
+        select:
+          options:
+            - "Off"
+            - "Clear"
+            - "Solid"
+            - "Aurora"
+            - "Chase"
+            - "Fast Blink"
+            - "Fast Chase"
+            - "Fast Falling"
+            - "Fast Rising"
+            - "Fast Siren"
+            - "Medium Blink"
+            - "Medium Falling"
+            - "Medium Rising"
+            - "Open/Close"
+            - "Pulse"
+            - "Slow Blink"
+            - "Slow Chase"
+            - "Slow Falling"
+            - "Slow Rising"
+            - "Slow Siren"
+            - "Small to Big"
+    up_5x_led_effect_color:
+      name: Up Quintruple-Press (5x) LED Effect Color
+      description: Color of the LED bar while `up_5x_led_effect` plays. Default is `White`.
+      default: White
       selector:
-        text:
-    up_5x_action_mqtt_topic:
-      name: Up Quintuple-Press (5x) Action MQTT Topic
-      description: Optional. MQTT topic to which action payloads are published for 'Up Quintuple' events. If no value is defined, defaults to 'Default Action MQTT Topic'.
-      default: {}
+        select:
+          custom_value: true
+          options:
+            - "Off"
+            - Red
+            - Orange
+            - Yellow
+            - Green
+            - Cyan
+            - Teal
+            - Blue
+            - Purple
+            - Light Pink
+            - Pink
+            - White
+    up_5x_led_effect_level:
+      name: Up Quintruple-Press (5x) LED Effect Level
+      description: Intensity percentage of the LED bar while `up_5x_led_effect` plays. Default is `10`.
+      default: 10
       selector:
-        text:
-    up_5x_led_payload:
-      name: Up Quintuple-Press (5x) LED Payload
-      description: "Optional. Payload published to the `'Blue Series Switch MQTT Topic'/set` topic for 'Up Quintuple' events. Defined value will be wrapped in `{ \"led_effect\": {} }`, so it does not need to be specified."
-      default: {}
+        number:
+          min: 0
+          max: 100
+          mode: box
+          step: 1
+          unit_of_measurement: percent
+    up_5x_led_effect_duration:
+      name: Up Quintruple-Press (5x) LED Effect Duration
+      description: Duration of the LED bar while `up_5x_led_effect` plays. Values 1-60 is in seconds. Values 61-120 is in minutes, calculated by (value-60); example a value of 65 would be 65-60 = 5 minutes. Values 120-254 is in hours, calculated by (value-120); example a value of 132 would be 132-120 would be 12 hours. - 255 Indefinitely. Default is `1`.
+      default: 1
       selector:
-        text:
-    up_held_action_payload:
+        number:
+          min: 0
+          max: 255
+          mode: box
+          step: 1
+    up_held_payload:
       name: Up Held MQTT Payload
-      description: Optional. Payload published to the 'Action MQTT Topic' for 'Up Held' events.
-      default: {}
+      description: "Payload to publish to the 'Switch MQTT Topic' for an `up_held` switch event. Default is `{ }`."
+      default: "{ }"
       selector:
         text:
-    up_held_action_mqtt_topic:
-      name: Up Held Action MQTT Topic
-      description: Optional. MQTT topic to which action payloads are published for 'Up Held' events. If no value is defined, defaults to 'Default Action MQTT Topic'.
-      default: {}
+    up_held_led_effect:
+      name: Up Held LED Effect
+      description: Effect played when for `up_held` events. Default is `Slow Blink`.
+      default: Slow Blink
       selector:
-        text:
-    up_held_led_payload:
-      name: Up Held LED Payload
-      description: "Optional. Payload published to the `'Blue Series Switch MQTT Topic'/set` topic for 'Up Held' events. Defined value will be wrapped in `{ \"led_effect\": {} }`, so it does not need to be specified."
-      default: {}
+        select:
+          options:
+            - "Off"
+            - "Clear"
+            - "Solid"
+            - "Aurora"
+            - "Chase"
+            - "Fast Blink"
+            - "Fast Chase"
+            - "Fast Falling"
+            - "Fast Rising"
+            - "Fast Siren"
+            - "Medium Blink"
+            - "Medium Falling"
+            - "Medium Rising"
+            - "Open/Close"
+            - "Pulse"
+            - "Slow Blink"
+            - "Slow Chase"
+            - "Slow Falling"
+            - "Slow Rising"
+            - "Slow Siren"
+            - "Small to Big"
+    up_held_led_effect_color:
+      name: Up Held LED Effect Color
+      description: Color of the LED bar while `up_held_led_effect` plays. Default is `White`.
+      default: White
       selector:
-        text:
-    up_release_action_payload:
+        select:
+          custom_value: true
+          options:
+            - "Off"
+            - Red
+            - Orange
+            - Yellow
+            - Green
+            - Cyan
+            - Teal
+            - Blue
+            - Purple
+            - Light Pink
+            - Pink
+            - White
+    up_held_led_effect_level:
+      name: Up Held  LED Effect Level
+      description: Intensity percentage of the LED bar while `up_held_led_effect` plays. Default is `10`.
+      default: 10
+      selector:
+        number:
+          min: 0
+          max: 100
+          mode: box
+          step: 1
+          unit_of_measurement: percent
+    up_held_led_effect_duration:
+      name: Up Held  LED Effect Duration
+      description: Duration of the LED bar while `up_held_led_effect` plays. Values 1-60 is in seconds. Values 61-120 is in minutes, calculated by (value-60); example a value of 65 would be 65-60 = 5 minutes. Values 120-254 is in hours, calculated by (value-120); example a value of 132 would be 132-120 would be 12 hours. - 255 Indefinitely. Default is `1`.
+      default: 1
+      selector:
+        number:
+          min: 0
+          max: 255
+          mode: box
+          step: 1
+    up_release_payload:
       name: Up Release MQTT Payload
-      description: Optional. Payload published to the 'Action MQTT Topic' for 'Up Release' events.
-      default: {}
+      description: "Payload to publish to the 'Switch MQTT Topic' for an `up_release` switch event. Default is `{ }`."
+      default: "{ }"
       selector:
         text:
-    up_release_action_mqtt_topic:
-      name: Up Release Action MQTT Topic
-      description: Optional. MQTT topic to which action payloads are published for 'Up Release' events. If no value is defined, defaults to 'Default Action MQTT Topic'.
-      default: {}
+    up_release_led_effect:
+      name: Up Release LED Effect
+      description: Effect played when for `up_release` events. Default is `Slow Blink`.
+      default: Slow Blink
       selector:
-        text:
-    up_release_led_payload:
-      name: Up Release LED Payload
-      description: "Optional. Payload published to the `'Blue Series Switch MQTT Topic'/set` topic for 'Up Release' events. Defined value will be wrapped in `{ \"led_effect\": {} }`, so it does not need to be specified."
-      default: {}
+        select:
+          options:
+            - "Off"
+            - "Clear"
+            - "Solid"
+            - "Aurora"
+            - "Chase"
+            - "Fast Blink"
+            - "Fast Chase"
+            - "Fast Falling"
+            - "Fast Rising"
+            - "Fast Siren"
+            - "Medium Blink"
+            - "Medium Falling"
+            - "Medium Rising"
+            - "Open/Close"
+            - "Pulse"
+            - "Slow Blink"
+            - "Slow Chase"
+            - "Slow Falling"
+            - "Slow Rising"
+            - "Slow Siren"
+            - "Small to Big"
+    up_release_led_effect_color:
+      name: Up Release LED Effect Color
+      description: Color of the LED bar while `up_release_led_effect` plays. Default is `White`.
+      default: White
       selector:
-        text:
-    down_1x_action_payload:
+        select:
+          custom_value: true
+          options:
+            - "Off"
+            - Red
+            - Orange
+            - Yellow
+            - Green
+            - Cyan
+            - Teal
+            - Blue
+            - Purple
+            - Light Pink
+            - Pink
+            - White
+    up_release_led_effect_level:
+      name: Up Release  LED Effect Level
+      description: Intensity percentage of the LED bar while `up_release_led_effect` plays. Default is `10`.
+      default: 10
+      selector:
+        number:
+          min: 0
+          max: 100
+          mode: box
+          step: 1
+          unit_of_measurement: percent
+    up_release_led_effect_duration:
+      name: Up Release  LED Effect Duration
+      description: Duration of the LED bar while `up_release_led_effect` plays. Values 1-60 is in seconds. Values 61-120 is in minutes, calculated by (value-60); example a value of 65 would be 65-60 = 5 minutes. Values 120-254 is in hours, calculated by (value-120); example a value of 132 would be 132-120 would be 12 hours. - 255 Indefinitely. Default is `1`.
+      default: 1
+      selector:
+        number:
+          min: 0
+          max: 255
+          mode: box
+          step: 1
+    down_1x_payload:
       name: Down Single-Press (1x) MQTT Payload
-      description: "Optional. Payload published to the 'Action MQTT Topic' for 'Down Single' events. Default is `{ \"state\": \"off\"}`."
+      description: "Payload to publish to the 'Switch MQTT Topic' for an `down_single` switch event. Default is `{ \"state\": \"off\" }`."
       default: '{ "state": "off" }'
       selector:
         text:
-    down_1x_action_mqtt_topic:
-      name: Down Single-Press (1x) Action MQTT Topic
-      description: Optional. MQTT topic to which action payloads are published for 'Down Single' events. If no value is defined, defaults to 'Default Action MQTT Topic'.
-      default: {}
+    down_1x_led_effect:
+      name: Down Single-Press (1x) LED Effect
+      description: Effect played when for `down_single` events. Default is `Open/Close`.
+      default: Open/Close
       selector:
-        text:
-    down_1x_led_payload:
-      name: Down Single-Press (1x) LED Payload
-      description: "Optional. Payload published to the `'Blue Series Switch MQTT Topic'/set` topic for 'Down Single' events. Defined value will be wrapped in `{ \"led_effect\": {} }`, so it does not need to be specified. Default is `{ \"effect\": \"Open/Close\", \"color\": 170, \"level\": 100, \"duration\": 5}`."
-      default: '{ "effect": "Open/Close", "color": 170, "level": 100, "duration": 5 }'
+        select:
+          options:
+            - "Off"
+            - "Clear"
+            - "Solid"
+            - "Aurora"
+            - "Chase"
+            - "Fast Blink"
+            - "Fast Chase"
+            - "Fast Falling"
+            - "Fast Rising"
+            - "Fast Siren"
+            - "Medium Blink"
+            - "Medium Falling"
+            - "Medium Rising"
+            - "Open/Close"
+            - "Pulse"
+            - "Slow Blink"
+            - "Slow Chase"
+            - "Slow Falling"
+            - "Slow Rising"
+            - "Slow Siren"
+            - "Small to Big"
+    down_1x_led_effect_color:
+      name: Down Single-Press (1x) LED Effect Color
+      description: Color of the LED bar while `down_1x_led_effect` plays. Default is `Blue`.
+      default: Blue
       selector:
-        text:
-    down_2x_action_payload:
+        select:
+          custom_value: true
+          options:
+            - "Off"
+            - Red
+            - Orange
+            - Yellow
+            - Green
+            - Cyan
+            - Teal
+            - Blue
+            - Purple
+            - Light Pink
+            - Pink
+            - White
+    down_1x_led_effect_level:
+      name: Down Single-Press (1x) LED Effect Level
+      description: Intensity percentage of the LED bar while `down_1x_led_effect` plays. Default is `10`.
+      default: 10
+      selector:
+        number:
+          min: 0
+          max: 100
+          mode: box
+          step: 1
+          unit_of_measurement: percent
+    down_1x_led_effect_duration:
+      name: Down Single-Press (1x) LED Effect Duration
+      description: Duration of the LED bar while `down_1x_led_effect` plays. Values 1-60 is in seconds. Values 61-120 is in minutes, calculated by (value-60); example a value of 65 would be 65-60 = 5 minutes. Values 120-254 is in hours, calculated by (value-120); example a value of 132 would be 132-120 would be 12 hours. - 255 Indefinitely. Default is `1`.
+      default: 1
+      selector:
+        number:
+          min: 0
+          max: 255
+          mode: box
+          step: 1
+    down_2x_payload:
       name: Down Double-Press (2x) MQTT Payload
-      description: Optional. Payload published to the 'Action MQTT Topic' for 'Down Double' events.
-      default: {}
+      description: "Payload to publish to the 'Switch MQTT Topic' for an `down_double` switch event. Default is `{ }`."
+      default: "{ }"
       selector:
         text:
-    down_2x_action_mqtt_topic:
-      name: Down Double-Press (2x) Action MQTT Topic
-      description: Optional. MQTT topic to which action payloads are published for 'Down Double' events. If no value is defined, defaults to 'Default Action MQTT Topic'.
-      default: {}
+    down_2x_led_effect:
+      name: Down Double-Press (2x) LED Effect
+      description: Effect played when for `down_double` events. Default is `Slow Blink`.
+      default: Slow Blink
       selector:
-        text:
-    down_2x_led_payload:
-      name: Down Double-Press (2x) LED Payload
-      description: "Optional. Payload published to the `'Blue Series Switch MQTT Topic'/set` topic for 'Down Double' events. Defined value will be wrapped in `{ \"led_effect\": {} }`, so it does not need to be specified."
-      default: {}
+        select:
+          options:
+            - "Off"
+            - "Clear"
+            - "Solid"
+            - "Aurora"
+            - "Chase"
+            - "Fast Blink"
+            - "Fast Chase"
+            - "Fast Falling"
+            - "Fast Rising"
+            - "Fast Siren"
+            - "Medium Blink"
+            - "Medium Falling"
+            - "Medium Rising"
+            - "Open/Close"
+            - "Pulse"
+            - "Slow Blink"
+            - "Slow Chase"
+            - "Slow Falling"
+            - "Slow Rising"
+            - "Slow Siren"
+            - "Small to Big"
+    down_2x_led_effect_color:
+      name: Down Double-Press (2x) LED Effect Color
+      description: Color of the LED bar while `down_2x_led_effect` plays. Default is `White`.
+      default: White
       selector:
-        text:
-    down_3x_action_payload:
+        select:
+          custom_value: true
+          options:
+            - "Off"
+            - Red
+            - Orange
+            - Yellow
+            - Green
+            - Cyan
+            - Teal
+            - Blue
+            - Purple
+            - Light Pink
+            - Pink
+            - White
+    down_2x_led_effect_level:
+      name: Down Double-Press (2x) LED Effect Level
+      description: Intensity percentage of the LED bar while `down_2x_led_effect` plays. Default is `10`.
+      default: 10
+      selector:
+        number:
+          min: 0
+          max: 100
+          mode: box
+          step: 1
+          unit_of_measurement: percent
+    down_2x_led_effect_duration:
+      name: Down Double-Press (2x) LED Effect Duration
+      description: Duration of the LED bar while `down_2x_led_effect` plays. Values 1-60 is in seconds. Values 61-120 is in minutes, calculated by (value-60); example a value of 65 would be 65-60 = 5 minutes. Values 120-254 is in hours, calculated by (value-120); example a value of 132 would be 132-120 would be 12 hours. - 255 Indefinitely. Default is `1`.
+      default: 1
+      selector:
+        number:
+          min: 0
+          max: 255
+          mode: box
+          step: 1
+    down_3x_payload:
       name: Down Triple-Press (3x) MQTT Payload
-      description: Optional. Payload published to the 'Action MQTT Topic' for 'Down Triple' events.
-      default: {}
+      description: "Payload to publish to the 'Switch MQTT Topic' for an `down_triple` switch event. Default is `{ }`."
+      default: "{ }"
       selector:
         text:
-    down_3x_action_mqtt_topic:
-      name: Down Triple-Press (3x) Action MQTT Topic
-      description: Optional. MQTT topic to which action payloads are published for 'Down Triple' events. If no value is defined, defaults to 'Default Action MQTT Topic'.
-      default: {}
+    down_3x_led_effect:
+      name: Down Triple-Press (3x) LED Effect
+      description: Effect played when for `down_triple` events. Default is `Slow Blink`.
+      default: Slow Blink
+      selector:
+        select:
+          options:
+            - "Off"
+            - "Clear"
+            - "Solid"
+            - "Aurora"
+            - "Chase"
+            - "Fast Blink"
+            - "Fast Chase"
+            - "Fast Falling"
+            - "Fast Rising"
+            - "Fast Siren"
+            - "Medium Blink"
+            - "Medium Falling"
+            - "Medium Rising"
+            - "Open/Close"
+            - "Pulse"
+            - "Slow Blink"
+            - "Slow Chase"
+            - "Slow Falling"
+            - "Slow Rising"
+            - "Slow Siren"
+            - "Small to Big"
+    down_3x_led_effect_color:
+      name: Down Triple-Press (3x) LED Effect Color
+      description: Color of the LED bar while `down_3x_led_effect` plays. Default is `White`.
+      default: White
+      selector:
+        select:
+          custom_value: true
+          options:
+            - "Off"
+            - Red
+            - Orange
+            - Yellow
+            - Green
+            - Cyan
+            - Teal
+            - Blue
+            - Purple
+            - Light Pink
+            - Pink
+            - White
+    down_3x_led_effect_level:
+      name: Down Triple-Press (3x) LED Effect Level
+      description: Intensity percentage of the LED bar while `down_3x_led_effect` plays. Default is `10`.
+      default: 10
+      selector:
+        number:
+          min: 0
+          max: 100
+          mode: box
+          step: 1
+          unit_of_measurement: percent
+    down_3x_led_effect_duration:
+      name: Down Triple-Press (3x) LED Effect Duration
+      description: Duration of the LED bar while `down_3x_led_effect` plays. Values 1-60 is in seconds. Values 61-120 is in minutes, calculated by (value-60); example a value of 65 would be 65-60 = 5 minutes. Values 120-254 is in hours, calculated by (value-120); example a value of 132 would be 132-120 would be 12 hours. - 255 Indefinitely. Default is `1`.
+      default: 1
+      selector:
+        number:
+          min: 0
+          max: 255
+          mode: box
+          step: 1
+    down_4x_payload:
+      name: Down Quadruple-Press (4x) MQTT Payload
+      description: "Payload to publish to the 'Switch MQTT Topic' for an `down_quadruple` switch event. Default is `{ }`."
+      default: "{ }"
       selector:
         text:
-    down_3x_led_payload:
-      name: Down Triple-Press (3x) LED Payload
-      description: "Optional. Payload published to the `'Blue Series Switch MQTT Topic'/set` topic for 'Down Triple' events. Defined value will be wrapped in `{ \"led_effect\": {} }`, so it does not need to be specified."
-      default: {}
+    down_4x_led_effect:
+      name: Down Quadruple-Press (4x) LED Effect
+      description: Effect played when for `down_quadruple` events. Default is `Slow Blink`.
+      default: Slow Blink
+      selector:
+        select:
+          options:
+            - "Off"
+            - "Clear"
+            - "Solid"
+            - "Aurora"
+            - "Chase"
+            - "Fast Blink"
+            - "Fast Chase"
+            - "Fast Falling"
+            - "Fast Rising"
+            - "Fast Siren"
+            - "Medium Blink"
+            - "Medium Falling"
+            - "Medium Rising"
+            - "Open/Close"
+            - "Pulse"
+            - "Slow Blink"
+            - "Slow Chase"
+            - "Slow Falling"
+            - "Slow Rising"
+            - "Slow Siren"
+            - "Small to Big"
+    down_4x_led_effect_color:
+      name: Down Quadruple-Press (4x) LED Effect Color
+      description: Color of the LED bar while `down_4x_led_effect` plays. Default is `White`.
+      default: White
+      selector:
+        select:
+          custom_value: true
+          options:
+            - "Off"
+            - Red
+            - Orange
+            - Yellow
+            - Green
+            - Cyan
+            - Teal
+            - Blue
+            - Purple
+            - Light Pink
+            - Pink
+            - White
+    down_4x_led_effect_level:
+      name: Down Quadruple-Press (4x) LED Effect Level
+      description: Intensity percentage of the LED bar while `down_4x_led_effect` plays. Default is `10`.
+      default: 10
+      selector:
+        number:
+          min: 0
+          max: 100
+          mode: box
+          step: 1
+          unit_of_measurement: percent
+    down_4x_led_effect_duration:
+      name: Down Quadruple-Press (4x) LED Effect Duration
+      description: Duration of the LED bar while `down_4x_led_effect` plays. Values 1-60 is in seconds. Values 61-120 is in minutes, calculated by (value-60); example a value of 65 would be 65-60 = 5 minutes. Values 120-254 is in hours, calculated by (value-120); example a value of 132 would be 132-120 would be 12 hours. - 255 Indefinitely. Default is `1`.
+      default: 1
+      selector:
+        number:
+          min: 0
+          max: 255
+          mode: box
+          step: 1
+    down_5x_payload:
+      name: Down Quintruple-Press (5x) MQTT Payload
+      description: "Payload to publish to the 'Switch MQTT Topic' for an `down_quintruple` switch event. Default is `{ }`."
+      default: "{ }"
       selector:
         text:
-    down_4x_action_payload:
-      name: Down Quadrdownle-Press (4x) MQTT Payload
-      description: Optional. Payload published to the 'Action MQTT Topic' for 'Down Quadrdownle' events.
-      default: {}
+    down_5x_led_effect:
+      name: Down Quintruple-Press (5x) LED Effect
+      description: Effect played when for `down_quintruple` events. Default is `Slow Blink`.
+      default: Slow Blink
       selector:
-        text:
-    down_4x_action_mqtt_topic:
-      name: Down Quadrdownle-Press (4x) Action MQTT Topic
-      description: Optional. MQTT topic to which action payloads are published for 'Down Quadrdownle' events. If no value is defined, defaults to 'Default Action MQTT Topic'.
-      default: {}
+        select:
+          options:
+            - "Off"
+            - "Clear"
+            - "Solid"
+            - "Aurora"
+            - "Chase"
+            - "Fast Blink"
+            - "Fast Chase"
+            - "Fast Falling"
+            - "Fast Rising"
+            - "Fast Siren"
+            - "Medium Blink"
+            - "Medium Falling"
+            - "Medium Rising"
+            - "Open/Close"
+            - "Pulse"
+            - "Slow Blink"
+            - "Slow Chase"
+            - "Slow Falling"
+            - "Slow Rising"
+            - "Slow Siren"
+            - "Small to Big"
+    down_5x_led_effect_color:
+      name: Down Quintruple-Press (5x) LED Effect Color
+      description: Color of the LED bar while `down_5x_led_effect` plays. Default is `White`.
+      default: White
       selector:
-        text:
-    down_4x_led_payload:
-      name: Down Quadrdownle-Press (4x) LED Payload
-      description: "Optional. Payload published to the `'Blue Series Switch MQTT Topic'/set` topic for 'Down Quadrdownle' events. Defined value will be wrapped in `{ \"led_effect\": {} }`, so it does not need to be specified."
-      default: {}
+        select:
+          custom_value: true
+          options:
+            - "Off"
+            - Red
+            - Orange
+            - Yellow
+            - Green
+            - Cyan
+            - Teal
+            - Blue
+            - Purple
+            - Light Pink
+            - Pink
+            - White
+    down_5x_led_effect_level:
+      name: Down Quintruple-Press (5x) LED Effect Level
+      description: Intensity percentage of the LED bar while `down_5x_led_effect` plays. Default is `10`.
+      default: 10
       selector:
-        text:
-    down_5x_action_payload:
-      name: Down Quintdownle-Press (5x) MQTT Payload
-      description: Optional. Payload published to the 'Action MQTT Topic' for 'Down Quintdownle' events.
-      default: {}
+        number:
+          min: 0
+          max: 100
+          mode: box
+          step: 1
+          unit_of_measurement: percent
+    down_5x_led_effect_duration:
+      name: Down Quintruple-Press (5x) LED Effect Duration
+      description: Duration of the LED bar while `down_5x_led_effect` plays. Values 1-60 is in seconds. Values 61-120 is in minutes, calculated by (value-60); example a value of 65 would be 65-60 = 5 minutes. Values 120-254 is in hours, calculated by (value-120); example a value of 132 would be 132-120 would be 12 hours. - 255 Indefinitely. Default is `1`.
+      default: 1
       selector:
-        text:
-    down_5x_action_mqtt_topic:
-      name: Down Quintdownle-Press (5x) Action MQTT Topic
-      description: Optional. MQTT topic to which action payloads are published for 'Down Quintdownle' events. If no value is defined, defaults to 'Default Action MQTT Topic'.
-      default: {}
-      selector:
-        text:
-    down_5x_led_payload:
-      name: Down Quintdownle-Press (5x) LED Payload
-      description: "Optional. Payload published to the `'Blue Series Switch MQTT Topic'/set` topic for 'Down Quintdownle' events. Defined value will be wrapped in `{ \"led_effect\": {} }`, so it does not need to be specified."
-      default: {}
-      selector:
-        text:
-    down_held_action_payload:
+        number:
+          min: 0
+          max: 255
+          mode: box
+          step: 1
+    down_held_payload:
       name: Down Held MQTT Payload
-      description: Optional. Payload published to the 'Action MQTT Topic' for 'Down Held' events.
-      default: {}
+      description: "Payload to publish to the 'Switch MQTT Topic' for an `down_held` switch event. Default is `{ }`."
+      default: "{ }"
       selector:
         text:
-    down_held_action_mqtt_topic:
-      name: Down Held Action MQTT Topic
-      description: Optional. MQTT topic to which action payloads are published for 'Down Held' events. If no value is defined, defaults to 'Default Action MQTT Topic'.
-      default: {}
+    down_held_led_effect:
+      name: Down Held LED Effect
+      description: Effect played when for `down_held` events. Default is `Slow Blink`.
+      default: Slow Blink
       selector:
-        text:
-    down_held_led_payload:
-      name: Down Held LED Payload
-      description: "Optional. Payload published to the `'Blue Series Switch MQTT Topic'/set` topic for 'Down Held' events. Defined value will be wrapped in `{ \"led_effect\": {} }`, so it does not need to be specified."
-      default: {}
+        select:
+          options:
+            - "Off"
+            - "Clear"
+            - "Solid"
+            - "Aurora"
+            - "Chase"
+            - "Fast Blink"
+            - "Fast Chase"
+            - "Fast Falling"
+            - "Fast Rising"
+            - "Fast Siren"
+            - "Medium Blink"
+            - "Medium Falling"
+            - "Medium Rising"
+            - "Open/Close"
+            - "Pulse"
+            - "Slow Blink"
+            - "Slow Chase"
+            - "Slow Falling"
+            - "Slow Rising"
+            - "Slow Siren"
+            - "Small to Big"
+    down_held_led_effect_color:
+      name: Down Held LED Effect Color
+      description: Color of the LED bar while `down_held_led_effect` plays. Default is `White`.
+      default: White
       selector:
-        text:
-    down_release_action_payload:
+        select:
+          custom_value: true
+          options:
+            - "Off"
+            - Red
+            - Orange
+            - Yellow
+            - Green
+            - Cyan
+            - Teal
+            - Blue
+            - Purple
+            - Light Pink
+            - Pink
+            - White
+    down_held_led_effect_level:
+      name: Down Held  LED Effect Level
+      description: Intensity percentage of the LED bar while `down_held_led_effect` plays. Default is `10`.
+      default: 10
+      selector:
+        number:
+          min: 0
+          max: 100
+          mode: box
+          step: 1
+          unit_of_measurement: percent
+    down_held_led_effect_duration:
+      name: Down Held  LED Effect Duration
+      description: Duration of the LED bar while `down_held_led_effect` plays. Values 1-60 is in seconds. Values 61-120 is in minutes, calculated by (value-60); example a value of 65 would be 65-60 = 5 minutes. Values 120-254 is in hours, calculated by (value-120); example a value of 132 would be 132-120 would be 12 hours. - 255 Indefinitely. Default is `1`.
+      default: 1
+      selector:
+        number:
+          min: 0
+          max: 255
+          mode: box
+          step: 1
+    down_release_payload:
       name: Down Release MQTT Payload
-      description: Optional. Payload published to the 'Action MQTT Topic' for 'Down Release' events.
-      default: {}
+      description: "Payload to publish to the 'Switch MQTT Topic' for an `down_release` switch event. Default is `{ }`."
+      default: "{ }"
       selector:
         text:
-    down_release_action_mqtt_topic:
-      name: Down Release Action MQTT Topic
-      description: Optional. MQTT topic to which action payloads are published for 'Down Release' events. If no value is defined, defaults to 'Default Action MQTT Topic'.
-      default: {}
+    down_release_led_effect:
+      name: Down Release LED Effect
+      description: Effect played when for `down_release` events. Default is `Slow Blink`.
+      default: Slow Blink
       selector:
-        text:
-    down_release_led_payload:
-      name: Down Release LED Payload
-      description: "Optional. Payload published to the `'Blue Series Switch MQTT Topic'/set` topic for 'Down Release' events. Defined value will be wrapped in `{ \"led_effect\": {} }`, so it does not need to be specified."
-      default: {}
+        select:
+          options:
+            - "Off"
+            - "Clear"
+            - "Solid"
+            - "Aurora"
+            - "Chase"
+            - "Fast Blink"
+            - "Fast Chase"
+            - "Fast Falling"
+            - "Fast Rising"
+            - "Fast Siren"
+            - "Medium Blink"
+            - "Medium Falling"
+            - "Medium Rising"
+            - "Open/Close"
+            - "Pulse"
+            - "Slow Blink"
+            - "Slow Chase"
+            - "Slow Falling"
+            - "Slow Rising"
+            - "Slow Siren"
+            - "Small to Big"
+    down_release_led_effect_color:
+      name: Down Release LED Effect Color
+      description: Color of the LED bar while `down_release_led_effect` plays. Default is `White`.
+      default: White
       selector:
-        text:
-    config_1x_action_payload:
+        select:
+          custom_value: true
+          options:
+            - "Off"
+            - Red
+            - Orange
+            - Yellow
+            - Green
+            - Cyan
+            - Teal
+            - Blue
+            - Purple
+            - Light Pink
+            - Pink
+            - White
+    down_release_led_effect_level:
+      name: Down Release  LED Effect Level
+      description: Intensity percentage of the LED bar while `down_release_led_effect` plays. Default is `10`.
+      default: 10
+      selector:
+        number:
+          min: 0
+          max: 100
+          mode: box
+          step: 1
+          unit_of_measurement: percent
+    down_release_led_effect_duration:
+      name: Down Release  LED Effect Duration
+      description: Duration of the LED bar while `down_release_led_effect` plays. Values 1-60 is in seconds. Values 61-120 is in minutes, calculated by (value-60); example a value of 65 would be 65-60 = 5 minutes. Values 120-254 is in hours, calculated by (value-120); example a value of 132 would be 132-120 would be 12 hours. - 255 Indefinitely. Default is `1`.
+      default: 1
+      selector:
+        number:
+          min: 0
+          max: 255
+          mode: box
+          step: 1
+    config_1x_payload:
       name: Config Single-Press (1x) MQTT Payload
-      description: "Optional. Payload published to the 'Action MQTT Topic' for 'Config Single' events."
-      default: {}
+      description: "Payload to publish to the 'Switch MQTT Topic' for an `config_single` switch event. Default is `{ }`."
+      default: "{ }"
       selector:
         text:
-    config_1x_action_mqtt_topic:
-      name: Config Single-Press (1x) Action MQTT Topic
-      description: Optional. MQTT topic to which action payloads are published for 'Config Single' events. If no value is defined, defaults to 'Default Action MQTT Topic'.
-      default: {}
+    config_1x_led_effect:
+      name: Config Single-Press (1x) LED Effect
+      description: Effect played when for `config_single` events. Default is `Slow Blink`.
+      default: Slow Blink
       selector:
-        text:
-    config_1x_led_payload:
-      name: Config Single-Press (1x) LED Payload
-      description: "Optional. Payload published to the `'Blue Series Switch MQTT Topic'/set` topic for 'Config Single' events. Defined value will be wrapped in `{ \"led_effect\": {} }`, so it does not need to be specified."
-      default: {}
+        select:
+          options:
+            - "Off"
+            - "Clear"
+            - "Solid"
+            - "Aurora"
+            - "Chase"
+            - "Fast Blink"
+            - "Fast Chase"
+            - "Fast Falling"
+            - "Fast Rising"
+            - "Fast Siren"
+            - "Medium Blink"
+            - "Medium Falling"
+            - "Medium Rising"
+            - "Open/Close"
+            - "Pulse"
+            - "Slow Blink"
+            - "Slow Chase"
+            - "Slow Falling"
+            - "Slow Rising"
+            - "Slow Siren"
+            - "Small to Big"
+    config_1x_led_effect_color:
+      name: Config Single-Press (1x) LED Effect Color
+      description: Color of the LED bar while `config_1x_led_effect` plays. Default is `White`.
+      default: White
       selector:
-        text:
-    config_2x_action_payload:
+        select:
+          custom_value: true
+          options:
+            - "Off"
+            - Red
+            - Orange
+            - Yellow
+            - Green
+            - Cyan
+            - Teal
+            - Blue
+            - Purple
+            - Light Pink
+            - Pink
+            - White
+    config_1x_led_effect_level:
+      name: Config Single-Press (1x) LED Effect Level
+      description: Intensity percentage of the LED bar while `config_1x_led_effect` plays. Default is `10`.
+      default: 10
+      selector:
+        number:
+          min: 0
+          max: 100
+          mode: box
+          step: 1
+          unit_of_measurement: percent
+    config_1x_led_effect_duration:
+      name: Config Single-Press (1x) LED Effect Duration
+      description: Duration of the LED bar while `config_1x_led_effect` plays. Values 1-60 is in seconds. Values 61-120 is in minutes, calculated by (value-60); example a value of 65 would be 65-60 = 5 minutes. Values 120-254 is in hours, calculated by (value-120); example a value of 132 would be 132-120 would be 12 hours. - 255 Indefinitely. Default is `1`.
+      default: 1
+      selector:
+        number:
+          min: 0
+          max: 255
+          mode: box
+          step: 1
+    config_2x_payload:
       name: Config Double-Press (2x) MQTT Payload
-      description: Optional. Payload published to the 'Action MQTT Topic' for 'Config Double' events.
-      default: {}
+      description: "Payload to publish to the 'Switch MQTT Topic' for an `config_double` switch event. Default is `{ }`."
+      default: "{ }"
       selector:
         text:
-    config_2x_action_mqtt_topic:
-      name: Config Double-Press (2x) Action MQTT Topic
-      description: Optional. MQTT topic to which action payloads are published for 'Config Double' events. If no value is defined, defaults to 'Default Action MQTT Topic'.
-      default: {}
+    config_2x_led_effect:
+      name: Config Double-Press (2x) LED Effect
+      description: Effect played when for `config_double` events. Default is `Slow Blink`.
+      default: Slow Blink
       selector:
-        text:
-    config_2x_led_payload:
-      name: Config Double-Press (2x) LED Payload
-      description: "Optional. Payload published to the `'Blue Series Switch MQTT Topic'/set` topic for 'Config Double' events. Defined value will be wrapped in `{ \"led_effect\": {} }`, so it does not need to be specified."
-      default: {}
+        select:
+          options:
+            - "Off"
+            - "Clear"
+            - "Solid"
+            - "Aurora"
+            - "Chase"
+            - "Fast Blink"
+            - "Fast Chase"
+            - "Fast Falling"
+            - "Fast Rising"
+            - "Fast Siren"
+            - "Medium Blink"
+            - "Medium Falling"
+            - "Medium Rising"
+            - "Open/Close"
+            - "Pulse"
+            - "Slow Blink"
+            - "Slow Chase"
+            - "Slow Falling"
+            - "Slow Rising"
+            - "Slow Siren"
+            - "Small to Big"
+    config_2x_led_effect_color:
+      name: Config Double-Press (2x) LED Effect Color
+      description: Color of the LED bar while `config_2x_led_effect` plays. Default is `White`.
+      default: White
       selector:
-        text:
-    config_3x_action_payload:
+        select:
+          custom_value: true
+          options:
+            - "Off"
+            - Red
+            - Orange
+            - Yellow
+            - Green
+            - Cyan
+            - Teal
+            - Blue
+            - Purple
+            - Light Pink
+            - Pink
+            - White
+    config_2x_led_effect_level:
+      name: Config Double-Press (2x) LED Effect Level
+      description: Intensity percentage of the LED bar while `config_2x_led_effect` plays. Default is `10`.
+      default: 10
+      selector:
+        number:
+          min: 0
+          max: 100
+          mode: box
+          step: 1
+          unit_of_measurement: percent
+    config_2x_led_effect_duration:
+      name: Config Double-Press (2x) LED Effect Duration
+      description: Duration of the LED bar while `config_2x_led_effect` plays. Values 1-60 is in seconds. Values 61-120 is in minutes, calculated by (value-60); example a value of 65 would be 65-60 = 5 minutes. Values 120-254 is in hours, calculated by (value-120); example a value of 132 would be 132-120 would be 12 hours. - 255 Indefinitely. Default is `1`.
+      default: 1
+      selector:
+        number:
+          min: 0
+          max: 255
+          mode: box
+          step: 1
+    config_3x_payload:
       name: Config Triple-Press (3x) MQTT Payload
-      description: Optional. Payload published to the 'Action MQTT Topic' for 'Config Triple' events.
-      default: {}
+      description: "Payload to publish to the 'Switch MQTT Topic' for an `config_triple` switch event. Default is `{ }`."
+      default: "{ }"
       selector:
         text:
-    config_3x_action_mqtt_topic:
-      name: Config Triple-Press (3x) Action MQTT Topic
-      description: Optional. MQTT topic to which action payloads are published for 'Config Triple' events. If no value is defined, defaults to 'Default Action MQTT Topic'.
-      default: {}
+    config_3x_led_effect:
+      name: Config Triple-Press (3x) LED Effect
+      description: Effect played when for `config_triple` events. Default is `Slow Blink`.
+      default: Slow Blink
+      selector:
+        select:
+          options:
+            - "Off"
+            - "Clear"
+            - "Solid"
+            - "Aurora"
+            - "Chase"
+            - "Fast Blink"
+            - "Fast Chase"
+            - "Fast Falling"
+            - "Fast Rising"
+            - "Fast Siren"
+            - "Medium Blink"
+            - "Medium Falling"
+            - "Medium Rising"
+            - "Open/Close"
+            - "Pulse"
+            - "Slow Blink"
+            - "Slow Chase"
+            - "Slow Falling"
+            - "Slow Rising"
+            - "Slow Siren"
+            - "Small to Big"
+    config_3x_led_effect_color:
+      name: Config Triple-Press (3x) LED Effect Color
+      description: Color of the LED bar while `config_3x_led_effect` plays. Default is `White`.
+      default: White
+      selector:
+        select:
+          custom_value: true
+          options:
+            - "Off"
+            - Red
+            - Orange
+            - Yellow
+            - Green
+            - Cyan
+            - Teal
+            - Blue
+            - Purple
+            - Light Pink
+            - Pink
+            - White
+    config_3x_led_effect_level:
+      name: Config Triple-Press (3x) LED Effect Level
+      description: Intensity percentage of the LED bar while `config_3x_led_effect` plays. Default is `10`.
+      default: 10
+      selector:
+        number:
+          min: 0
+          max: 100
+          mode: box
+          step: 1
+          unit_of_measurement: percent
+    config_3x_led_effect_duration:
+      name: Config Triple-Press (3x) LED Effect Duration
+      description: Duration of the LED bar while `config_3x_led_effect` plays. Values 1-60 is in seconds. Values 61-120 is in minutes, calculated by (value-60); example a value of 65 would be 65-60 = 5 minutes. Values 120-254 is in hours, calculated by (value-120); example a value of 132 would be 132-120 would be 12 hours. - 255 Indefinitely. Default is `1`.
+      default: 1
+      selector:
+        number:
+          min: 0
+          max: 255
+          mode: box
+          step: 1
+    config_4x_payload:
+      name: Config Quadruple-Press (4x) MQTT Payload
+      description: "Payload to publish to the 'Switch MQTT Topic' for an `config_quadruple` switch event. Default is `{ }`."
+      default: "{ }"
       selector:
         text:
-    config_3x_led_payload:
-      name: Config Triple-Press (3x) LED Payload
-      description: "Optional. Payload published to the `'Blue Series Switch MQTT Topic'/set` topic for 'Config Triple' events. Defined value will be wrapped in `{ \"led_effect\": {} }`, so it does not need to be specified."
-      default: {}
+    config_4x_led_effect:
+      name: Config Quadruple-Press (4x) LED Effect
+      description: Effect played when for `config_quadruple` events. Default is `Slow Blink`.
+      default: Slow Blink
+      selector:
+        select:
+          options:
+            - "Off"
+            - "Clear"
+            - "Solid"
+            - "Aurora"
+            - "Chase"
+            - "Fast Blink"
+            - "Fast Chase"
+            - "Fast Falling"
+            - "Fast Rising"
+            - "Fast Siren"
+            - "Medium Blink"
+            - "Medium Falling"
+            - "Medium Rising"
+            - "Open/Close"
+            - "Pulse"
+            - "Slow Blink"
+            - "Slow Chase"
+            - "Slow Falling"
+            - "Slow Rising"
+            - "Slow Siren"
+            - "Small to Big"
+    config_4x_led_effect_color:
+      name: Config Quadruple-Press (4x) LED Effect Color
+      description: Color of the LED bar while `config_4x_led_effect` plays. Default is `White`.
+      default: White
+      selector:
+        select:
+          custom_value: true
+          options:
+            - "Off"
+            - Red
+            - Orange
+            - Yellow
+            - Green
+            - Cyan
+            - Teal
+            - Blue
+            - Purple
+            - Light Pink
+            - Pink
+            - White
+    config_4x_led_effect_level:
+      name: Config Quadruple-Press (4x) LED Effect Level
+      description: Intensity percentage of the LED bar while `config_4x_led_effect` plays. Default is `10`.
+      default: 10
+      selector:
+        number:
+          min: 0
+          max: 100
+          mode: box
+          step: 1
+          unit_of_measurement: percent
+    config_4x_led_effect_duration:
+      name: Config Quadruple-Press (4x) LED Effect Duration
+      description: Duration of the LED bar while `config_4x_led_effect` plays. Values 1-60 is in seconds. Values 61-120 is in minutes, calculated by (value-60); example a value of 65 would be 65-60 = 5 minutes. Values 120-254 is in hours, calculated by (value-120); example a value of 132 would be 132-120 would be 12 hours. - 255 Indefinitely. Default is `1`.
+      default: 1
+      selector:
+        number:
+          min: 0
+          max: 255
+          mode: box
+          step: 1
+    config_5x_payload:
+      name: Config Quintruple-Press (5x) MQTT Payload
+      description: "Payload to publish to the 'Switch MQTT Topic' for an `config_quintruple` switch event. Default is `{ }`."
+      default: "{ }"
       selector:
         text:
-    config_4x_action_payload:
-      name: Config Quadrconfigle-Press (4x) MQTT Payload
-      description: Optional. Payload published to the 'Action MQTT Topic' for 'Config Quadrconfigle' events.
-      default: {}
+    config_5x_led_effect:
+      name: Config Quintruple-Press (5x) LED Effect
+      description: Effect played when for `config_quintruple` events. Default is `Slow Blink`.
+      default: Slow Blink
       selector:
-        text:
-    config_4x_action_mqtt_topic:
-      name: Config Quadrconfigle-Press (4x) Action MQTT Topic
-      description: Optional. MQTT topic to which action payloads are published for 'Config Quadrconfigle' events. If no value is defined, defaults to 'Default Action MQTT Topic'.
-      default: {}
+        select:
+          options:
+            - "Off"
+            - "Clear"
+            - "Solid"
+            - "Aurora"
+            - "Chase"
+            - "Fast Blink"
+            - "Fast Chase"
+            - "Fast Falling"
+            - "Fast Rising"
+            - "Fast Siren"
+            - "Medium Blink"
+            - "Medium Falling"
+            - "Medium Rising"
+            - "Open/Close"
+            - "Pulse"
+            - "Slow Blink"
+            - "Slow Chase"
+            - "Slow Falling"
+            - "Slow Rising"
+            - "Slow Siren"
+            - "Small to Big"
+    config_5x_led_effect_color:
+      name: Config Quintruple-Press (5x) LED Effect Color
+      description: Color of the LED bar while `config_5x_led_effect` plays. Default is `White`.
+      default: White
       selector:
-        text:
-    config_4x_led_payload:
-      name: Config Quadrconfigle-Press (4x) LED Payload
-      description: "Optional. Payload published to the `'Blue Series Switch MQTT Topic'/set` topic for 'Config Quadrconfigle' events. Defined value will be wrapped in `{ \"led_effect\": {} }`, so it does not need to be specified."
-      default: {}
+        select:
+          custom_value: true
+          options:
+            - "Off"
+            - Red
+            - Orange
+            - Yellow
+            - Green
+            - Cyan
+            - Teal
+            - Blue
+            - Purple
+            - Light Pink
+            - Pink
+            - White
+    config_5x_led_effect_level:
+      name: Config Quintruple-Press (5x) LED Effect Level
+      description: Intensity percentage of the LED bar while `config_5x_led_effect` plays. Default is `10`.
+      default: 10
       selector:
-        text:
-    config_5x_action_payload:
-      name: Config Quintconfigle-Press (5x) MQTT Payload
-      description: Optional. Payload published to the 'Action MQTT Topic' for 'Config Quintconfigle' events.
-      default: {}
+        number:
+          min: 0
+          max: 100
+          mode: box
+          step: 1
+          unit_of_measurement: percent
+    config_5x_led_effect_duration:
+      name: Config Quintruple-Press (5x) LED Effect Duration
+      description: Duration of the LED bar while `config_5x_led_effect` plays. Values 1-60 is in seconds. Values 61-120 is in minutes, calculated by (value-60); example a value of 65 would be 65-60 = 5 minutes. Values 120-254 is in hours, calculated by (value-120); example a value of 132 would be 132-120 would be 12 hours. - 255 Indefinitely. Default is `1`.
+      default: 1
       selector:
-        text:
-    config_5x_action_mqtt_topic:
-      name: Config Quintconfigle-Press (5x) Action MQTT Topic
-      description: Optional. MQTT topic to which action payloads are published for 'Config Quintconfigle' events. If no value is defined, defaults to 'Default Action MQTT Topic'.
-      default: {}
-      selector:
-        text:
-    config_5x_led_payload:
-      name: Config Quintconfigle-Press (5x) LED Payload
-      description: "Optional. Payload published to the `'Blue Series Switch MQTT Topic'/set` topic for 'Config Quintconfigle' events. Defined value will be wrapped in `{ \"led_effect\": {} }`, so it does not need to be specified."
-      default: {}
-      selector:
-        text:
-    config_held_action_payload:
+        number:
+          min: 0
+          max: 255
+          mode: box
+          step: 1
+    config_held_payload:
       name: Config Held MQTT Payload
-      description: Optional. Payload published to the 'Action MQTT Topic' for 'Config Held' events.
-      default: {}
+      description: "Payload to publish to the 'Switch MQTT Topic' for an `config_held` switch event. Default is `{ }`."
+      default: "{ }"
       selector:
         text:
-    config_held_action_mqtt_topic:
-      name: Config Held Action MQTT Topic
-      description: Optional. MQTT topic to which action payloads are published for 'Config Held' events. If no value is defined, defaults to 'Default Action MQTT Topic'.
-      default: {}
+    config_held_led_effect:
+      name: Config Held LED Effect
+      description: Effect played when for `config_held` events. Default is `Slow Blink`.
+      default: Slow Blink
       selector:
-        text:
-    config_held_led_payload:
-      name: Config Held LED Payload
-      description: "Optional. Payload published to the `'Blue Series Switch MQTT Topic'/set` topic for 'Config Held' events. Defined value will be wrapped in `{ \"led_effect\": {} }`, so it does not need to be specified."
-      default: {}
+        select:
+          options:
+            - "Off"
+            - "Clear"
+            - "Solid"
+            - "Aurora"
+            - "Chase"
+            - "Fast Blink"
+            - "Fast Chase"
+            - "Fast Falling"
+            - "Fast Rising"
+            - "Fast Siren"
+            - "Medium Blink"
+            - "Medium Falling"
+            - "Medium Rising"
+            - "Open/Close"
+            - "Pulse"
+            - "Slow Blink"
+            - "Slow Chase"
+            - "Slow Falling"
+            - "Slow Rising"
+            - "Slow Siren"
+            - "Small to Big"
+    config_held_led_effect_color:
+      name: Config Held LED Effect Color
+      description: Color of the LED bar while `config_held_led_effect` plays. Default is `White`.
+      default: White
       selector:
-        text:
-    config_release_action_payload:
+        select:
+          custom_value: true
+          options:
+            - "Off"
+            - Red
+            - Orange
+            - Yellow
+            - Green
+            - Cyan
+            - Teal
+            - Blue
+            - Purple
+            - Light Pink
+            - Pink
+            - White
+    config_held_led_effect_level:
+      name: Config Held  LED Effect Level
+      description: Intensity percentage of the LED bar while `config_held_led_effect` plays. Default is `10`.
+      default: 10
+      selector:
+        number:
+          min: 0
+          max: 100
+          mode: box
+          step: 1
+          unit_of_measurement: percent
+    config_held_led_effect_duration:
+      name: Config Held  LED Effect Duration
+      description: Duration of the LED bar while `config_held_led_effect` plays. Values 1-60 is in seconds. Values 61-120 is in minutes, calculated by (value-60); example a value of 65 would be 65-60 = 5 minutes. Values 120-254 is in hours, calculated by (value-120); example a value of 132 would be 132-120 would be 12 hours. - 255 Indefinitely. Default is `1`.
+      default: 1
+      selector:
+        number:
+          min: 0
+          max: 255
+          mode: box
+          step: 1
+    config_release_payload:
       name: Config Release MQTT Payload
-      description: Optional. Payload published to the 'Action MQTT Topic' for 'Config Release' events.
-      default: {}
+      description: "Payload to publish to the 'Switch MQTT Topic' for an `config_release` switch event. Default is `{ }`."
+      default: "{ }"
       selector:
         text:
-    config_release_action_mqtt_topic:
-      name: Config Release Action MQTT Topic
-      description: Optional. MQTT topic to which action payloads are published for 'Config Release' events. If no value is defined, defaults to 'Default Action MQTT Topic'.
-      default: {}
+    config_release_led_effect:
+      name: Config Release LED Effect
+      description: Effect played when for `config_release` events. Default is `Slow Blink`.
+      default: Slow Blink
       selector:
-        text:
-    config_release_led_payload:
-      name: Config Release LED Payload
-      description: "Optional. Payload published to the `'Blue Series Switch MQTT Topic'/set` topic for 'Config Release' events. Defined value will be wrapped in `{ \"led_effect\": {} }`, so it does not need to be specified."
-      default: {}
+        select:
+          options:
+            - "Off"
+            - "Clear"
+            - "Solid"
+            - "Aurora"
+            - "Chase"
+            - "Fast Blink"
+            - "Fast Chase"
+            - "Fast Falling"
+            - "Fast Rising"
+            - "Fast Siren"
+            - "Medium Blink"
+            - "Medium Falling"
+            - "Medium Rising"
+            - "Open/Close"
+            - "Pulse"
+            - "Slow Blink"
+            - "Slow Chase"
+            - "Slow Falling"
+            - "Slow Rising"
+            - "Slow Siren"
+            - "Small to Big"
+    config_release_led_effect_color:
+      name: Config Release LED Effect Color
+      description: Color of the LED bar while `config_release_led_effect` plays. Default is `White`.
+      default: White
       selector:
-        text:
+        select:
+          custom_value: true
+          options:
+            - "Off"
+            - Red
+            - Orange
+            - Yellow
+            - Green
+            - Cyan
+            - Teal
+            - Blue
+            - Purple
+            - Light Pink
+            - Pink
+            - White
+    config_release_led_effect_level:
+      name: Config Release  LED Effect Level
+      description: Intensity percentage of the LED bar while `config_release_led_effect` plays. Default is `10`.
+      default: 10
+      selector:
+        number:
+          min: 0
+          max: 100
+          mode: box
+          step: 1
+          unit_of_measurement: percent
+    config_release_led_effect_duration:
+      name: Config Release  LED Effect Duration
+      description: Duration of the LED bar while `config_release_led_effect` plays. Values 1-60 is in seconds. Values 61-120 is in minutes, calculated by (value-60); example a value of 65 would be 65-60 = 5 minutes. Values 120-254 is in hours, calculated by (value-120); example a value of 132 would be 132-120 would be 12 hours. - 255 Indefinitely. Default is `1`.
+      default: 1
+      selector:
+        number:
+          min: 0
+          max: 255
+          mode: box
+          step: 1
 mode: restart
 trigger:
   - platform: mqtt
     topic: !input switch_mqtt_topic
-    id: trigger_mqtt
-condition:
-  - condition: template
-    value_template: >
-      {%- if trigger.payload_json['action'] is defined -%}
-        {%- if trigger.payload_json.action != '' -%}
-          {{ true }}
-        {%- endif -%}
-      {%- endif -%}
+    payload: up_single
+    id: trigger_up_1x
+  - platform: mqtt
+    topic: !input switch_mqtt_topic
+    payload: up_double
+    id: trigger_up_2x
+  - platform: mqtt
+    topic: !input switch_mqtt_topic
+    payload: up_triple
+    id: trigger_up_3x
+  - platform: mqtt
+    topic: !input switch_mqtt_topic
+    payload: up_quadruple
+    id: trigger_up_4x
+  - platform: mqtt
+    topic: !input switch_mqtt_topic
+    payload: up_quintuple
+    id: trigger_up_5x
+  - platform: mqtt
+    topic: !input switch_mqtt_topic
+    payload: up_held
+    id: trigger_up_held
+  - platform: mqtt
+    topic: !input switch_mqtt_topic
+    payload: up_release
+    id: trigger_up_release
+  - platform: mqtt
+    topic: !input switch_mqtt_topic
+    payload: down_single
+    id: trigger_down_1x
+  - platform: mqtt
+    topic: !input switch_mqtt_topic
+    payload: down_double
+    id: trigger_down_2x
+  - platform: mqtt
+    topic: !input switch_mqtt_topic
+    payload: down_triple
+    id: trigger_down_3x
+  - platform: mqtt
+    topic: !input switch_mqtt_topic
+    payload: down_quadruple
+    id: trigger_down_4x
+  - platform: mqtt
+    topic: !input switch_mqtt_topic
+    payload: down_quintuple
+    id: trigger_down_5x
+  - platform: mqtt
+    topic: !input switch_mqtt_topic
+    payload: down_held
+    id: trigger_down_held
+  - platform: mqtt
+    topic: !input switch_mqtt_topic
+    payload: down_release
+    id: trigger_down_release
+  - platform: mqtt
+    topic: !input switch_mqtt_topic
+    payload: config_release
+    id: trigger_config_release
+  - platform: mqtt
+    topic: !input switch_mqtt_topic
+    payload: config_double
+    id: trigger_config_2x
+  - platform: mqtt
+    topic: !input switch_mqtt_topic
+    payload: config_triple
+    id: trigger_config_3x
+  - platform: mqtt
+    topic: !input switch_mqtt_topic
+    payload: config_quadruple
+    id: trigger_config_4x
+  - platform: mqtt
+    topic: !input switch_mqtt_topic
+    payload: config_quintuple
+    id: trigger_config_5x
+  - platform: mqtt
+    topic: !input switch_mqtt_topic
+    payload: config_single
+    id: trigger_config_1x
+  - platform: mqtt
+    topic: !input switch_mqtt_topic
+    payload: config_held
+    id: trigger_config_held
 variables:
-  trigger_action: '{{ trigger.payload_json["action"] }}'
   switch_mqtt_topic: !input switch_mqtt_topic
-  default_action_mqtt_topic: !input default_action_mqtt_topic
-  led_effect_mqtt_topic: "{{ switch_mqtt_topic }}/set"
-  up_1x_action_payload: !input up_1x_action_payload
-  up_1x_action_mqtt_topic: !input up_1x_action_mqtt_topic
-  up_1x_led_payload: !input up_1x_led_payload
-  up_2x_action_payload: !input up_2x_action_payload
-  up_2x_action_mqtt_topic: !input up_2x_action_mqtt_topic
-  up_2x_led_payload: !input up_2x_led_payload
-  up_3x_action_payload: !input up_3x_action_payload
-  up_3x_action_mqtt_topic: !input up_3x_action_mqtt_topic
-  up_3x_led_payload: !input up_3x_led_payload
-  up_4x_action_payload: !input up_4x_action_payload
-  up_4x_action_mqtt_topic: !input up_4x_action_mqtt_topic
-  up_4x_led_payload: !input up_4x_led_payload
-  up_5x_action_payload: !input up_5x_action_payload
-  up_5x_action_mqtt_topic: !input up_5x_action_mqtt_topic
-  up_5x_led_payload: !input up_5x_led_payload
-  up_held_action_payload: !input up_held_action_payload
-  up_held_action_mqtt_topic: !input up_held_action_mqtt_topic
-  up_held_led_payload: !input up_held_led_payload
-  up_release_action_payload: !input up_release_action_payload
-  up_release_action_mqtt_topic: !input up_release_action_mqtt_topic
-  up_release_led_payload: !input up_release_led_payload
-  down_1x_action_payload: !input down_1x_action_payload
-  down_1x_action_mqtt_topic: !input down_1x_action_mqtt_topic
-  down_1x_led_payload: !input down_1x_led_payload
-  down_2x_action_payload: !input down_2x_action_payload
-  down_2x_action_mqtt_topic: !input down_2x_action_mqtt_topic
-  down_2x_led_payload: !input down_2x_led_payload
-  down_3x_action_payload: !input down_3x_action_payload
-  down_3x_action_mqtt_topic: !input down_3x_action_mqtt_topic
-  down_3x_led_payload: !input down_3x_led_payload
-  down_4x_action_payload: !input down_4x_action_payload
-  down_4x_action_mqtt_topic: !input down_4x_action_mqtt_topic
-  down_4x_led_payload: !input down_4x_led_payload
-  down_5x_action_payload: !input down_5x_action_payload
-  down_5x_action_mqtt_topic: !input down_5x_action_mqtt_topic
-  down_5x_led_payload: !input down_5x_led_payload
-  down_held_action_payload: !input down_held_action_payload
-  down_held_action_mqtt_topic: !input down_held_action_mqtt_topic
-  down_held_led_payload: !input down_held_led_payload
-  down_release_action_payload: !input down_release_action_payload
-  down_release_action_mqtt_topic: !input down_release_action_mqtt_topic
-  down_release_led_payload: !input down_release_led_payload
-  config_1x_action_payload: !input config_1x_action_payload
-  config_1x_action_mqtt_topic: !input config_1x_action_mqtt_topic
-  config_1x_led_payload: !input config_1x_led_payload
-  config_2x_action_payload: !input config_2x_action_payload
-  config_2x_action_mqtt_topic: !input config_2x_action_mqtt_topic
-  config_2x_led_payload: !input config_2x_led_payload
-  config_3x_action_payload: !input config_3x_action_payload
-  config_3x_action_mqtt_topic: !input config_3x_action_mqtt_topic
-  config_3x_led_payload: !input config_3x_led_payload
-  config_4x_action_payload: !input config_4x_action_payload
-  config_4x_action_mqtt_topic: !input config_4x_action_mqtt_topic
-  config_4x_led_payload: !input config_4x_led_payload
-  config_5x_action_payload: !input config_5x_action_payload
-  config_5x_action_mqtt_topic: !input config_5x_action_mqtt_topic
-  config_5x_led_payload: !input config_5x_led_payload
-  config_held_action_payload: !input config_held_action_payload
-  config_held_action_mqtt_topic: !input config_held_action_mqtt_topic
-  config_held_led_payload: !input config_held_led_payload
-  config_release_action_payload: !input config_release_action_payload
-  config_release_action_mqtt_topic: !input config_release_action_mqtt_topic
-  config_release_led_payload: !input config_release_led_payload
-  action_payload: >
-    {%- set payload = '' -%}
-    {%- if 'up_' in trigger.payload_json['action'] -%}
-      {%- if trigger.payload_json['action'] == 'up_single' -%}
-        {%- set payload = up_1x_action_payload -%}
-      {%- elif trigger.payload_json['action'] == 'up_double' -%}
-        {%- set payload = up_2x_action_payload -%}
-      {%- elif trigger.payload_json['action'] == 'up_triple' -%}
-        {%- set payload = up_3x_action_payload -%}
-      {%- elif trigger.payload_json['action'] == 'up_quadruple' -%}
-        {%- set payload = up_4x_action_payload -%}
-      {%- elif trigger.payload_json['action'] == 'up_quintuple' -%}
-        {%- set payload = up_5x_action_payload -%}
-      {%- elif trigger.payload_json['action'] == 'up_held' -%}
-        {%- set payload = up_held_action_payload -%}
-      {%- elif trigger.payload_json['action'] == 'up_release' -%}
-        {%- set payload = up_release_action_payload -%}
-      {%- endif -%}
-    {%- elif 'down_' in trigger.payload_json['action'] -%}
-      {%- if trigger.payload_json['action'] == 'down_single' -%}
-        {%- set payload = down_1x_action_payload -%}
-      {%- elif trigger.payload_json['action'] == 'down_double' -%}
-        {%- set payload = down_2x_action_payload -%}
-      {%- elif trigger.payload_json['action'] == 'down_triple' -%}
-        {%- set payload = down_3x_action_payload -%}
-      {%- elif trigger.payload_json['action'] == 'down_quadruple' -%}
-        {%- set payload = down_4x_action_payload -%}
-      {%- elif trigger.payload_json['action'] == 'down_quintuple' -%}
-        {%- set payload = down_5x_action_payload -%}
-      {%- elif trigger.payload_json['action'] == 'down_held' -%}
-        {%- set payload = down_held_action_payload -%}
-      {%- elif trigger.payload_json['action'] == 'down_release' -%}
-        {%- set payload = down_release_action_payload -%}
-      {%- endif -%}
-    {%- elif 'config_' in trigger.payload_json['action'] -%}
-      {%- if trigger.payload_json['action'] == 'config_single' -%}
-        {%- set payload = config_1x_action_payload -%}
-      {%- elif trigger.payload_json['action'] == 'config_double' -%}
-        {%- set payload = config_2x_action_payload -%}
-      {%- elif trigger.payload_json['action'] == 'config_triple' -%}
-        {%- set payload = config_3x_action_payload -%}
-      {%- elif trigger.payload_json['action'] == 'config_quadruple' -%}
-        {%- set payload = config_4x_action_payload -%}
-      {%- elif trigger.payload_json['action'] == 'config_quintuple' -%}
-        {%- set payload = config_5x_action_payload -%}
-      {%- elif trigger.payload_json['action'] == 'config_held' -%}
-        {%- set payload = config_held_action_payload -%}
-      {%- elif trigger.payload_json['action'] == 'config_release' -%}
-        {%- set payload = config_release_action_payload -%}
-      {%- endif -%}
-    {%- endif -%}
-    {{ payload }}
-  action_mqtt_topic: >
-    {%- set mqtt_topic = '' -%}
-    {%- if 'up_' in trigger.payload_json['action'] -%}
-      {%- if trigger.payload_json['action'] == 'up_single' -%}
-        {%- set mqtt_topic = up_1x_action_payload | default(default_action_mqtt_topic,true) -%}
-      {%- elif trigger.payload_json['action'] == 'up_double' -%}
-        {%- set mqtt_topic = up_2x_action_payload | default(default_action_mqtt_topic,true) -%}
-      {%- elif trigger.payload_json['action'] == 'up_triple' -%}
-        {%- set mqtt_topic = up_3x_action_payload | default(default_action_mqtt_topic,true) -%}
-      {%- elif trigger.payload_json['action'] == 'up_quadruple' -%}
-        {%- set mqtt_topic = up_4x_action_payload | default(default_action_mqtt_topic,true) -%}
-      {%- elif trigger.payload_json['action'] == 'up_quintuple' -%}
-        {%- set mqtt_topic = up_5x_action_payload | default(default_action_mqtt_topic,true) -%}
-      {%- elif trigger.payload_json['action'] == 'up_held' -%}
-        {%- set mqtt_topic = up_helmd_action_payload | default(default_action_mqtt_topic,true) -%}
-      {%- elif trigger.payload_json['action'] == 'up_release' -%}
-        {%- set mqtt_topic = up_release_action_payload | default(default_action_mqtt_topic,true) -%}
-      {%- endif -%}
-    {%- elif 'down_' in trigger.payload_json['action'] -%}
-      {%- if trigger.payload_json['action'] == 'down_single' -%}
-        {%- set mqtt_topic = down_1x_action_payload | default(default_action_mqtt_topic,true) -%}
-      {%- elif trigger.payload_json['action'] == 'down_double' -%}
-        {%- set mqtt_topic = down_2x_action_payload | default(default_action_mqtt_topic,true) -%}
-      {%- elif trigger.payload_json['action'] == 'down_triple' -%}
-        {%- set mqtt_topic = down_3x_action_payload | default(default_action_mqtt_topic,true) -%}
-      {%- elif trigger.payload_json['action'] == 'down_quadruple' -%}
-        {%- set mqtt_topic = down_4x_action_payload | default(default_action_mqtt_topic,true) -%}
-      {%- elif trigger.payload_json['action'] == 'down_quintuple' -%}
-        {%- set mqtt_topic = down_5x_action_payload | default(default_action_mqtt_topic,true) -%}
-      {%- elif trigger.payload_json['action'] == 'down_held' -%}
-        {%- set mqtt_topic = down_held_action_payload | default(default_action_mqtt_topic,true) -%}
-      {%- elif trigger.payload_json['action'] == 'down_release' -%}
-        {%- set mqtt_topic = down_release_action_payload | default(default_action_mqtt_topic,true) -%}
-      {%- endif -%}
-    {%- elif 'config_' in trigger.payload_json['action'] -%}
-      {%- if trigger.payload_json['action'] == 'config_single' -%}
-        {%- set mqtt_topic = config_1x_action_payload | default(default_action_mqtt_topic,true) -%}
-      {%- elif trigger.payload_json['action'] == 'config_double' -%}
-        {%- set mqtt_topic = config_2x_action_payload | default(default_action_mqtt_topic,true) -%}
-      {%- elif trigger.payload_json['action'] == 'config_triple' -%}
-        {%- set mqtt_topic = config_3x_action_payload | default(default_action_mqtt_topic,true) -%}
-      {%- elif trigger.payload_json['action'] == 'config_quadruple' -%}
-        {%- set mqtt_topic = config_4x_action_payload | default(default_action_mqtt_topic,true) -%}
-      {%- elif trigger.payload_json['action'] == 'config_quintuple' -%}
-        {%- set mqtt_topic = config_5x_action_payload | default(default_action_mqtt_topic,true) -%}
-      {%- elif trigger.payload_json['action'] == 'config_held' -%}
-        {%- set mqtt_topic = config_held_action_payload | default(default_action_mqtt_topic,true) -%}
-      {%- elif trigger.payload_json['action'] == 'config_release' -%}
-        {%- set mqtt_topic = config_release_action_payload | default(default_action_mqtt_topic,true) -%}
-      {%- endif -%}
-    {%- endif -%}
-    {{ mqtt_topic }}
-  led_payload: >
-    {%- set ledpayload = '' -%}
-    {%- if 'up_' in trigger.payload_json['action'] -%}
-      {%- if trigger.payload_json['action'] == 'up_single' -%}
-        {%- set ledpayload = up_1x_led_payload -%}
-      {%- elif trigger.payload_json['action'] == 'up_double' -%}
-        {%- set ledpayload = up_2x_led_payload -%}
-      {%- elif trigger.payload_json['action'] == 'up_triple' -%}
-        {%- set ledpayload = up_3x_led_payload -%}
-      {%- elif trigger.payload_json['action'] == 'up_quadruple' -%}
-        {%- set ledpayload = up_4x_led_payload -%}
-      {%- elif trigger.payload_json['action'] == 'up_quintuple' -%}
-        {%- set ledpayload = up_5x_led_payload -%}
-      {%- elif trigger.payload_json['action'] == 'up_held' -%}
-        {%- set ledpayload = up_held_led_payload -%}
-      {%- elif trigger.payload_json['action'] == 'up_release' -%}
-        {%- set ledpayload = up_release_led_payload -%}
-      {%- endif -%}
-    {%- elif 'down_' in trigger.payload_json['action'] -%}
-      {%- if trigger.payload_json['action'] == 'down_single' -%}
-        {%- set ledpayload = down_1x_led_payload -%}
-      {%- elif trigger.payload_json['action'] == 'down_double' -%}
-        {%- set ledpayload = down_2x_led_payload -%}
-      {%- elif trigger.payload_json['action'] == 'down_triple' -%}
-        {%- set ledpayload = down_3x_led_payload -%}
-      {%- elif trigger.payload_json['action'] == 'down_quadruple' -%}
-        {%- set ledpayload = down_4x_led_payload -%}
-      {%- elif trigger.payload_json['action'] == 'down_quintuple' -%}
-        {%- set ledpayload = down_5x_led_payload -%}
-      {%- elif trigger.payload_json['action'] == 'down_held' -%}
-        {%- set ledpayload = down_held_led_payload -%}
-      {%- elif trigger.payload_json['action'] == 'down_release' -%}
-        {%- set ledpayload = down_release_led_payload -%}
-      {%- endif -%}
-    {%- elif 'config_' in trigger.payload_json['action'] -%}
-      {%- if trigger.payload_json['action'] == 'config_single' -%}
-        {%- set ledpayload = config_1x_led_payload -%}
-      {%- elif trigger.payload_json['action'] == 'config_double' -%}
-        {%- set ledpayload = config_2x_led_payload -%}
-      {%- elif trigger.payload_json['action'] == 'config_triple' -%}
-        {%- set ledpayload = config_3x_led_payload -%}
-      {%- elif trigger.payload_json['action'] == 'config_quadruple' -%}
-        {%- set ledpayload = config_4x_led_payload -%}
-      {%- elif trigger.payload_json['action'] == 'config_quintuple' -%}
-        {%- set ledpayload = config_5x_led_payload -%}
-      {%- elif trigger.payload_json['action'] == 'config_held' -%}
-        {%- set ledpayload = config_held_led_payload -%}
-      {%- elif trigger.payload_json['action'] == 'config_release' -%}
-        {%- set ledpayload = config_release_led_payload -%}
-      {%- endif -%}
-    {%- endif -%}
-    {{ ledpayload }}
+  entity_mqtt_topic: !input entity_mqtt_topic
+  led_effect_mqtt_topic: !input led_effect_mqtt_topic
+  up_1x_payload: !input up_1x_payload
+  up_1x_led_effect: !input up_1x_led_effect
+  up_1x_led_effect_color: !input up_1x_led_effect_color
+  up_1x_led_effect_level: !input up_1x_led_effect_level
+  up_1x_led_effect_duration: !input up_1x_led_effect_duration
+  up_2x_payload: !input up_2x_payload
+  up_2x_led_effect: !input up_2x_led_effect
+  up_2x_led_effect_color: !input up_2x_led_effect_color
+  up_2x_led_effect_level: !input up_2x_led_effect_level
+  up_2x_led_effect_duration: !input up_2x_led_effect_duration
+  up_3x_payload: !input up_3x_payload
+  up_3x_led_effect: !input up_3x_led_effect
+  up_3x_led_effect_color: !input up_3x_led_effect_color
+  up_3x_led_effect_level: !input up_3x_led_effect_level
+  up_3x_led_effect_duration: !input up_3x_led_effect_duration
+  up_4x_payload: !input up_4x_payload
+  up_4x_led_effect: !input up_4x_led_effect
+  up_4x_led_effect_color: !input up_4x_led_effect_color
+  up_4x_led_effect_level: !input up_4x_led_effect_level
+  up_4x_led_effect_duration: !input up_4x_led_effect_duration
+  up_5x_payload: !input up_5x_payload
+  up_5x_led_effect: !input up_5x_led_effect
+  up_5x_led_effect_color: !input up_5x_led_effect_color
+  up_5x_led_effect_level: !input up_5x_led_effect_level
+  up_5x_led_effect_duration: !input up_5x_led_effect_duration
+  up_held_payload: !input up_held_payload
+  up_held_led_effect: !input up_held_led_effect
+  up_held_led_effect_color: !input up_held_led_effect_color
+  up_held_led_effect_level: !input up_held_led_effect_level
+  up_held_led_effect_duration: !input up_held_led_effect_duration
+  up_release_payload: !input up_release_payload
+  up_release_led_effect: !input up_release_led_effect
+  up_release_led_effect_color: !input up_release_led_effect_color
+  up_release_led_effect_level: !input up_release_led_effect_level
+  up_release_led_effect_duration: !input up_release_led_effect_duration
+  down_1x_payload: !input down_1x_payload
+  down_1x_led_effect: !input down_1x_led_effect
+  down_1x_led_effect_color: !input down_1x_led_effect_color
+  down_1x_led_effect_level: !input down_1x_led_effect_level
+  down_1x_led_effect_duration: !input down_1x_led_effect_duration
+  down_2x_payload: !input down_2x_payload
+  down_2x_led_effect: !input down_2x_led_effect
+  down_2x_led_effect_color: !input down_2x_led_effect_color
+  down_2x_led_effect_level: !input down_2x_led_effect_level
+  down_2x_led_effect_duration: !input down_2x_led_effect_duration
+  down_3x_payload: !input down_3x_payload
+  down_3x_led_effect: !input down_3x_led_effect
+  down_3x_led_effect_color: !input down_3x_led_effect_color
+  down_3x_led_effect_level: !input down_3x_led_effect_level
+  down_3x_led_effect_duration: !input down_3x_led_effect_duration
+  down_4x_payload: !input down_4x_payload
+  down_4x_led_effect: !input down_4x_led_effect
+  down_4x_led_effect_color: !input down_4x_led_effect_color
+  down_4x_led_effect_level: !input down_4x_led_effect_level
+  down_4x_led_effect_duration: !input down_4x_led_effect_duration
+  down_5x_payload: !input down_5x_payload
+  down_5x_led_effect: !input down_5x_led_effect
+  down_5x_led_effect_color: !input down_5x_led_effect_color
+  down_5x_led_effect_level: !input down_5x_led_effect_level
+  down_5x_led_effect_duration: !input down_5x_led_effect_duration
+  down_held_payload: !input down_held_payload
+  down_held_led_effect: !input down_held_led_effect
+  down_held_led_effect_color: !input down_held_led_effect_color
+  down_held_led_effect_level: !input down_held_led_effect_level
+  down_held_led_effect_duration: !input down_held_led_effect_duration
+  down_release_payload: !input down_release_payload
+  down_release_led_effect: !input down_release_led_effect
+  down_release_led_effect_color: !input down_release_led_effect_color
+  down_release_led_effect_level: !input down_release_led_effect_level
+  down_release_led_effect_duration: !input down_release_led_effect_duration
+  config_1x_payload: !input config_1x_payload
+  config_1x_led_effect: !input config_1x_led_effect
+  config_1x_led_effect_color: !input config_1x_led_effect_color
+  config_1x_led_effect_level: !input config_1x_led_effect_level
+  config_1x_led_effect_duration: !input config_1x_led_effect_duration
+  config_2x_payload: !input config_2x_payload
+  config_2x_led_effect: !input config_2x_led_effect
+  config_2x_led_effect_color: !input config_2x_led_effect_color
+  config_2x_led_effect_level: !input config_2x_led_effect_level
+  config_2x_led_effect_duration: !input config_2x_led_effect_duration
+  config_3x_payload: !input config_3x_payload
+  config_3x_led_effect: !input config_3x_led_effect
+  config_3x_led_effect_color: !input config_3x_led_effect_color
+  config_3x_led_effect_level: !input config_3x_led_effect_level
+  config_3x_led_effect_duration: !input config_3x_led_effect_duration
+  config_4x_payload: !input config_4x_payload
+  config_4x_led_effect: !input config_4x_led_effect
+  config_4x_led_effect_color: !input config_4x_led_effect_color
+  config_4x_led_effect_level: !input config_4x_led_effect_level
+  config_4x_led_effect_duration: !input config_4x_led_effect_duration
+  config_5x_payload: !input config_5x_payload
+  config_5x_led_effect: !input config_5x_led_effect
+  config_5x_led_effect_color: !input config_5x_led_effect_color
+  config_5x_led_effect_level: !input config_5x_led_effect_level
+  config_5x_led_effect_duration: !input config_5x_led_effect_duration
+  config_held_payload: !input config_held_payload
+  config_held_led_effect: !input config_held_led_effect
+  config_held_led_effect_color: !input config_held_led_effect_color
+  config_held_led_effect_level: !input config_held_led_effect_level
+  config_held_led_effect_duration: !input config_held_led_effect_duration
+  config_release_payload: !input config_release_payload
+  config_release_led_effect: !input config_release_led_effect
+  config_release_led_effect_color: !input config_release_led_effect_color
+  config_release_led_effect_level: !input config_release_led_effect_level
+  config_release_led_effect_duration: !input config_release_led_effect_duration
+condition: []
 action:
-  - parallel:
-    - sequence:
-      - condition: template
-        value_template: '{{ action_payload != "" }}'
-      - service: mqtt.publish
-        data:
-          qos: "1"
-          topic: '{{ action_mqtt_topic }}'
-          payload: '{{ action_payload }}'
-    - sequence:
-      - condition: template
-        value_template: '{{ led_payload != "" }}'
-      - service: mqtt.publish
-        data:
-          qos: "1"
-          topic: '{{ led_effect_mqtt_topic }}'
-          payload: '{ "led_effect": {{ led_payload }} }'
+  - choose:
+      - conditions:
+          - condition: trigger
+            id: trigger_up_1x
+        sequence:
+          - parallel:
+              - service: mqtt.publish
+                data:
+                  qos: "1"
+                  topic: "{{ entity_mqtt_topic }}"
+                  payload: "{{ up_1x_payload }}"
+              - service: mqtt.publish
+                data:
+                  qos: "1"
+                  topic: '{{ led_effect_mqtt_topic }}'
+                  payload: '{ "effect": "{{ up_1x_led_effect }}", "color": "{{ up_1x_led_effect_color }}", "level": {{ up_1x_led_effect_level }}, "duration": {{ up_1x_led_effect_duration }} }'
+      - conditions:
+          - condition: trigger
+            id: trigger_up_2x
+        sequence:
+          - parallel:
+              - service: mqtt.publish
+                data:
+                  qos: "1"
+                  topic: "{{ entity_mqtt_topic }}"
+                  payload: "{{ up_2x_payload }}"
+              - service: mqtt.publish
+                data:
+                  qos: "1"
+                  topic: '{{ led_effect_mqtt_topic }}'
+                  payload: '{ "effect": "{{ up_2x_led_effect }}", "color": "{{ up_2x_led_effect_color }}", "level": {{ up_2x_led_effect_level }}, "duration": {{ up_2x_led_effect_duration }} }'
+      - conditions:
+          - condition: trigger
+            id: trigger_up_3x
+        sequence:
+          - parallel:
+              - service: mqtt.publish
+                data:
+                  qos: "1"
+                  topic: "{{ entity_mqtt_topic }}"
+                  payload: "{{ up_3x_payload }}"
+              - service: mqtt.publish
+                data:
+                  qos: "1"
+                  topic: '{{ led_effect_mqtt_topic }}'
+                  payload: '{ "effect": "{{ up_3x_led_effect }}", "color": "{{ up_3x_led_effect_color }}", "level": {{ up_3x_led_effect_level }}, "duration": {{ up_3x_led_effect_duration }} }'
+      - conditions:
+          - condition: trigger
+            id: trigger_up_4x
+        sequence:
+          - parallel:
+              - service: mqtt.publish
+                data:
+                  qos: "1"
+                  topic: "{{ entity_mqtt_topic }}"
+                  payload: "{{ up_4x_payload }}"
+              - service: mqtt.publish
+                data:
+                  qos: "1"
+                  topic: '{{ led_effect_mqtt_topic }}'
+                  payload: '{ "effect": "{{ up_4x_led_effect }}", "color": "{{ up_4x_led_effect_color }}", "level": {{ up_4x_led_effect_level }}, "duration": {{ up_4x_led_effect_duration }} }'
+      - conditions:
+          - condition: trigger
+            id: trigger_up_5x
+        sequence:
+          - parallel:
+              - service: mqtt.publish
+                data:
+                  qos: "1"
+                  topic: "{{ entity_mqtt_topic }}"
+                  payload: "{{ up_5x_payload }}"
+              - service: mqtt.publish
+                data:
+                  qos: "1"
+                  topic: '{{ led_effect_mqtt_topic }}'
+                  payload: '{ "effect": "{{ up_5x_led_effect }}", "color": "{{ up_5x_led_effect_color }}", "level": {{ up_5x_led_effect_level }}, "duration": {{ up_5x_led_effect_duration }} }'
+      - conditions:
+          - condition: trigger
+            id: trigger_up_held
+        sequence:
+          - parallel:
+              - service: mqtt.publish
+                data:
+                  qos: "1"
+                  topic: "{{ entity_mqtt_topic }}"
+                  payload: "{{ up_held_payload }}"
+              - service: mqtt.publish
+                data:
+                  qos: "1"
+                  topic: '{{ led_effect_mqtt_topic }}'
+                  payload: '{ "effect": "{{ up_held_led_effect }}", "color": "{{ up_held_led_effect_color }}", "level": {{ up_held_led_effect_level }}, "duration": {{ up_held_led_effect_duration }} }'
+      - conditions:
+          - condition: trigger
+            id: trigger_up_release
+        sequence:
+          - parallel:
+              - service: mqtt.publish
+                data:
+                  qos: "1"
+                  topic: "{{ entity_mqtt_topic }}"
+                  payload: "{{ up_release_payload }}"
+              - service: mqtt.publish
+                data:
+                  qos: "1"
+                  topic: '{{ led_effect_mqtt_topic }}'
+                  payload: '{ "effect": "{{ up_release_led_effect }}", "color": "{{ up_release_led_effect_color }}", "level": {{ up_release_led_effect_level }}, "duration": {{ up_release_led_effect_duration }} }'
+      - conditions:
+          - condition: trigger
+            id: trigger_down_1x
+        sequence:
+          - parallel:
+              - service: mqtt.publish
+                data:
+                  qos: "1"
+                  topic: "{{ entity_mqtt_topic }}"
+                  payload: "{{ down_1x_payload }}"
+              - service: mqtt.publish
+                data:
+                  qos: "1"
+                  topic: '{{ led_effect_mqtt_topic }}'
+                  payload: '{ "effect": "{{ down_1x_led_effect }}", "color": "{{ down_1x_led_effect_color }}", "level": {{ down_1x_led_effect_level }}, "duration": {{ down_1x_led_effect_duration }} }'
+      - conditions:
+          - condition: trigger
+            id: trigger_down_2x
+        sequence:
+          - parallel:
+              - service: mqtt.publish
+                data:
+                  qos: "1"
+                  topic: "{{ entity_mqtt_topic }}"
+                  payload: "{{ down_2x_payload }}"
+              - service: mqtt.publish
+                data:
+                  qos: "1"
+                  topic: '{{ led_effect_mqtt_topic }}'
+                  payload: '{ "effect": "{{ down_2x_led_effect }}", "color": "{{ down_2x_led_effect_color }}", "level": {{ down_2x_led_effect_level }}, "duration": {{ down_2x_led_effect_duration }} }'
+      - conditions:
+          - condition: trigger
+            id: trigger_down_3x
+        sequence:
+          - parallel:
+              - service: mqtt.publish
+                data:
+                  qos: "1"
+                  topic: "{{ entity_mqtt_topic }}"
+                  payload: "{{ down_3x_payload }}"
+              - service: mqtt.publish
+                data:
+                  qos: "1"
+                  topic: '{{ led_effect_mqtt_topic }}'
+                  payload: '{ "effect": "{{ down_3x_led_effect }}", "color": "{{ down_3x_led_effect_color }}", "level": {{ down_3x_led_effect_level }}, "duration": {{ down_3x_led_effect_duration }} }'
+      - conditions:
+          - condition: trigger
+            id: trigger_down_4x
+        sequence:
+          - parallel:
+              - service: mqtt.publish
+                data:
+                  qos: "1"
+                  topic: "{{ entity_mqtt_topic }}"
+                  payload: "{{ down_4x_payload }}"
+              - service: mqtt.publish
+                data:
+                  qos: "1"
+                  topic: '{{ led_effect_mqtt_topic }}'
+                  payload: '{ "effect": "{{ down_4x_led_effect }}", "color": "{{ down_4x_led_effect_color }}", "level": {{ down_4x_led_effect_level }}, "duration": {{ down_4x_led_effect_duration }} }'
+      - conditions:
+          - condition: trigger
+            id: trigger_down_5x
+        sequence:
+          - parallel:
+              - service: mqtt.publish
+                data:
+                  qos: "1"
+                  topic: "{{ entity_mqtt_topic }}"
+                  payload: "{{ down_5x_payload }}"
+              - service: mqtt.publish
+                data:
+                  qos: "1"
+                  topic: '{{ led_effect_mqtt_topic }}'
+                  payload: '{ "effect": "{{ down_5x_led_effect }}", "color": "{{ down_5x_led_effect_color }}", "level": {{ down_5x_led_effect_level }}, "duration": {{ down_5x_led_effect_duration }} }'
+      - conditions:
+          - condition: trigger
+            id: trigger_down_held
+        sequence:
+          - parallel:
+              - service: mqtt.publish
+                data:
+                  qos: "1"
+                  topic: "{{ entity_mqtt_topic }}"
+                  payload: "{{ down_held_payload }}"
+              - service: mqtt.publish
+                data:
+                  qos: "1"
+                  topic: '{{ led_effect_mqtt_topic }}'
+                  payload: '{ "effect": "{{ down_held_led_effect }}", "color": "{{ down_held_led_effect_color }}", "level": {{ down_held_led_effect_level }}, "duration": {{ down_held_led_effect_duration }} }'
+      - conditions:
+          - condition: trigger
+            id: trigger_down_release
+        sequence:
+          - parallel:
+              - service: mqtt.publish
+                data:
+                  qos: "1"
+                  topic: "{{ entity_mqtt_topic }}"
+                  payload: "{{ down_release_payload }}"
+              - service: mqtt.publish
+                data:
+                  qos: "1"
+                  topic: '{{ led_effect_mqtt_topic }}'
+                  payload: '{ "effect": "{{ down_release_led_effect }}", "color": "{{ down_release_led_effect_color }}", "level": {{ down_release_led_effect_level }}, "duration": {{ down_release_led_effect_duration }} }'
+      - conditions:
+          - condition: trigger
+            id: trigger_config_1x
+        sequence:
+          - parallel:
+              - service: mqtt.publish
+                data:
+                  qos: "1"
+                  topic: "{{ entity_mqtt_topic }}"
+                  payload: "{{ config_1x_payload }}"
+              - service: mqtt.publish
+                data:
+                  qos: "1"
+                  topic: '{{ led_effect_mqtt_topic }}'
+                  payload: '{ "effect": "{{ config_1x_led_effect }}", "color": "{{ config_1x_led_effect_color }}", "level": {{ config_1x_led_effect_level }}, "duration": {{ config_1x_led_effect_duration }} }'
+      - conditions:
+          - condition: trigger
+            id: trigger_config_2x
+        sequence:
+          - parallel:
+              - service: mqtt.publish
+                data:
+                  qos: "1"
+                  topic: "{{ entity_mqtt_topic }}"
+                  payload: "{{ config_2x_payload }}"
+              - service: mqtt.publish
+                data:
+                  qos: "1"
+                  topic: '{{ led_effect_mqtt_topic }}'
+                  payload: '{ "effect": "{{ config_2x_led_effect }}", "color": "{{ config_2x_led_effect_color }}", "level": {{ config_2x_led_effect_level }}, "duration": {{ config_2x_led_effect_duration }} }'
+      - conditions:
+          - condition: trigger
+            id: trigger_config_3x
+        sequence:
+          - parallel:
+              - service: mqtt.publish
+                data:
+                  qos: "1"
+                  topic: "{{ entity_mqtt_topic }}"
+                  payload: "{{ config_3x_payload }}"
+              - service: mqtt.publish
+                data:
+                  qos: "1"
+                  topic: '{{ led_effect_mqtt_topic }}'
+                  payload: '{ "effect": "{{ config_3x_led_effect }}", "color": "{{ config_3x_led_effect_color }}", "level": {{ config_3x_led_effect_level }}, "duration": {{ config_3x_led_effect_duration }} }'
+      - conditions:
+          - condition: trigger
+            id: trigger_config_4x
+        sequence:
+          - parallel:
+              - service: mqtt.publish
+                data:
+                  qos: "1"
+                  topic: "{{ entity_mqtt_topic }}"
+                  payload: "{{ config_4x_payload }}"
+              - service: mqtt.publish
+                data:
+                  qos: "1"
+                  topic: '{{ led_effect_mqtt_topic }}'
+                  payload: '{ "effect": "{{ config_4x_led_effect }}", "color": "{{ config_4x_led_effect_color }}", "level": {{ config_4x_led_effect_level }}, "duration": {{ config_4x_led_effect_duration }} }'
+      - conditions:
+          - condition: trigger
+            id: trigger_config_5x
+        sequence:
+          - parallel:
+              - service: mqtt.publish
+                data:
+                  qos: "1"
+                  topic: "{{ entity_mqtt_topic }}"
+                  payload: "{{ config_5x_payload }}"
+              - service: mqtt.publish
+                data:
+                  qos: "1"
+                  topic: '{{ led_effect_mqtt_topic }}'
+                  payload: '{ "effect": "{{ config_5x_led_effect }}", "color": "{{ config_5x_led_effect_color }}", "level": {{ config_5x_led_effect_level }}, "duration": {{ config_5x_led_effect_duration }} }'
+      - conditions:
+          - condition: trigger
+            id: trigger_config_held
+        sequence:
+          - parallel:
+              - service: mqtt.publish
+                data:
+                  qos: "1"
+                  topic: "{{ entity_mqtt_topic }}"
+                  payload: "{{ config_held_payload }}"
+              - service: mqtt.publish
+                data:
+                  qos: "1"
+                  topic: '{{ led_effect_mqtt_topic }}'
+                  payload: '{ "effect": "{{ config_held_led_effect }}", "color": "{{ config_held_led_effect_color }}", "level": {{ config_held_led_effect_level }}, "duration": {{ config_held_led_effect_duration }} }'
+      - conditions:
+          - condition: trigger
+            id: trigger_config_release
+        sequence:
+          - parallel:
+              - service: mqtt.publish
+                data:
+                  qos: "1"
+                  topic: "{{ entity_mqtt_topic }}"
+                  payload: "{{ config_release_payload }}"
+              - service: mqtt.publish
+                data:
+                  qos: "1"
+                  topic: '{{ led_effect_mqtt_topic }}'
+                  payload: '{ "effect": "{{ config_release_led_effect }}", "color": "{{ config_release_led_effect_color }}", "level": {{ config_release_led_effect_level }}, "duration": {{ config_release_led_effect_duration }} }'
