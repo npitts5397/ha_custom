@@ -107,8 +107,10 @@ trigger:
 variables:
   hue_light_entity: !input hue_light_entity
   default_scene_helper: !input default_scene_helper
+  default_scene_helper_state: '{{ states(default_scene_helper) }}'
   default_scene_transition: !input default_scene_transition
   alternate_scene_helper: !input alternate_scene_helper
+  alternate_scene_helper_state: '{{ states(alternate_scene_helper) }}'
   alternate_scene_transition: !input alternate_scene_transition
   default_off_transition: !input default_off_transition
   passthrough_mqtt_topic: !input passthrough_mqtt_topic
@@ -141,10 +143,10 @@ variables:
       {%- endif -%}
     {%- endif -%}
     {%- if scene == '' -%}
-      {%- if states(alternate_scene_helper) != 'NO_SCENE_SPECIFIED' -%}
-        {%- set scene = states(alternate_scene_helper) -%}
+      {%- if (alternate_scene_helper_state != 'NO_SCENE_SPECIFIED') and (alternate_scene_helper_state != '') -%}
+        {%- set scene = alternate_scene_helper_state -%}
       {%- else -%}
-        {%- set scene = states(default_scene_helper) -%}
+        {%- set scene = default_scene_helper_state -%}
       {%- endif -%}
     {%- endif -%}
     {{ (hue_light_entity | replace('light.','scene.')) + '_' + (scene | lower  | replace(' ','_')) }}
@@ -238,9 +240,9 @@ action:
         - condition: template
           value_template: "{{ hue_state == 'on' }}"
       - condition: trigger
-        id: trigger_default_scene
+        id: trigger_default_scene_helper
       - condition: trigger
-        id: trigger_alternate_scene
+        id: trigger_alternate_scene_helper
       - condition: trigger
         id: trigger_light_becomes_on
     sequence:
