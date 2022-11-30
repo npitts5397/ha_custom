@@ -1,0 +1,241 @@
+blueprint:
+  name: Illuminance Sensor Monitor (zigbee2mqtt)
+  description: Publishes a payload to an MQTT topic when illuminance (lux) becomes above or below set lux threshold of an MQTT lux sensor.
+  domain: automation
+  input:
+    lux_sensor_entity:
+      name: Illuminance (lux) Sensor Entity
+      description: Required. The illuminance (lux) sensor entity to monitor.
+      selector:
+        entity:
+          domain: sensor
+    publish_mqtt_topic:
+      name: Publish MQTT Topic
+      description: Required. The MQTT topic to which payloads are published.
+      selector:
+        text:
+    on_payload:
+      name: On Payload
+      description: Required. Payload published to 'Publish MQTT Topic' when lux value of 'Illuminance (lux) Sensor Entity' meets the threshold for the 'on' condition.
+      default: '{ "state": "on" }'
+      selector:
+        text:
+    off_payload:
+      name: Off Payload
+      description: Required. Payload published to 'Publish MQTT Topic' when lux value of 'Illuminance (lux) Sensor Entity' meets the threshold for the 'off' condition.
+      default: '{ "state": "off" }'
+      selector:
+        text:
+    on_above_lux_threshold:
+      name: On Above Lux Threshold
+      description: Optional. When enabled, publish 'on' when lux becomes _above_ lux threshold. When disabled (default), publish 'on' when lux becomes _below_ lux threshold.
+      default: false
+      selector:
+        boolean:
+    lux_threshold:
+      name: Lux Threshold
+      description: Required. Lux value threshold of 'Illuminance (lux) Sensor Entity'. The automation is trigged when the value crosses this value.
+      default: 100
+      selector:
+        number: 
+          min: 0
+          max: 100000
+          mode: box
+          step: 1
+          unit_of_measurement: lux
+    on_delay_seconds:
+      name: On Delay
+      description: Optional. Amount of time in seconds to wait before publishing 'On Payload' to 'Publish MQTT Topic'. Cancels if lux re-crosses threshold.
+      default: 0
+      selector:
+        number:
+          min: 0
+          mode: box
+          step: 1
+          unit_of_measurement: seconds
+    off_delay_seconds:
+      name: Off Delay
+      description: Optional. Amount of time in seconds to wait before publishing 'Off Payload' to 'Publish MQTT Topic'. Cancels if lux re-crosses threshold.
+      default: 0
+      selector:
+        number:
+          min: 0
+          mode: box
+          step: 1
+          unit_of_measurement: seconds
+    random_offset_percentage:
+      name: Random Offset Percentage
+      description: Optional. Percentage above and below the specified delays to randomly wait before taking action.
+      default: 0
+      selector:
+        number:
+          min: 0
+          max: 100
+          step: 1
+          unit_of_measurement: '%'
+    do_not_publish_phases:
+      name: Do-Not-Publish Phases
+      description: Optional. Comma separated phases in which to 'on' and 'off' messages are _not_ published to the MQTT topic.
+      default: ""
+      selector:
+        text:
+    publish_off_phases:
+      name: Publish Off Only Phases
+      description: Optional. Comma separated phases in which 'off' is published to the MQTT topic with respect to off_delay_seconds and will not publish 'on' until the phase changes. Example- When phase is 'Night', publish 'off' after normal wait time.
+      default: ""
+      selector:
+        text:
+    phase_helper:
+      name: Phase Helper
+      description: Optional. Helper which holds the current phase. This helper's state will be compared when do_not_publish_phases is set.
+      default: {}
+      selector:
+        entity:
+          domain: input_select
+    do_not_publish_modes:
+      name: Do-Not-Publish Modes
+      description: Optional. Comma separated modes in which not to publush 'on' or 'off' messages to the MQTT topic.
+      default: ""
+      selector:
+        text:
+    publish_off_modes:
+      name: Publish Off Only Modes
+      description: Optional. Comma separated modes in which 'off' is published to the MQTT topic with respect to off_delay_seconds and will not publish 'on' until the mode changes. Example- When mode is 'Away', publish 'off' after normal wait time.
+      default: ""
+      selector:
+        text:
+    mode_helper:
+      name: Mode Entity
+      description: Optional. Helper which holds the current mode. This helper's state will be compared when do_not_publish_modes is set.
+      default: {}
+      selector:
+        entity:
+          domain: input_select
+mode: restart
+trigger:
+- platform: event
+  id: Automation-Reloaded
+  event_type: automation_reloaded
+- platform: numeric_state
+  entity_id: !input lux_sensor_entity
+  above: !input lux_threshold
+- platform: numeric_state
+  entity_id: !input lux_sensor_entity
+  below: !input lux_threshold
+- platform: state
+  entity_id: !input phase_helper
+- platform: state
+  entity_id: !input mode_helper
+variables:
+  lux_sensor_entity: !input lux_sensor_entity
+  lux_value: "{{ states(lux_sensor_entity) }}"
+  publish_mqtt_topic: !input publish_mqtt_topic
+  on_payload: !input on_payload
+  off_payload: !input off_payload
+  on_above_lux_threshold: !input on_above_lux_threshold
+  lux_threshold: !input lux_threshold
+  random_offset_percentage: !input random_offset_percentage
+  on_delay_seconds_input: !input on_delay_seconds
+  on_delay_seconds: "{{ on_delay_seconds_input | default(0,true) }}"
+  on_wait_seconds: >-
+    {%- if (on_delay_seconds != 0) and (random_offset_percentage > 0) %}
+      {%- set on_low_end = (on_delay_seconds - (on_delay_seconds * (random_offset_percentage/100))) %}
+      {%- set on_high_end = (on_delay_seconds * (1 + (random_offset_percentage/100))) %}
+      {{ range(on_low_end|int, on_high_end|int) | random }}
+    {%- else %}
+      {{ on_delay_seconds }}
+    {%- endif %}
+  off_delay_seconds_input: !input off_delay_seconds
+  off_delay_seconds: "{{ off_delay_seconds_input | default(0,true) }}"
+  off_wait_seconds: >-
+    {%- if (off_delay_seconds != 0) and (random_offset_percentage > 0) %}
+      {%- set off_low_end = (off_delay_seconds - (off_delay_seconds * (random_offset_percentage/100))) %}
+      {%- set off_high_end = (off_delay_seconds * (1 + (random_offset_percentage/100))) %}
+      {{ range(off_low_end|int, off_high_end|int) | random }}
+    {%- else %}
+      {{ off_delay_seconds }}
+    {%- endif %}
+  do_not_publish_phases: !input do_not_publish_phases
+  do_not_publish_phase_list: "{{ (do_not_publish_phases | replace(', ',',') | replace(' ,',',')).split(',') }}"
+  publish_off_phases: !input publish_off_phases
+  publish_off_phases_list: "{{ (publish_off_phases | replace(', ',',') | replace(' ,',',')).split(',') }}"
+  phase_helper: !input phase_helper
+  do_not_publish_modes: !input do_not_publish_modes
+  do_not_publish_mode_list: "{{ (do_not_publish_modes | replace(', ',',') | replace(' ,',',')).split(',') }}"
+  publish_off_modes: !input publish_off_modes
+  publish_off_modes_list: "{{ (publish_off_modes | replace(', ',',') | replace(' ,',',')).split(',') }}"
+  mode_helper: !input mode_helper
+condition:
+- condition: and
+  # phase_helper is not set OR make sure current phase is not in do_not_publish_phase_list
+  conditions:
+  - condition: or
+    conditions:
+    - condition: template
+      value_template: "{{ phase_helper == none }}"
+    - condition: not
+      conditions:
+      - condition: template
+        value_template: "{{ states(phase_helper) in do_not_publish_phase_list }}"
+  # mode_helper is not set OR make sure current mode is not in do_not_publish_mode_list
+  - condition: or
+    conditions:
+    - condition: template
+      value_template: "{{ mode_helper == none }}"
+    - condition: not
+      conditions:
+      - condition: template
+        value_template: "{{ states(mode_helper) in do_not_publish_mode_list }}"
+action:
+- choose:
+  # publish 'on'
+  - conditions:
+    - condition: and
+      conditions:
+      - condition: template
+        value_template: "{{ states(phase_helper) not in publish_off_phases_list }}"
+      - condition: template
+        value_template: "{{ states(mode_helper) not in publish_off_modes_list }}"
+      - condition: or
+        conditions:
+        - condition: template
+          value_template: "{{ lux_value <= lux_threshold }}"
+        - condition: and
+          conditions:
+          - condition: template
+            value_template: "{{ on_above_lux_threshold == true }}"
+          - condition: template
+            value_template: "{{ lux_value >= lux_threshold }}"
+    sequence:
+    - delay:
+        seconds: "{{ on_wait_seconds }}"
+    - service: mqtt.publish
+      data:
+        qos: "1"
+        topic: "{{ publish_mqtt_topic }}"
+        payload: "{{ on_payload }}"
+  # publish 'off'
+  - conditions:
+    - condition: or
+      conditions:
+      - condition: template
+        value_template: "{{ states(phase_helper) in publish_off_phases_list }}"
+      - condition: template
+        value_template: "{{ states(mode_helper) in publish_off_modes_list }}"
+      - condition: template
+        value_template: "{{ lux_value > lux_threshold }}"
+      - condition: and
+        conditions:
+        - condition: template
+          value_template: "{{ on_above_lux_threshold == true }}"
+        - condition: template
+          value_template: "{{ lux_value < lux_threshold }}"
+    sequence:
+    - delay:
+        seconds: "{{ off_wait_seconds }}"
+    - service: mqtt.publish
+      data:
+        qos: "1"
+        topic: "{{ publish_mqtt_topic}}"
+        payload: "{{ off_payload }}"
+        
