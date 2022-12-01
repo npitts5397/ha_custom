@@ -69,8 +69,8 @@ blueprint:
           unit_of_measurement: seconds
     passthrough_mqtt_topic:
       name: Passthrough MQTT Topic
-      description: Optional. MQTT topic to which `passthrough_mqtt_payload` to published.
-      default: {}
+      description: Optional. MQTT topic to which `passthrough_mqtt_payload` to published. Default is empty string.
+      default: ''
       selector:
         text:
     default_on_passthrough_mqtt_payload:
@@ -278,10 +278,10 @@ action:
                 target:
                   entity_id: "{{ hue_scene }}"
                 data:
-                  transition: '{{ hue_transition }}'
-                  dynamic: '{{ hue_dynamic }}'
-                  speed: '{{ hue_speed }}'
-                  brightness: '{{ hue_brightness }}'
+                  transition: "{{ hue_transition }}"
+                  dynamic: "{{ hue_dynamic }}"
+                  speed: "{{ hue_speed }}"
+                  brightness: "{{ hue_brightness }}"
             # if speed is provided, call service with speed
             - conditions:
               - condition: template
@@ -291,9 +291,9 @@ action:
                 target:
                   entity_id: "{{ hue_scene }}"
                 data:
-                  transition: '{{ hue_transition }}'
-                  dynamic: '{{ hue_dynamic }}'
-                  speed: '{{ hue_speed }}'
+                  transition: "{{ hue_transition }}"
+                  dynamic: "{{ hue_dynamic }}"
+                  speed: "{{ hue_speed }}"
             # if brightness is provided, call service with brightness
             - conditions:
               - condition: template
@@ -303,29 +303,29 @@ action:
                 target:
                   entity_id: "{{ hue_scene }}"
                 data:
-                  transition: '{{ hue_transition }}'
-                  dynamic: '{{ hue_dynamic }}'
-                  brightness: '{{ hue_brightness }}'
+                  transition: "{{ hue_transition }}"
+                  dynamic: "{{ hue_dynamic }}"
+                  brightness: "{{ hue_brightness }}"
             # default service call (speed and brightness are not provided)
             default:
             - service: hue.activate_scene
               target:
                 entity_id: "{{ hue_scene }}"
               data:
-                transition: '{{ hue_transition }}'
-                dynamic: '{{ hue_dynamic }}'
+                transition: "{{ hue_transition }}"
+                dynamic: "{{ hue_dynamic }}"
         default: []
         # send passthrough payload if pasthrough topic is set
       - sequence:
         - condition: template
-          value_template: '{{ passthrough_mqtt_topic != "" }}'
+          value_template: "{{ (passthrough_mqtt_topic != '') and (passthrough_mqtt_topic != None) }}"
         - delay:
-            seconds: '{{ hue_transition }}'
+            seconds: "{{ hue_transition }}"
         - service: mqtt.publish
           data:
             qos: "1"
-            topic: '{{ passthrough_mqtt_topic }}'
-            payload: '{{ passthrough_mqtt_payload }}'
+            topic: "{{ passthrough_mqtt_topic }}"
+            payload: "{{ passthrough_mqtt_payload }}"
   # turn light off
   - conditions:
     - condition: and
@@ -338,17 +338,17 @@ action:
     - parallel:
       - service: light.turn_off
         target:
-          entity_id: '{{ hue_light_entity }}'
+          entity_id: "{{ hue_light_entity }}"
         data:
-          transition: '{{ hue_transition }}'
+          transition: "{{ hue_transition }}"
         # send passthrough payload if pasthrough topic is set
       - sequence:
         - condition: template
-          value_template: '{{ passthrough_mqtt_topic != "" }}'
+          value_template: "{{ (passthrough_mqtt_topic != '') and (passthrough_mqtt_topic != None) }}"
         - delay:
-            seconds: '{{ hue_transition }}'
+            seconds: "{{ hue_transition }}"
         - service: mqtt.publish
           data:
             qos: "1"
-            topic: '{{ passthrough_mqtt_topic }}'
-            payload: '{{ passthrough_mqtt_payload }}'
+            topic: "{{ passthrough_mqtt_topic }}"
+            payload: "{{ passthrough_mqtt_payload }}"
