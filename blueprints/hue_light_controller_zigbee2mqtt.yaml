@@ -76,13 +76,13 @@ blueprint:
     default_on_passthrough_mqtt_payload:
       name: Default 'On' Passthrough MQTT Payload
       description: Default payload published to 'Passthrough MQTT Topic' for when light state is on. No payload is published when 'Passthrough MQTT Topic' is undefined.
-      default: '{ "effect": "Solid", "color": "Green", "level": 10, "duration": 255 }'
+      default: '{ "led": -1, "effect": "Solid", "color": "Green", "level": 10, "duration": 255 }'
       selector:
         text:
     default_off_passthrough_mqtt_payload:
       name: Default 'Off' Passthrough MQTT Payload
       description: Default payload published to 'Passthrough MQTT Topic' for when light state is off. No payload is published when 'Passthrough MQTT Topic' is undefined.
-      default: '{ "effect": "Solid", "color": "Blue", "level": 10, "duration": 255 }'
+      default: '{ "led": -1, "effect": "Solid", "color": "Blue", "level": 10, "duration": 255 }'
       selector:
         text:
 mode: restart
