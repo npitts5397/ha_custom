@@ -231,10 +231,14 @@ condition:
   conditions:
   - condition: and
     conditions:
-    - condition: trigger
-      id: trigger_light_becomes_on
     - condition: template
       value_template: "{{ now() - state_attr(this.entity_id,'last_triggered') < timedelta(seconds=1) }}"
+    - condition: or
+      conditions:
+      - condition: trigger
+        id: trigger_light_becomes_on
+      - condition: trigger
+        id: trigger_light_becomes_off
 action:
 - choose:
   - conditions:
@@ -335,12 +339,16 @@ action:
             payload: "{{ passthrough_mqtt_payload }}"
   # turn light off
   - conditions:
-    - condition: and
+    - condition: or
       conditions:
+      - condition: and
+        conditions:
+        - condition: trigger
+          id: trigger_mqtt
+        - condition: template
+          value_template: "{{ hue_state == 'off' }}"
       - condition: trigger
-        id: trigger_mqtt
-      - condition: template
-        value_template: "{{ hue_state == 'off' }}" 
+        id: trigger_light_becomes_off
     sequence:
     - parallel:
       - service: light.turn_off
