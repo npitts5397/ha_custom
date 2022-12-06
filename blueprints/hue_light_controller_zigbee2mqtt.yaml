@@ -90,22 +90,28 @@ trigger:
 - platform: event
   id: Automation-Reloaded
   event_type: automation_reloaded
-- platform: mqtt
-  topic: !input mqtt_topic
-  id: trigger_mqtt
 - platform: state
   entity_id: !input default_scene_helper
   id: trigger_default_scene_helper
 - platform: state
   entity_id: !input alternate_scene_helper
   id: trigger_alternate_scene_helper
+- platform: mqtt
+  topic: !input mqtt_topic
+  id: trigger_mqtt
 - platform: state
   entity_id: !input hue_light_entity
   from: 'off'
   to: 'on'
   id: trigger_light_becomes_on
+- platform: state
+  entity_id: !input hue_light_entity
+  from: 'on'
+  to: 'off'
+  id: trigger_light_becomes_off
 variables:
   hue_light_entity: !input hue_light_entity
+  hue_light_entity_state: '{{ states(hue_light_entity) }}'
   default_scene_helper: !input default_scene_helper
   default_scene_helper_state: '{{ states(default_scene_helper) }}'
   default_scene_transition: !input default_scene_transition
@@ -130,9 +136,10 @@ variables:
         {%- endif -%}
       {%- endif -%}
     {%- endif -%}
-    {%- if state != '' -%}
-      {{ state }}
+    {%- if state == '' -%}
+      {% set state = hue_light_entity_state -%}
     {%- endif -%}
+    {{ state }}
   hue_scene: >
     {%- set scene = '' -%}
     {%- if trigger is defined -%}
