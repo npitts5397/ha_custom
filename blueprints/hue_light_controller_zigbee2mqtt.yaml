@@ -69,20 +69,20 @@ blueprint:
           unit_of_measurement: seconds
     passthrough_mqtt_topic:
       name: Passthrough MQTT Topic
-      description: Optional. MQTT topic to which `passthrough_mqtt_payload` to published. Default is empty string.
+      description: Optional. MQTT topic to which passthrough mqtt payloads are published. Typically a `/set` subtopic. Default is empty string.
       default: ''
       selector:
         text:
     default_on_passthrough_mqtt_payload:
       name: Default 'On' Passthrough MQTT Payload
-      description: Default payload published to 'Passthrough MQTT Topic' for when light state is on. No payload is published when 'Passthrough MQTT Topic' is undefined.
-      default: '{ "led": -1, "effect": "Solid", "color": "Green", "level": 10, "duration": 255 }'
+      description: Default payload published to 'Passthrough MQTT Topic' for when light state is on. No payload is published when 'Passthrough MQTT Topic' is undefined. Default value sets an Inovelli Blue Series LED bar to green.
+      default: '{ "led_effect": {"led": -1, "effect": "solid", "color": 85, "level": 10, "duration": 255 }}'
       selector:
         text:
     default_off_passthrough_mqtt_payload:
       name: Default 'Off' Passthrough MQTT Payload
-      description: Default payload published to 'Passthrough MQTT Topic' for when light state is off. No payload is published when 'Passthrough MQTT Topic' is undefined.
-      default: '{ "led": -1, "effect": "Solid", "color": "Blue", "level": 10, "duration": 255 }'
+      description: Default payload published to 'Passthrough MQTT Topic' for when light state is off. No payload is published when 'Passthrough MQTT Topic' is undefined. Default value sets an Inovelli Blue Series LED bar to blue.
+      default: '{ "led_effect": {"led": -1, "effect": "solid", "color": 170, "level": 10, "duration": 255 }}'
       selector:
         text:
 mode: restart
