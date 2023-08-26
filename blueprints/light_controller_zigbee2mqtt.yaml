@@ -1,0 +1,310 @@
+blueprint:
+  name: Light Controller (zigbee2mqtt)
+  description: Sets a light state based on values in MQTT payload and Home Assistant helpers when triggered by a supported event.
+  domain: automation
+  input:
+    light_entity:
+      name: Light Entity
+      description: Required. Light entity for which scenes will be set.
+      selector:
+        entity:
+          domain: light
+    subscribed_mqtt_topic:
+      name: Subscription MQTT Topic
+      description: >
+        Required. Subscribed MQTT topic to which light state payloads are published. Payloads support several attributes:
+          * `state` | string | Required. The state of the light. Supported values are `on` and `off`. Automation takes no action without this attribute.
+          * `scene` | string | Optional. Friendly name of a scene to set. The Home Assistant scene name is determined by combining the light entity and parsing the friendly scene name.
+          * `transition` | number | Optional. Seconds to transition between light states / scenes. `0.1` increments are supported.
+          * `passthrough_mqtt_payload` | string | Optional. JSON string containing a payload that will be sent to `Passthrough MQTT Topic`.
+      selector:
+        text:
+    default_on_transition:
+      name: Default 'On' Transition
+      description: Default amount of time in seconds to transition to `on` state. Default is `0.5`.
+      default: 0.5
+      selector:
+        number:
+          min: 0
+          mode: box
+          step: 0.1
+          unit_of_measurement: seconds
+    default_off_transition:
+      name: Default 'Off' Transition
+      description: Default amount of time in seconds to transition to 'off' state. Default is `0.5`.
+      default: 0.5
+      selector:
+        number:
+          min: 0
+          mode: box
+          step: 0.1
+          unit_of_measurement: seconds
+    passthrough_mqtt_topic:
+      name: Publish MQTT Topic
+      description: Optional. MQTT topic to which `passthrough_mqtt_payload`, `Default 'On' Passthrough MQTT Payload`, and `Default 'Off' Passthrough MQTT Payload` are published. Default is empty string.
+      default: ''
+      selector:
+        text:
+    default_on_passthrough_mqtt_payload:
+      name: Default 'On' Passthrough MQTT Payload
+      description: Default payload published to `Publish MQTT Topic` for when light state is `on`. Value is ignored when `Passthrough MQTT Topic` is not specified.
+      default: '{ "led_effect": {"led": -1, "effect": "solid", "color": 85, "level": 10, "duration": 255 }}'
+      selector:
+        text:
+    default_off_passthrough_mqtt_payload:
+      name: Default 'Off' Passthrough MQTT Payload
+      description: Default payload published to `Passthrough MQTT Topic` for when light state is `off`. Value is ignored when `Passthrough MQTT Topic` is not specified.
+      default: '{ "led_effect": {"led": -1, "effect": "solid", "color": 170, "level": 10, "duration": 255 }}'
+      selector:
+        text:
+mode: queued
+max: 10
+trigger:
+- platform: event
+  event_type: automation_reloaded
+  id: trigger_automation_reloaded
+- platform: mqtt
+  topic: !input subscribed_mqtt_topic
+  id: trigger_subscribed_mqtt_topic
+- platform: state
+  entity_id: !input light_entity
+  from: 'off'
+  to: 'on'
+  id: trigger_light_becomes_on
+- platform: state
+  entity_id: !input light_entity
+  from: 'on'
+  to: 'off'
+  id: trigger_light_becomes_off
+variables:
+  light_entity: !input light_entity
+  light_entity_state: '{{ states(light_entity) }}'
+  default_on_transition: !input default_on_transition
+  default_off_transition: !input default_off_transition
+  passthrough_mqtt_topic: !input passthrough_mqtt_topic
+  default_on_passthrough_mqtt_payload: !input default_on_passthrough_mqtt_payload
+  default_off_passthrough_mqtt_payload: !input default_off_passthrough_mqtt_payload
+# Set variables from MQTT payload if provided, otherwise use defaults
+  light_state: >
+    {%- set state = '' -%}
+    {%- if trigger is defined -%}
+      {%- if trigger.payload_json is defined -%}
+        {%- if trigger.payload_json.state -%}
+          {%- set state = trigger.payload_json.state -%}
+        {%- endif -%}
+      {%- elif trigger.payload is defined -%}
+        {%- if (trigger.payload == 'on') or (trigger.payload == 'off') -%}
+          {%- set state = trigger.payload -%}
+        {%- endif -%}
+      {%- endif -%}
+    {%- endif -%}
+    {%- if state == '' -%}
+      {% set state = light_entity_state -%}
+    {%- endif -%}
+    {{ state }}
+  transition: >
+    {%- set transition = '' -%}
+    {%- if trigger is defined -%}
+      {%- if trigger.payload_json is defined -%}
+        {%- if trigger.payload_json.transition is defined -%}
+          {%- set transition = trigger.payload_json.transition -%}
+        {%- endif -%}
+      {%- endif -%}
+    {%- endif -%}
+    {%- if transition == '' -%}
+      {%- if light_state == 'off' -%}
+        {%- set transition = default_off_transition -%}
+      {%- else -%}
+        {%- set transition = default_on_transition -%}
+      {%- endif -%}
+    {%- endif -%}
+    {{ transition }}
+  hue_dynamic: >
+    {%- set dynamic = false -%}
+    {%- if trigger is defined -%}
+      {%- if trigger.payload_json is defined -%}
+        {%- if trigger.payload_json.dynamic is defined-%}
+          {%- set dynamic = trigger.payload_json.dynamic -%}
+        {%- endif -%}
+      {%- endif -%}
+    {%- endif -%}
+    {{ dynamic }}
+  hue_speed: >
+    {%- set speed = '' -%}
+    {%- if trigger is defined -%}
+      {%- if trigger.payload_json is defined -%}
+        {%- if trigger.payload_json.speed is defined -%}
+          {%- set speed = trigger.payload_json.speed -%}
+        {%- endif -%}
+      {%- endif -%}
+    {%- endif -%}
+    {{ speed }}
+  hue_brightness: >
+    {%- set brightness = '' -%}
+    {%- if trigger is defined -%}
+      {%- if trigger.payload_json is defined -%}
+        {%- if trigger.payload_json.brightness is defined -%}
+          {%- set brightness = trigger.payload_json.brightness -%}
+        {%- endif -%}
+      {%- endif -%}
+    {%- endif -%}
+    {{ brightness }}
+  passthrough_mqtt_payload: >
+    {%- set payload = '' -%}
+    {%- if trigger is defined -%}
+      {%- if trigger.payload_json is defined -%}
+        {%- if trigger.payload_json.passthrough_mqtt_payload is defined -%}
+          {%- set payload = trigger.payload_json.passthrough_mqtt_payload -%}
+        {%- endif -%}
+      {%- endif -%}
+    {%- endif -%}
+    {%- if payload == '' -%}
+      {%- if hue_state == 'on' -%}
+        {%- set payload = default_on_passthrough_mqtt_payload -%}
+      {%- elif hue_state == 'off' -%}
+        {%- set payload = default_off_passthrough_mqtt_payload -%}
+      {%- endif-%}
+    {%- endif -%}
+    {{ payload }}
+condition:
+# block execution if trigger_light_becomes_on happens within 1 second of the previous automation execution
+- condition: not
+  conditions:
+  - condition: and
+    conditions:
+    - condition: template
+      value_template: "{{ now() - state_attr(this.entity_id,'last_triggered') < timedelta(seconds=1) }}"
+    - condition: or
+      conditions:
+      - condition: trigger
+        id: trigger_light_becomes_on
+      - condition: trigger
+        id: trigger_light_becomes_off
+action:
+- choose:
+  - conditions:
+    - condition: or
+      conditions:
+      - condition: and
+        conditions:
+        - condition: trigger
+          id: trigger_mqtt
+        - condition: template
+          value_template: "{{ hue_state == 'on' }}"
+      - condition: trigger
+        id: trigger_default_scene_helper
+      - condition: trigger
+        id: trigger_alternate_scene_helper
+      - condition: trigger
+        id: trigger_light_becomes_on
+    sequence:
+    - parallel:
+      - choose:
+        # light is off and triggered to turn on OR is already on
+        - conditions:
+          - condition: or
+            conditions:
+            - condition: and
+              conditions:
+              - condition: template
+                value_template: "{{ states(hue_light_entity) == 'off' }}"
+              - condition: trigger
+                id: trigger_mqtt
+              - condition: template
+                value_template: "{{ hue_state == 'on' }}"
+            - condition: template
+              value_template: "{{ states(hue_light_entity) == 'on' }}"
+          sequence:
+          # these 'chooses' are dumb, can this be dynamically handled somehow?
+          - choose:
+            # if speed and brightness are provided, call service with speed and brightness
+            - conditions:
+              - condition: and
+                conditions: 
+                - condition: template
+                  value_template: "{{ hue_speed != '' }}"
+                - condition: template
+                  value_template: "{{ hue_brightness != '' }}"
+              sequence:
+              - service: hue.activate_scene
+                target:
+                  entity_id: "{{ hue_scene }}"
+                data:
+                  transition: "{{ hue_transition }}"
+                  dynamic: "{{ hue_dynamic }}"
+                  speed: "{{ hue_speed }}"
+                  brightness: "{{ hue_brightness }}"
+            # if speed is provided, call service with speed
+            - conditions:
+              - condition: template
+                value_template: "{{ hue_speed != '' }}"
+              sequence:
+              - service: hue.activate_scene
+                target:
+                  entity_id: "{{ hue_scene }}"
+                data:
+                  transition: "{{ hue_transition }}"
+                  dynamic: "{{ hue_dynamic }}"
+                  speed: "{{ hue_speed }}"
+            # if brightness is provided, call service with brightness
+            - conditions:
+              - condition: template
+                value_template: "{{ hue_brightness != '' }}"
+              sequence:
+              - service: hue.activate_scene
+                target:
+                  entity_id: "{{ hue_scene }}"
+                data:
+                  transition: "{{ hue_transition }}"
+                  dynamic: "{{ hue_dynamic }}"
+                  brightness: "{{ hue_brightness }}"
+            # default service call (speed and brightness are not provided)
+            default:
+            - service: hue.activate_scene
+              target:
+                entity_id: "{{ hue_scene }}"
+              data:
+                transition: "{{ hue_transition }}"
+                dynamic: "{{ hue_dynamic }}"
+        default: []
+        # send passthrough payload if pasthrough topic is set
+      - sequence:
+        - condition: template
+          value_template: "{{ (passthrough_mqtt_topic != '') and (passthrough_mqtt_topic != None) }}"
+        - delay:
+            seconds: "{{ hue_transition }}"
+        - service: mqtt.publish
+          data:
+            qos: "1"
+            topic: "{{ passthrough_mqtt_topic }}"
+            payload: "{{ passthrough_mqtt_payload }}"
+  # turn light off
+  - conditions:
+    - condition: or
+      conditions:
+      - condition: and
+        conditions:
+        - condition: trigger
+          id: trigger_mqtt
+        - condition: template
+          value_template: "{{ hue_state == 'off' }}"
+      - condition: trigger
+        id: trigger_light_becomes_off
+    sequence:
+    - parallel:
+      - service: light.turn_off
+        target:
+          entity_id: "{{ hue_light_entity }}"
+        data:
+          transition: "{{ hue_transition }}"
+        # send passthrough payload if pasthrough topic is set
+      - sequence:
+        - condition: template
+          value_template: "{{ (passthrough_mqtt_topic != '') and (passthrough_mqtt_topic != None) }}"
+        - delay:
+            seconds: "{{ hue_transition }}"
+        - service: mqtt.publish
+          data:
+            qos: "1"
+            topic: "{{ passthrough_mqtt_topic }}"
+            payload: "{{ passthrough_mqtt_payload }}"
