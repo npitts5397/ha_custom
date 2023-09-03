@@ -97,7 +97,7 @@ variables:
     {%- if trigger is defined -%}
       {%- if trigger.payload_json is defined -%}
         {%- if trigger.payload_json.action -%}
-          {%- set state = trigger.payload_json.action -%}
+          {%- set action = trigger.payload_json.action -%}
         {%- endif -%}
       {%- elif trigger.payload is defined -%}
         {%- if (trigger.payload == 'on') or (trigger.payload == 'off') or (trigger.payload == 'dim_up') or (trigger.payload == 'dim_down') -%}
@@ -108,7 +108,7 @@ variables:
     {%- if action == '' -%}
       {% set action = light_entity_state -%}
     {%- endif -%}
-    {{ state }}
+    {{ action }}
   transition: >
     {%- set transition = '' -%}
     {%- if trigger is defined -%}
