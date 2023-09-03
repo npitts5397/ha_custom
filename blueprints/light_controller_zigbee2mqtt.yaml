@@ -219,29 +219,29 @@ action:
               value_template: "{{ states(light_entity) == 'on' }}"
           sequence:
           - choose:
-            # if scene is provided, call 'scene.apply' for the scene
-            - conditions:
-              - condition: and
-                conditions: 
-                - condition: template
-                  value_template: "{{ scene != '' }}"
-              sequence:
-              - service: scene.apply
-                target:
-                  entity_id: "{{ scene }}"
-                data:
-                  transition: "{{ transition }}"
+            # if scene is provided, call 'scene.turn_on' for the scene
+            # - conditions:
+            #   - condition: and
+            #     conditions: 
+            #     - condition: template
+            #       value_template: "{{ scene != '' }}"
+            #   sequence:
+            #   - service: scene.turn_on
+            #     entities:
+            #       entity_id: "{{ scene }}"
+            #     data:
+            #       transition: "{{ transition }}"
             # if brightness is provided, call 'light.turn_on' with brightness
-            - conditions:
-              - condition: template
-                value_template: "{{ brightness != '' }}"
-              sequence:
-              - service: light.turn_on
-                target:
-                  entity_id: "{{ light_entity }}"
-                data:
-                  transition: "{{ transition }}"
-                  brightness: "{{ brightness }}"
+            # - conditions:
+            #   - condition: template
+            #     value_template: "{{ brightness != '' }}"
+            #   sequence:
+            #   - service: light.turn_on
+            #     target:
+            #       entity_id: "{{ light_entity }}"
+            #     data:
+            #       transition: "{{ transition }}"
+            #       brightness: "{{ brightness }}"
             # default 'light.turn_on' call
             default:
             - service: light.turn_on
