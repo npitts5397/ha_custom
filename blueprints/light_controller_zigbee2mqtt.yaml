@@ -186,22 +186,22 @@ condition:
       - condition: trigger
         id: trigger_light_becomes_off
 action:
-- choose:
-  - conditions:
-    - condition: or
-      conditions:
-      - condition: and
+- parallel:
+  - choose:
+    - conditions:
+      - condition: or
         conditions:
+        - condition: and
+          conditions:
+          - condition: trigger
+            id: trigger_mqtt
+          - condition: template
+            value_template: "{{ desired_state == 'on' }}"
         - condition: trigger
-          id: trigger_mqtt
-        - condition: template
-          value_template: "{{ desired_state == 'on' }}"
-      - condition: trigger
-        id: trigger_scene_helper
-      - condition: trigger
-        id: trigger_light_becomes_on
-    sequence:
-    - parallel:
+          id: trigger_scene_helper
+        - condition: trigger
+          id: trigger_light_becomes_on
+      sequence:
       - choose:
         # light is off and triggered to turn on OR is already on
         - conditions:
@@ -250,44 +250,33 @@ action:
               data:
                 transition: "{{ transition }}"
         default: []
-        # send passthrough payload if pasthrough topic is set
-      - sequence:
-        - condition: template
-          value_template: "{{ (publish_mqtt_topic != '') and (publish_mqtt_topic != None) }}"
-        - delay:
-            seconds: "{{ transition }}"
-        - service: mqtt.publish
-          data:
-            qos: "1"
-            topic: "{{ publish_mqtt_topic }}"
-            payload: "{{ publish_mqtt_payload }}"
-  # turn light off
-  - conditions:
-    - condition: or
-      conditions:
-      - condition: and
+    # turn light off
+    - conditions:
+      - condition: or
         conditions:
+        - condition: and
+          conditions:
+          - condition: trigger
+            id: trigger_mqtt
+          - condition: template
+            value_template: "{{ desired_state == 'off' }}"
         - condition: trigger
-          id: trigger_mqtt
-        - condition: template
-          value_template: "{{ desired_state == 'off' }}"
-      - condition: trigger
-        id: trigger_light_becomes_off
-    sequence:
-    - parallel:
-      - service: light.turn_off
-        target:
-          entity_id: "{{ light_entity }}"
-        data:
-          transition: "{{ transition }}"
-        # send passthrough payload if pasthrough topic is set
-      - sequence:
-        - condition: template
-          value_template: "{{ (publish_mqtt_topic != '') and (publish_mqtt_topic != None) }}"
-        - delay:
-            seconds: "{{ transition }}"
-        - service: mqtt.publish
+          id: trigger_light_becomes_off
+      sequence:
+      - parallel:
+        - service: light.turn_off
+          target:
+            entity_id: "{{ light_entity }}"
           data:
-            qos: "1"
-            topic: "{{ publish_mqtt_topic }}"
-            payload: "{{ publish_mqtt_payload }}"
+            transition: "{{ transition }}"
+  # publish payload if publish topic is set
+  - sequence:
+    - condition: template
+      value_template: "{{ (publish_mqtt_topic != '') and (publish_mqtt_topic != None) }}"
+    - delay:
+        seconds: "{{ transition }}"
+    - service: mqtt.publish
+      data:
+        qos: "1"
+        topic: "{{ publish_mqtt_topic }}"
+        payload: "{{ publish_mqtt_payload }}"
