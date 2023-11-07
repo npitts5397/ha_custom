@@ -2,25 +2,39 @@ blueprint:
   name: Light-Switch-AL Controller
   description: |
     Set light configuration based on switch and adaptive lighting states. The following configuration should be applied:
-      * Light group
+      * Lights
           - All light devices are added to a light group
           - Switch is added to the same light group
-          - Zigbee switch has a 'Level' binding to the light goup. If not using Zigbee, this is untested.
+          - Zigbee switch has only 'Level' binding to the light goup. If not using Zigbee, this is untested.
       * Switch
           - Dimmer mode: true
       * Adaptive Lighting
           - Configured for the light group
           - `take_over_control` is disabled
+    
+    Change log:
+    #1.0.0 - HA-82 - Initial version.
+    #1.1.0 - HA-82 - Add ability to handle multiple switches.
+    #1.2.0 - HA-82 - `config_double` always enables AL. 'off', `up_double` and `down_double` disable AL.
+
+    Known issues:
+    * Light on from double tap of paddle will double trigger on light on and switch action and will likely be unpredictable. Light should not trigger in this case.
+
+    To do:
+    * `config_double` toggles with animation. Needs AL entity(ies) though.
+    * Input switch devices, not 'Action' entity
+    * suppport additional actions- triple_*, quad_*, etc. for ceiling lights, curtains, etc.
   domain: automation
   input:
     light:
-      name: Light Group
-      description: The light group.
+      name: Lights
+      description: Required. The lights to control.
       selector:
         entity:
           domain: light
+          multiple: true
     switch_sensor:
-      name: Switch Action Sensor
+      name: Action Sensor
       description: The switch sensor that reflects action state.
       selector:
         entity:
@@ -30,16 +44,28 @@ mode: single
 trigger:
   - platform: state
     entity_id: !input light
+    to: "on"
+    id: light_turned_on
+  - platform: state
+    entity_id: !input light
     to: "off"
     id: light_turned_off
   - platform: state
-    entity_id: !input light
-    to: "on"
-    id: light_turned_on
+    entity_id: !input switch_sensor
+    to: config_double
+    id: switch_config_double
+  - platform: state
+    entity_id: !input switch_sensor
+    to: down_double
+    id: switch_down_double
   - platform: state
     entity_id: !input switch_sensor
     to: down_held
     id: switch_down_held
+  - platform: state
+    entity_id: !input switch_sensor
+    to: up_double
+    id: switch_up_double
   - platform: state
     entity_id: !input switch_sensor
     to: up_held
@@ -52,32 +78,56 @@ action:
             id:
               - light_turned_on
         sequence:
-          - delay:
-              hours: 0
-              minutes: 0
-              seconds: 0
-              milliseconds: 500
-            enabled: false
           - service: adaptive_lighting.set_manual_control
             data:
               manual_control: false
               lights:
-                - !input light
+                !input light
           - service: adaptive_lighting.apply
             data:
               lights:
-                - !input light
+                !input light
+          - delay:
+              hours: 0
+              minutes: 0
+              seconds: 0
+              milliseconds: 600
+          - service: adaptive_lighting.set_manual_control
+            data:
+              manual_control: false
+              lights:
+                !input light
+          - service: adaptive_lighting.apply
+            data:
+              lights:
+                !input light
       - conditions:
           - condition: trigger
             id:
+              - switch_down_double
               - switch_down_held
+              - switch_up_double
               - switch_up_held
         sequence:
           - service: adaptive_lighting.set_manual_control
             data:
               manual_control: true
               lights:
-                - !input light
+                !input light
+      - conditions:
+          - condition: trigger
+            id:
+              - switch_config_double
+        sequence:
+          - service: adaptive_lighting.set_manual_control
+            data:
+              manual_control: false
+              lights:
+                !input light
+          - service: adaptive_lighting.apply
+            data:
+              lights:
+                !input light
       - conditions:
           - condition: trigger
             id:
@@ -85,6 +135,6 @@ action:
         sequence:
           - service: adaptive_lighting.set_manual_control
             data:
-              manual_control: false
+              manual_control: true
               lights:
-                - !input light
+                !input light
