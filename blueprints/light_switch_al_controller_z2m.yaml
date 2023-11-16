@@ -34,6 +34,7 @@ blueprint:
     #1.1.0 - HA-82 - Add ability to handle multiple switches.
     #1.2.0 - HA-82 - `config_double` always enables AL. 'off', `up_double` and `down_double` disable AL.
     #2.0.0 - HA-82 - Breaking change. Subscribe to switch MQTT topics instead of relying on HA entity state changes.
+    #2.0.1 - HA-89 - Set manual control state on the AL switch instead of lights.
 
     Known issues:
 
@@ -153,8 +154,11 @@ action:
           - service: adaptive_lighting.set_manual_control
             data:
               manual_control: false
-              lights:
-                "{{ lights }}"
+              entity_id: "{{ al_switch }}"
+          - service: adaptive_lighting.apply
+            data:
+              entity_id: "{{ al_switch }}"
+              transition: 1
       - conditions:
           - condition: template
             value_template: >
@@ -168,8 +172,7 @@ action:
           - service: adaptive_lighting.set_manual_control
             data:
               manual_control: true
-              lights:
-                "{{ lights }}"
+              entity_id: "{{ al_switch }}"
           - service: switch.turn_off
             target:
               entity_id: "{{ al_switch }}"
@@ -183,8 +186,11 @@ action:
           - service: adaptive_lighting.set_manual_control
             data:
               manual_control: false
-              lights:
-                "{{ lights }}"
+              entity_id: "{{ al_switch }}"
+          - service: adaptive_lighting.apply
+            data:
+              entity_id: "{{ al_switch }}"
+              transition: 1
       - conditions:
           or:
             - condition: trigger
@@ -199,5 +205,4 @@ action:
           - service: adaptive_lighting.set_manual_control
             data:
               manual_control: true
-              lights:
-                "{{ lights }}"
+              entity_id: "{{ al_switch }}"
