@@ -1,19 +1,24 @@
 blueprint:
   name: Light-Switch-AL Controller (Z2M)
+  domain: automation
+  author: Nathaniel Pitts
   description: |
     Set light configuration based on switch and Adaptive Lighting states. Designed for use with Inovelli Blue Series switches
-    bound to smart bulb groups or directly controlling traditional lighting.
+    bound to smart bulb groups or directly controlling traditional lighting, but as long as the MQTT payload contains an `action`
+    field with a supported value, this blueprint can be used. See below for supported values of `action`.
 
     Supported switch events:
       Enables AL:
-        * `up_single`
-        * `config_double`
+        * `"action": "on"` - also turns on lights
+        * `"action": "up_single"`
+        * `"action": "config_double"`
       Disables AL:
-        * `down_single`
-        * `up_double` 
-        * `down_double`
-        * `up_held`
-        * `down_held`
+        * `"action": "off"` - also turns off lights
+        * `"action": "down_single"`
+        * `"action": "up_double"` 
+        * `"action": "down_double"`
+        * `"action": "up_held"`
+        * `"action": "down_held"`
       Other:
       
     Prerequisites:
@@ -21,10 +26,10 @@ blueprint:
       * Lights
           - Lights are best when added to platform-native groups. For example, if using Zigbee lights, a Zigbee group works best.
             Use Home Assistant groups only if necessary.
-          - The Zigbee switch device is added to the same group as the lights.
-          - Zigbee switch binding has only `LevelCtrl` binding to the light goup.
       * Switch
           - Dimmer mode: true
+          - The Zigbee switch device is added to the same group as the lights.
+          - Zigbee switch binding has only `LevelCtrl` binding to the light goup.
       * Adaptive Lighting
           - Configured for the light group
           - `take_over_control` is disabled
@@ -35,6 +40,7 @@ blueprint:
     #1.2.0 - HA-82 - `config_double` always enables AL. 'off', `up_double` and `down_double` disable AL.
     #2.0.0 - HA-82 - Breaking change. Subscribe to switch MQTT topics instead of relying on HA entity state changes.
     #2.0.1 - HA-89 - Set manual control state on the AL switch instead of lights.
+    #2.1.0 - HA-90 - Additional input topics and support generic on/off payloads.
 
     Known issues:
 
@@ -42,7 +48,6 @@ blueprint:
     * `config_double` toggles with animation. Needs AL entity(ies) though.
     * suppport additional actions- triple_*, quad_*, etc. for ceiling lights, curtains, etc.
     * determine how to handle switches that control multiple lights (e.g., lamps and ceiling)
-  domain: automation
   input:
     lights:
       name: Lights
@@ -79,6 +84,18 @@ blueprint:
     switch_3_topic:
       name: Quaternary switch topic
       description: Optional. Device MQTT topic for quaternary switch.
+      default: none
+      selector:
+        text:
+    switch_4_topic:
+      name: Quinary switch topic
+      description: Optional. Device MQTT topic for quinary switch.
+      default: none
+      selector:
+        text:
+    switch_5_topic:
+      name: Senary switch topic
+      description: Optional. Device MQTT topic for senary switch.
       default: none
       selector:
         text:
@@ -128,10 +145,30 @@ trigger:
         {%- endif -%}
       {% endif %}
     payload: action
+  - id: switch_4_action
+    platform: mqtt
+    topic: !input switch_4_topic
+    value_template: |
+      {% if (value_json['action'] is defined) -%}
+        {%- if (value_json['action'] is not none) and (value_json['action'] | string != '') -%}
+          {{ 'action' }}
+        {%- endif -%}
+      {% endif %}
+    payload: action
+  - id: switch_5_action
+    platform: mqtt
+    topic: !input switch_5_topic
+    value_template: |
+      {% if (value_json['action'] is defined) -%}
+        {%- if (value_json['action'] is not none) and (value_json['action'] | string != '') -%}
+          {{ 'action' }}
+        {%- endif -%}
+      {% endif %}
+    payload: action
 variables:
   lights: !input lights
   al_switch: !input al_switch
-  switch_event: >
+  event: >
     {%- set event = '' -%}
     {% if trigger is defined -%}
       {%- if trigger.payload_json is defined -%}
@@ -146,7 +183,18 @@ action:
   - choose:
       - conditions:
           - condition: template
-            value_template: "{{ switch_event == 'up_single' }}"
+            value_template: "{{ event == 'on' }}"
+        sequence:
+          - service: switch.turn_on
+            target:
+              entity_id: "{{ al_switch }}"
+          - service: light.turn_on
+            target:
+              entity_id:
+                "{{ lights }}"
+      - conditions:
+          - condition: template
+            value_template: "{{ event == 'up_single' }}"
         sequence:
           - service: switch.turn_on
             target:
@@ -163,10 +211,10 @@ action:
           - condition: template
             value_template: >
               {{
-                (switch_event == 'down_double') or
-                (switch_event == 'down_held') or
-                (switch_event == 'up_double') or
-                (switch_event == 'up_held') 
+                (event == 'down_double') or
+                (event == 'down_held') or
+                (event == 'up_double') or
+                (event == 'up_held') 
               }}
         sequence:
           - service: adaptive_lighting.set_manual_control
@@ -178,7 +226,7 @@ action:
               entity_id: "{{ al_switch }}"
       - conditions:
           - condition: template
-            value_template: "{{ switch_event == 'config_double' }}"
+            value_template: "{{ event == 'config_double' }}"
         sequence:
           - service: switch.turn_on
             target:
@@ -197,7 +245,7 @@ action:
               id:
                 - light_turned_off
             - condition: template
-              value_template: "{{ switch_event == 'down_single' }}" 
+              value_template: "{{ event == 'down_single' }}"
         sequence:
           - service: switch.turn_off
             target:
@@ -206,3 +254,14 @@ action:
             data:
               manual_control: true
               entity_id: "{{ al_switch }}"
+      - conditions:
+          - condition: template
+            value_template: "{{ event == 'off' }}"
+        sequence:
+          - service: switch.turn_off
+            target:
+              entity_id: "{{ al_switch }}"
+          - service: light.turn_off
+            target:
+              entity_id:
+                "{{ lights }}"

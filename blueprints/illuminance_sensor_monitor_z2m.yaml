@@ -1,6 +1,12 @@
 blueprint:
-  name: Illuminance Sensor Monitor (zigbee2mqtt)
-  description: Publishes a payload to an MQTT topic when illuminance (lux) becomes above or below set lux threshold of an MQTT lux sensor.
+  name: Illuminance Sensor Monitor (Z2M)
+  description: |
+    Publishes a payload to an MQTT topic when illuminance (lux) becomes above or below set lux threshold of an MQTT lux sensor.
+    
+    Change log:
+    #1.0.0 - HA-82 - Initial version.
+    #1.0.1 - HA-85 - Update default payload to 'action' instead of 'state' and rename blueprint.
+
   domain: automation
   input:
     lux_sensor_entity:
@@ -17,13 +23,13 @@ blueprint:
     on_payload:
       name: On Payload
       description: Required. Payload published to 'Publish MQTT Topic' when lux value of 'Illuminance (lux) Sensor Entity' meets the threshold for the 'on' condition.
-      default: '{ "state": "on" }'
+      default: '{ "action": "on" }'
       selector:
         text:
     off_payload:
       name: Off Payload
       description: Required. Payload published to 'Publish MQTT Topic' when lux value of 'Illuminance (lux) Sensor Entity' meets the threshold for the 'off' condition.
-      default: '{ "state": "off" }'
+      default: '{ "action": "off" }'
       selector:
         text:
     on_above_lux_threshold:
@@ -94,7 +100,7 @@ blueprint:
           domain: input_select
     do_not_publish_modes:
       name: Do-Not-Publish Modes
-      description: Optional. Comma separated modes in which not to publush 'on' or 'off' messages to the MQTT topic.
+      description: Optional. Comma separated modes in which not to publish 'on' or 'off' messages to the MQTT topic.
       default: ""
       selector:
         text:
