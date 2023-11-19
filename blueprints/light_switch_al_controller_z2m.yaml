@@ -20,7 +20,7 @@ blueprint:
         * `"action": "up_held"`
         * `"action": "down_held"`
       Other:
-      
+        * `"action": "config_single"` - toggles optional secondary light
     Prerequisites:
       * Zigbee2MQTT (Z2M)
       * Lights
@@ -41,6 +41,7 @@ blueprint:
     #2.0.0 - HA-82 - Breaking change. Subscribe to switch MQTT topics instead of relying on HA entity state changes.
     #2.0.1 - HA-89 - Set manual control state on the AL switch instead of lights.
     #2.1.0 - HA-90 - Additional input topics and support generic on/off payloads.
+    #2.2.0 - HA-86 - Support toggling secondary light with `config_single` action.
 
     Known issues:
 
@@ -49,20 +50,27 @@ blueprint:
     * suppport additional actions- triple_*, quad_*, etc. for ceiling lights, curtains, etc.
     * determine how to handle switches that control multiple lights (e.g., lamps and ceiling)
   input:
-    lights:
-      name: Lights
-      description: Required. The lights to control.
+    primary_lights:
+      name: Primary Lights
+      description: Required. The primary lights to control.
       selector:
         entity:
           domain: light
           multiple: true
-    al_switch:
-      name: Adaptive Lighting switch
-      description: Required. The primary Adaptive Lighting switch for the lights selected above.
+    primary_al_switch:
+      name: Primary Adaptive Lighting switch
+      description: Required. The primary Adaptive Lighting switch for the primary lights selected above.
       selector:
         entity:
           domain: switch
           integration: adaptive_lighting
+    secondary_light:
+      name: Secondary Lights
+      description: Optional. The secondary light to control with `config_single` interations.
+      default: {}
+      selector:
+        entity:
+          domain: light
     switch_0_topic:
       name: Primary switch topic
       description: Optional. Device MQTT topic for primary switch.
@@ -102,75 +110,76 @@ blueprint:
 mode: single
 trigger:
   - platform: state
-    entity_id: !input lights
+    entity_id: !input primary_lights
     to: "off"
     id: light_turned_off
   - id: switch_0_action
     platform: mqtt
     topic: !input switch_0_topic
     value_template: |
-      {% if (value_json['action'] is defined) -%}
+      {%- if (value_json['action'] is defined) -%}
         {%- if (value_json['action'] is not none) and (value_json['action'] | string != '') -%}
           {{ 'action' }}
         {%- endif -%}
-      {% endif %}
+      {%- endif -%}
     payload: action
   - id: switch_1_action
     platform: mqtt
     topic: !input switch_1_topic
     value_template: |
-      {% if (value_json['action'] is defined) -%}
+      {%- if (value_json['action'] is defined) -%}
         {%- if (value_json['action'] is not none) and (value_json['action'] | string != '') -%}
           {{ 'action' }}
         {%- endif -%}
-      {% endif %}
+      {%- endif -%}
     payload: action
   - id: switch_2_action
     platform: mqtt
     topic: !input switch_2_topic
     value_template: |
-      {% if (value_json['action'] is defined) -%}
+      {%- if (value_json['action'] is defined) -%}
         {%- if (value_json['action'] is not none) and (value_json['action'] | string != '') -%}
           {{ 'action' }}
         {%- endif -%}
-      {% endif %}
+      {%- endif -%}
     payload: action
   - id: switch_3_action
     platform: mqtt
     topic: !input switch_3_topic
     value_template: |
-      {% if (value_json['action'] is defined) -%}
+      {%- if (value_json['action'] is defined) -%}
         {%- if (value_json['action'] is not none) and (value_json['action'] | string != '') -%}
           {{ 'action' }}
         {%- endif -%}
-      {% endif %}
+      {%- endif -%}
     payload: action
   - id: switch_4_action
     platform: mqtt
     topic: !input switch_4_topic
     value_template: |
-      {% if (value_json['action'] is defined) -%}
+      {%- if (value_json['action'] is defined) -%}
         {%- if (value_json['action'] is not none) and (value_json['action'] | string != '') -%}
           {{ 'action' }}
         {%- endif -%}
-      {% endif %}
+      {%- endif -%}
     payload: action
   - id: switch_5_action
     platform: mqtt
     topic: !input switch_5_topic
     value_template: |
-      {% if (value_json['action'] is defined) -%}
+      {%- if (value_json['action'] is defined) -%}
         {%- if (value_json['action'] is not none) and (value_json['action'] | string != '') -%}
           {{ 'action' }}
         {%- endif -%}
-      {% endif %}
+      {%- endif -%}
     payload: action
 variables:
-  lights: !input lights
-  al_switch: !input al_switch
+  primary_lights: !input primary_lights
+  primary_al_switch: !input primary_al_switch
+  secondary_light: !input secondary_light
   event: >
     {%- set event = '' -%}
-    {% if trigger is defined -%}
+    {%- if trigger is defined -%}
       {%- if trigger.payload_json is defined -%}
         {%- if trigger.payload_json.action -%}
           {%- set event = trigger.payload_json.action -%}
@@ -181,31 +190,32 @@ variables:
 condition: []
 action:
   - choose:
+      # primary lighting
       - conditions:
           - condition: template
             value_template: "{{ event == 'on' }}"
         sequence:
           - service: switch.turn_on
             target:
-              entity_id: "{{ al_switch }}"
+              entity_id: "{{ primary_al_switch }}"
           - service: light.turn_on
             target:
               entity_id:
-                "{{ lights }}"
+                "{{ primary_lights }}"
       - conditions:
           - condition: template
             value_template: "{{ event == 'up_single' }}"
         sequence:
           - service: switch.turn_on
             target:
-              entity_id: "{{ al_switch }}"
+              entity_id: "{{ primary_al_switch }}"
           - service: adaptive_lighting.set_manual_control
             data:
               manual_control: false
-              entity_id: "{{ al_switch }}"
+              entity_id: "{{ primary_al_switch }}"
           - service: adaptive_lighting.apply
             data:
-              entity_id: "{{ al_switch }}"
+              entity_id: "{{ primary_al_switch }}"
               transition: 1
       - conditions:
           - condition: template
@@ -220,24 +230,24 @@ action:
           - service: adaptive_lighting.set_manual_control
             data:
               manual_control: true
-              entity_id: "{{ al_switch }}"
+              entity_id: "{{ primary_al_switch }}"
           - service: switch.turn_off
             target:
-              entity_id: "{{ al_switch }}"
+              entity_id: "{{ primary_al_switch }}"
       - conditions:
           - condition: template
             value_template: "{{ event == 'config_double' }}"
         sequence:
           - service: switch.turn_on
             target:
-              entity_id: "{{ al_switch }}"
+              entity_id: "{{ primary_al_switch }}"
           - service: adaptive_lighting.set_manual_control
             data:
               manual_control: false
-              entity_id: "{{ al_switch }}"
+              entity_id: "{{ primary_al_switch }}"
           - service: adaptive_lighting.apply
             data:
-              entity_id: "{{ al_switch }}"
+              entity_id: "{{ primary_al_switch }}"
               transition: 1
       - conditions:
           or:
@@ -249,19 +259,34 @@ action:
         sequence:
           - service: switch.turn_off
             target:
-              entity_id: "{{ al_switch }}"
+              entity_id: "{{ primary_al_switch }}"
           - service: adaptive_lighting.set_manual_control
             data:
               manual_control: true
-              entity_id: "{{ al_switch }}"
+              entity_id: "{{ primary_al_switch }}"
       - conditions:
           - condition: template
             value_template: "{{ event == 'off' }}"
         sequence:
           - service: switch.turn_off
             target:
-              entity_id: "{{ al_switch }}"
+              entity_id: "{{ primary_al_switch }}"
           - service: light.turn_off
             target:
               entity_id:
-                "{{ lights }}"
+                "{{ primary_lights }}"
+      # secondary lighting
+      - conditions:
+          and:
+            - condition: template
+              value_template: "{{ event == 'config_single' }}"
+            - condition: template
+              value_template: |
+                {%- if (secondary_light is defined) and (secondary_light | length > 0) -%}
+                  {{ true }}
+                {%- endif -%}
+        sequence:
+          - service: light.toggle
+            target:
+              entity_id:
+                "{{ secondary_light }}"
