@@ -42,6 +42,7 @@ blueprint:
     #2.0.1 - HA-89 - Set manual control state on the AL switch instead of lights.
     #2.1.0 - HA-90 - Additional input topics and support generic on/off payloads.
     #2.2.0 - HA-86 - Support toggling secondary light with `config_single` action.
+    #2.3.0 - HA-92 - Support enable/disable of AL Sleep mode and support multiple secondary lights.
 
     Known issues:
 
@@ -66,11 +67,12 @@ blueprint:
           integration: adaptive_lighting
     secondary_light:
       name: Secondary Lights
-      description: Optional. The secondary light to control with `config_single` interations.
-      default: {}
+      description: Optional. The secondary lights to toggle with `config_single` interations.
+      default: []
       selector:
         entity:
           domain: light
+          multiple: true
     switch_0_topic:
       name: Primary switch topic
       description: Optional. Device MQTT topic for primary switch.
@@ -107,6 +109,23 @@ blueprint:
       default: none
       selector:
         text:
+    sleep_helper:
+      name: Sleep Helper
+      description: Optional. Helper that holds values related to sleep mode. Valid values are `Awake`, `Nap`, and `Sleep`.
+      default: {}
+      selector:
+        entity:
+          domain:
+            - input_select
+            - input_text
+    primary_al_sleep_mode_switch:
+      name: Primary Adaptive Lighting Sleep Mode switch
+      description: Optional, but required when `sleep_helper` is set. The primary Adaptive Lighting Sleep Mode switch for the primary lights selected above.
+      default: {}
+      selector:
+        entity:
+          domain: switch
+          integration: adaptive_lighting
 mode: single
 trigger:
   - platform: state
@@ -173,6 +192,9 @@ trigger:
         {%- endif -%}
       {%- endif -%}
     payload: action
+  - id: sleep_helper_updated
+    platform: state
+    entity_id: !input sleep_helper 
 variables:
   primary_lights: !input primary_lights
   primary_al_switch: !input primary_al_switch
@@ -187,6 +209,8 @@ variables:
       {%- endif -%}
     {%- endif -%}
     {{ event }}
+  sleep_helper: !input sleep_helper
+  primary_al_sleep_mode_switch: !input primary_al_sleep_mode_switch
 condition: []
 action:
   - choose:
@@ -290,3 +314,30 @@ action:
             target:
               entity_id:
                 "{{ secondary_light }}"
+      - conditions:
+          - condition: trigger
+            id: 
+              - sleep_helper_updated
+        sequence:
+          - choose:
+              - conditions:
+                  - condition: template
+                    value_template: "{{ states(sleep_helper) == 'Nap' }}"
+                sequence:
+                  - service: switch.turn_on
+                    target:
+                      entity_id:
+                        "{{ primary_al_sleep_mode_switch }}"
+              - conditions:
+                  - condition: template
+                    value_template: "{{ states(sleep_helper) == 'Sleep' }}"
+                sequence:
+                  - service: switch.turn_on
+                    target:
+                      entity_id:
+                        "{{ primary_al_sleep_mode_switch }}"
+            default:
+              - service: switch.turn_off
+                target:
+                  entity_id:
+                    "{{ primary_al_sleep_mode_switch }}"
