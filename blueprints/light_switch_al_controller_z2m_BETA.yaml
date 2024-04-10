@@ -67,20 +67,20 @@ blueprint:
       * Implement support for automatically re-enabling Adaptive Lighting via adaptive_lighting.autoreset_control_seconds
   input:
     primary_lights:
-      name: Primary Lights
+      name: Primary lights
       description: Required. The primary lights to control. Lights must be Adaptive Lighting enabled.
       selector:
         entity:
           domain: light
           multiple: true
     primary_lights_direct_control:
-      name: Primary Lights Direct Control
+      name: Primary lights direct control
       description: Set to `true` when the selected lights should be updated by Home Assistant directly. This should be `false` when lights and switches are bound (Zigbee) or associated (ZWave) directly. Defaults to `false`.
       default: false
       selector:
         boolean:
     secondary_lights:
-      name: Secondary Lights
+      name: Secondary lights
       description: Optional. The secondary lights to toggle with `config_single` interactions. Lights must be Adaptive Lighting enabled. Direct control of secondary lights is assumed.
       default: []
       selector:
