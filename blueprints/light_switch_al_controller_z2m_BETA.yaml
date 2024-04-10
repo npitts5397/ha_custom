@@ -1,5 +1,5 @@
 blueprint:
-  name: Light-Switch-AL Controller (Z2M)
+  name: Light-Switch-AL Controller (Z2M) BETA
   domain: automation
   author: Nathaniel Pitts
   description: |
