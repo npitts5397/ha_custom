@@ -50,6 +50,7 @@ blueprint:
                      Remove `config_double` functionality to reset AL config as it's redundant with `up_single`
                      Add toggle for smart lights not bound do a switch (needs testing)
                      Make use of adaptive_lighting.change_switch_settings service
+    #3.0.1 - HA-104 - Fix primary lighting direct control scenarios
 
     Known issues:
       * turning off a light results in the automation firing twice due to 'light_turned_off' trigger
@@ -230,6 +231,16 @@ trigger:
     platform: state
     entity_id: !input sleep_helper
 variables:
+  event: >
+    {%- set event = '' -%}
+    {%- if trigger is defined -%}
+      {%- if trigger.payload_json is defined -%}
+        {%- if trigger.payload_json.action -%}
+          {%- set event = trigger.payload_json.action -%}
+        {%- endif -%}
+      {%- endif -%}
+    {%- endif -%}
+    {{ event }}
   primary_lights: !input primary_lights
   primary_lights_state: >
     {%- set primary_lights_state = 'off' %}
@@ -240,7 +251,8 @@ variables:
       {%- endif %}
     {%- endif %}
     {{ primary_lights_state }}
-  primary_lights_direct_control: >
+  primary_lights_direct_control: !input primary_lights_direct_control
+  primary_lights_direct_control_enabled: >
     {%- set direct_control = false %}
     {%- if (primary_lights_direct_control == true) or (event == 'on') or (event == 'off') %}
       {%- set direct_control = true %}
@@ -268,16 +280,6 @@ variables:
       {%- set data.switches = data.switches + ['switch.adaptive_lighting_' + light.replace('light.','')] %}
     {%- endfor %}
     {{ data.switches }}
-  event: >
-    {%- set event = '' -%}
-    {%- if trigger is defined -%}
-      {%- if trigger.payload_json is defined -%}
-        {%- if trigger.payload_json.action -%}
-          {%- set event = trigger.payload_json.action -%}
-        {%- endif -%}
-      {%- endif -%}
-    {%- endif -%}
-    {{ event }}
   phase_helper: !input phase_helper
   color_phases: !input color_phases
   current_phase: >
@@ -346,7 +348,7 @@ action:
                       - 0
           - if:
               - condition: template
-                value_template: "{{ primary_lights_direct_control == true }}"
+                value_template: "{{ primary_lights_direct_control_enabled == true }}"
             then:
               - service: light.turn_on
                 target:
@@ -362,7 +364,7 @@ action:
                   lights:
                     "{{ primary_lights }}"
               - choose:
-                  - conditions: "{{ (event == 'off' or primary_lights_direct_control == true) and primary_lights_state == 'on' }}"
+                  - conditions: "{{ (event == 'off' or primary_lights_direct_control_enabled == true) and primary_lights_state == 'on' }}"
                     sequence:
                       - service: light.turn_off
                         target:
@@ -378,7 +380,7 @@ action:
                 "{{ primary_lights }}"
           - if:
               - condition: template
-                value_template: "{{ primary_lights_direct_control == true }}"
+                value_template: "{{ primary_lights_direct_control_enabled == true }}"
             then:
               - choose:
                   - conditions: "{{ event == 'up_double' }}"
