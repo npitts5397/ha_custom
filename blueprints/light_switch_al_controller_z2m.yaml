@@ -51,6 +51,7 @@ blueprint:
                      Add toggle for smart lights not bound do a switch (needs testing)
                      Make use of adaptive_lighting.change_switch_settings service
     #3.0.1 - HA-104 - Fix primary lighting direct control scenarios
+    #3.1.0 - HA-105 - Do not statically set sleep lighting values
 
     Known issues:
       * turning off a light results in the automation firing twice due to 'light_turned_off' trigger
@@ -340,12 +341,6 @@ action:
                     use_defaults: configuration
                     entity_id: "{{ repeat.item }}"
                     prefer_rgb_color: "{{ enable_rgb_color }}"
-                    sleep_brightness: 1
-                    sleep_rgb_or_color_temp: rgb_color
-                    sleep_rgb_color:
-                      - 255
-                      - 0
-                      - 0
           - if:
               - condition: template
                 value_template: "{{ primary_lights_direct_control_enabled == true }}"
