@@ -1,0 +1,34 @@
+blueprint:
+  name: Install 'Toggle Adaptive Lighting Manual Control' Script
+  description: |
+    Installs the 'Toggle Adaptive Lighting Manual Control' script. Script can be used to toggle manual control mode of Adaptive Lighting switches.
+
+    Requirements:
+      * Adaptive Lighting integration
+      * Adaptive Lighting switch
+
+    Use:
+      * Script call must include argument of 'switch' to be set to the appropriate Adaptive Lighting switch.
+        Example:
+          data:
+            switch: 'switch.adaptive_lighting_some_al_switch'
+  author: Nathaniel Pitts
+  source_url: https://github.com/xenokira/ha_custom/blob/main/blueprints/holiday_scene_selector.yaml
+  domain: script
+sequence:
+  - if:
+      - condition: template
+        value_template: >-
+          {{ state_attr(switch,'manual_control') | length == 0
+          }}
+    then:
+      - service: adaptive_lighting.set_manual_control
+        data:
+          manual_control: true
+          entity_id: "{{ switch }}"
+    else:
+      - service: adaptive_lighting.set_manual_control
+        data:
+          manual_control: false
+          entity_id: "{{ switch }}"
+mode: parallel
