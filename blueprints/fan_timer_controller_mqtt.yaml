@@ -103,7 +103,7 @@ action:
       # MQTT event for `up_double` to set and start timer
       - conditions: "{{ event == 'up_double' }}"
         sequence:
-          - if: "{{ states(switches) == 'off' }}"
+          - if: "{{ states(switches) != 'on' }}"
             then:
               - service: fan.turn_on
                 target:
