@@ -37,7 +37,7 @@ blueprint:
       description: Required. Device MQTT topic for the fan switch.
       selector:
         text:
-    timeout:
+    timeout_duration:
       name: Timeout duration
       description: Optional. The period of time until automatically turning off the fan switch when `up_double` is pressed. Must be in `HH:MM:SS` format. Defaults to `00:30:00` for 30 minhutes.
       default: 00:30:00
@@ -81,7 +81,7 @@ variables:
     {%- endif -%}
     {{ event }}
   switches: !input switches
-  timeout: !input timeout
+  timeout_duration: !input timeout_duration
   timer_helper: !input timer_helper
 condition: []
 action:
@@ -102,7 +102,7 @@ action:
         sequence:
           - service: timer.set_duration
             data:
-              duration: "{{ timeout }}"
+              duration: "{{ timeout_duration }}"
             target:
               entity_id: "{{ timer_helper }}"
           - service: timer.start
