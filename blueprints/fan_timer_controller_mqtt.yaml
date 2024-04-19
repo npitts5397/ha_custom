@@ -88,7 +88,7 @@ condition: []
 action:
   - choose:
       # MQTT event for `up_single` and `down_single` to reset/cancel `timeout_helper`
-      - conditions: "{{ event == 'up_double' }}"
+      - conditions: "{{ event == 'up_single' or event == 'down_single' }}"
         sequence:
           - service: timer.cancel
             target:
@@ -99,7 +99,7 @@ action:
             target:
               entity_id: "{{ timer_helper }}"
       # MQTT event for `up_double` to set and start timer
-      - conditions: "{{ event == 'up_single' or event == 'down_single' }}"
+      - conditions: "{{ event == 'up_double' }}"
         sequence:
           - service: timer.set_duration
             data:
