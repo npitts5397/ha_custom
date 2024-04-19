@@ -2,6 +2,7 @@ blueprint:
   name: Fan Timer Controller (MQTT)
   domain: automation
   author: Nathaniel Pitts
+  source_url: https://github.com/xenokira/ha_custom/blob/main/blueprints/fan_timer_controller_mqtt.yaml
   description: | 
     Sets a timer for a fan. Intended for use with Invelli VZM35-SN switches.
 
@@ -15,6 +16,7 @@ blueprint:
 
     Change log:
       #1.0.0 - HA-110 - Initial version.
+      #1.0.1 - HA-110 - Turn on fan when `up_double` if not already on.
 
     Known issues:
       * N/A
@@ -22,8 +24,7 @@ blueprint:
     To do:
       * explore setting autoOffTimer to have the switches directly control the timer. This _could_ allow for the
         helper to be removed.
-      * automatically set MQTT topic based on switch name (tbd)
-      * support multiple switches (tbd)
+      * consolidate to only use 'switches' or mqtt topics, don't _need_ to do both
   input:
     switches:
       name: Fan
@@ -51,7 +52,7 @@ blueprint:
       selector:
         entity:
           domain: timer
-mode: single
+mode: restart
 trigger:
   # trigger by fan switch action
   - id: switch_0_action
@@ -102,6 +103,11 @@ action:
       # MQTT event for `up_double` to set and start timer
       - conditions: "{{ event == 'up_double' }}"
         sequence:
+          - if: "{{ states(switches) == 'off' }}"
+            then:
+              - service: fan.turn_on
+                target:
+                  entity_id: "{{ switches }}"
           - service: timer.set_duration
             data:
               duration: "{{ timeout_duration }}"
