@@ -1,5 +1,5 @@
 blueprint:
-  name: Fan Timer Controllers (MQTT)
+  name: Fan Timer Controller (MQTT)
   domain: automation
   author: Nathaniel Pitts
   description: | 
@@ -22,12 +22,11 @@ blueprint:
     To do:
       * explore setting autoOffTimer to have the switches directly control the timer. This _could_ allow for the
         helper to be removed.
-      * support timeout periods longer than 60 minutes
       * automatically set MQTT topic based on switch name (tbd)
       * support multiple switches (tbd)
   input:
     switches:
-      name: Fan switch
+      name: Fan
       description: Required. The fan switch entity.
       selector:
         entity:
@@ -40,7 +39,7 @@ blueprint:
         text:
     timeout:
       name: Timeout
-      description: Optional. The period of time until automatically turning off the fan switch when `up_double` is pressed. Mujst be in `HH:MM:SS` format. Defaults to `00:30:00` for 30 minhutes.
+      description: Optional. The period of time until automatically turning off the fan switch when `up_double` is pressed. Must be in `HH:MM:SS` format. Defaults to `00:30:00` for 30 minhutes.
       default: 00:30:00
       selector:
         time:
