@@ -1,0 +1,116 @@
+blueprint:
+  name: Fan Timer Controllers (MQTT)
+  domain: automation
+  author: Nathaniel Pitts
+  description: | 
+    Sets a timer for a fan. Intended for use with Invelli VZM35-SN switches.
+
+    Supported switch events:
+      * `up_single` - Fan is on (switch controlled) and timer is reset to 0.
+      * `up_double` - Fan is on (if not already, automation turns it on) and timer is set to `timeout_minutes`.
+      * `down_single` - Fan is off (switch controlled) and timer is reset to 0.
+
+    Prerequisites:
+      * Must have a `timer` helper configured for each automation. Values are set by the automation. 
+
+    Change log:
+      #1.0.0 - HA-110 - Initial version.
+
+    Known issues:
+      * N/A
+
+    To do:
+      * explore setting autoOffTimer to have the switches directly control the timer. This _could_ allow for the
+        helper to be removed.
+      * support timeout periods longer than 60 minutes
+      * automatically set MQTT topic based on switch name (tbd)
+      * support multiple switches (tbd)
+  input:
+    switches:
+      name: Fan switch
+      description: Required. The fan switch entity.
+      selector:
+        entity:
+          domain: switch
+          multiple: false
+    switch_0_topic:
+      name: Fan switch MQTT topic
+      description: Required. Device MQTT topic for the fan switch.
+      selector:
+        text:
+    timeout:
+      name: Timeout
+      description: Optional. The period of time until automatically turning off the fan switch when `up_double` is pressed. Mujst be in `HH:MM:SS` format. Defaults to `00:30:00` for 30 minhutes.
+      default: 00:30:00
+      selector:
+        time:
+    timer_helper:
+      name: Timer Helper
+      description: Required. A timer helper used for this fan.
+      selector:
+        entity:
+          domain: timer
+mode: single
+trigger:
+  # trigger by fan switch action
+  - id: switch_0_action
+    platform: mqtt
+    topic: !input switch_0_topic
+    value_template: |
+      {%- if (value_json['action'] is defined) -%}
+        {%- if (value_json['action'] is not none) and (value_json['action'] | string != '') -%}
+          {{ 'action' }}
+        {%- endif -%}
+      {%- endif -%}
+    payload: action
+  # trigger by expired timer
+  - id: timer_expired
+    platform:
+      entity_id: !input timer_helper
+      to: idle
+variables:
+  event: >
+    {%- set event = '' -%}
+    {%- if trigger is defined -%}
+      {%- if trigger.payload_json is defined -%}
+        {%- if trigger.payload_json.action -%}
+          {%- set event = trigger.payload_json.action -%}
+        {%- endif -%}
+      {%- endif -%}
+    {%- endif -%}
+    {{ event }}
+  switches: !input switches
+  timeout: !input timeout
+  timer_helper: !input timer_helper
+condition: []
+action:
+  - choose:
+      # MQTT event for `up_single` and `down_single` to reset/cancel `timeout_helper`
+      - conditions: "{{ event == 'up_double' }}"
+        sequence:
+          - service: timer.cancel
+            target:
+              entity_id: "{{ timer_helper }}"
+          - service: timer.set_duration
+            data:
+              duration: 00:00:00
+            target:
+              entity_id: "{{ timer_helper }}"
+      # MQTT event for `up_double` to set and start timer
+      - conditions: "{{ event == 'up_single' or event == 'down_single' }}"
+        sequence:
+          - service: timer.set_duration
+            data:
+              duration: "{{ timeout }}"
+            target:
+              entity_id: "{{ timer_helper }}"
+          - service: timer.start
+            target:
+              entity_id:  "{{ timer_helper }}"
+      # Timer expired, turn off fan
+      - conditions: "{{ trigger.id == 'timer_expired' }}"
+        sequence:
+          - service: fan.turn_off
+            target:
+              entity_id: "{{ switches }}"
+    default:
