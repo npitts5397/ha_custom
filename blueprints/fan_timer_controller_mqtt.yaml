@@ -31,7 +31,7 @@ blueprint:
       description: Required. The fan switch entity.
       selector:
         entity:
-          domain: switch
+          domain: fan
           multiple: false
     switch_0_topic:
       name: Fan switch MQTT topic
