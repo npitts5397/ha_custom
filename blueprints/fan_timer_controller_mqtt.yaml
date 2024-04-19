@@ -39,8 +39,9 @@ blueprint:
         text:
     timeout_duration:
       name: Timeout duration
-      description: Optional. The period of time until automatically turning off the fan switch when `up_double` is pressed. Must be in `HH:MM:SS` format. Defaults to `00:30:00` for 30 minhutes.
-      default: 00:30:00
+      description: Optional. The period of time until automatically turning off the fan switch when `up_double` is pressed. Defaults to 30 minutes.
+      default:
+        minutes: 30
       selector:
         duration:
           enable_day: false
