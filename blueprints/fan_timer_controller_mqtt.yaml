@@ -38,12 +38,12 @@ blueprint:
       selector:
         text:
     timeout:
-      name: Timeout
+      name: Timeout duration
       description: Optional. The period of time until automatically turning off the fan switch when `up_double` is pressed. Must be in `HH:MM:SS` format. Defaults to `00:30:00` for 30 minhutes.
       default: 00:30:00
       selector:
         text:
-          type: time
+          type: duration
     timer_helper:
       name: Timer Helper
       description: Required. A timer helper used for this fan.
@@ -67,6 +67,7 @@ trigger:
   - id: timer_expired
     platform:
       entity_id: !input timer_helper
+      from: active
       to: idle
 variables:
   event: >
