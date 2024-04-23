@@ -27,6 +27,8 @@ blueprint:
       * explore setting autoOffTimer to have the switches directly control the timer. This _could_ allow for the
         helper to be removed.
       * consolidate to only use 'switches' or mqtt topics, don't _need_ to do both
+    
+    Source repository: https://github.com/xenokira/ha_custom
   input:
     switches:
       name: Fan
