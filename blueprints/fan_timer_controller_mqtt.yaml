@@ -12,11 +12,13 @@ blueprint:
       * `down_single` - Fan is off (switch controlled) and timer is reset to 0.
 
     Prerequisites:
-      * Must have a `timer` helper configured for each automation. Values are set by the automation. 
+      * Must have a `timer` helper configured for each automation. Values are set by the automation.
+      * The Spook integration is required for the `timer.set_duration` service.
 
     Change log:
       #1.0.0 - HA-110 - Initial version.
       #1.0.1 - HA-110 - Turn on fan when `up_double` if not already on.
+      #1.0.2 - HA-110 - Block circular triggering.
 
     Known issues:
       * N/A
@@ -52,7 +54,7 @@ blueprint:
       selector:
         entity:
           domain: timer
-mode: restart
+mode: single
 trigger:
   # trigger by fan switch action
   - id: switch_0_action
@@ -123,3 +125,6 @@ action:
             target:
               entity_id: "{{ switches }}"
     default:
+  # wait 1 second to block circular triggering
+  - delay:
+      milliseconds: 500
