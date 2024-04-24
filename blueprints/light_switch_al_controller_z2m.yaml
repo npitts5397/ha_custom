@@ -2,6 +2,7 @@ blueprint:
   name: Light-Switch-AL Controller (Z2M)
   domain: automation
   author: Nathaniel Pitts
+  source_url: https://github.com/xenokira/ha_custom/blob/main/blueprints/light_switch_al_controller_z2m.yaml
   description: |
     Set light configuration based on switch and Adaptive Lighting states. Designed for use with Inovelli Blue Series switches
     bound to smart bulb groups or directly controlling traditional lighting, but as long as the MQTT payload contains an `action`
@@ -52,6 +53,7 @@ blueprint:
                      Make use of adaptive_lighting.change_switch_settings service
     #3.0.1 - HA-104 - Fix primary lighting direct control scenarios
     #3.1.0 - HA-105 - Do not statically set sleep lighting values
+    #3.2.0 - HA-113 - Fix adaptive lighting not actually disabling when `manual_control: true`
 
     Known issues:
       * turning off a light results in the automation firing twice due to 'light_turned_off' trigger
@@ -328,11 +330,16 @@ action:
       # primary lights - mqtt "on" OR "up_single" OR (phase_helper_updated AND light is on)
       - conditions: "{{ event == 'on' or event == 'up_single' or (trigger.id == 'phase_helper_updated' and primary_lights_state == 'on') }}"
         sequence:
-          - service: adaptive_lighting.set_manual_control
-            data:
-              manual_control: false
-              lights:
-                "{{ primary_lights }}"
+          - parallel:
+              - service: adaptive_lighting.set_manual_control
+                data:
+                  manual_control: false
+                  lights:
+                    "{{ primary_lights }}"
+              - service: switch.turn_on
+                target:
+                  entity_id:
+                    "{{ primary_lights_adaptive_lighting_switches }}"
           - repeat:
               for_each: "{{ primary_lights_adaptive_lighting_switches }}"
               sequence:
@@ -358,6 +365,10 @@ action:
                   manual_control: true
                   lights:
                     "{{ primary_lights }}"
+              - service: switch.turn_off
+                target:
+                  entity_id:
+                    "{{ primary_lights_adaptive_lighting_switches }}"
               - choose:
                   - conditions: "{{ (event == 'off' or primary_lights_direct_control_enabled == true) and primary_lights_state == 'on' }}"
                     sequence:
@@ -368,11 +379,16 @@ action:
       # primary lights - mqtt "up_double" OR "up_held" OR "down_double" OR "down_held"
       - conditions: "{{ event == 'up_double' or event == 'up_held' or event == 'down_double' or event == 'down_held' }}"
         sequence:
-          - service: adaptive_lighting.set_manual_control
-            data:
-              manual_control: true
-              lights:
-                "{{ primary_lights }}"
+          - parallel:
+              - service: adaptive_lighting.set_manual_control
+                data:
+                  manual_control: true
+                  lights:
+                    "{{ primary_lights }}"
+              - service: switch.turn_off
+                target:
+                  entity_id:
+                    "{{ primary_lights_adaptive_lighting_switches }}"
           - if:
               - condition: template
                 value_template: "{{ primary_lights_direct_control_enabled == true }}"
