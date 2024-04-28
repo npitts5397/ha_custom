@@ -5,8 +5,7 @@ blueprint:
   source_url: https://github.com/xenokira/ha_custom/blob/main/blueprints/light_switch_al_controller_z2m.yaml
   description: |
     Set light configuration based on switch and Adaptive Lighting states. Designed for use with Inovelli Blue Series switches
-    bound to smart bulb groups or directly controlling traditional lighting, but as long as the MQTT payload contains an `action`
-    field with a supported value, this blueprint can be used. See below for supported values of `action`.
+    bound to smart bulb groups or directly controlling traditional lighting.
 
     Supported switch events in switch's MQTT payload:
       * Enables AL:
@@ -33,6 +32,10 @@ blueprint:
       * Adaptive Lighting
           - Configured for any specified lights
           - `take_over_control` is disabled
+      * Inovelli Blue LED (Zigbee2MQTT) script (Optional)
+          - Used to set notification for secondary lights
+          - Blueprint is available here: https://github.com/zanix/home-assistant-blueprints/blob/main/script/inovelli_blue_led_zigbee2mqtt.yaml
+          - After creating the script from the blueprint, set script's mode from 'single' to 'parallel'
     
     Change log:
       * 1.0.0 - HA-82 - Initial version.
@@ -57,6 +60,7 @@ blueprint:
       * 3.0.2 - HA-105 - Do not statically set sleep lighting values
       * 3.0.3 - HA-113 - Fix adaptive lighting not actually disabling when `manual_control: true`
       * 3.0.4 - HA-113 - Enable/disable adaptiving lighting for secondary lights
+      * 3.1.0 - HA-118 - Animate Inovelli LED bar for secondary lighting
 
     Known issues:
       * turning off a light results in the automation firing twice due to 'light_turned_off' trigger
@@ -73,6 +77,7 @@ blueprint:
       * Allow user to define dimming steps (default: 5%) and min/max brightness (default: 35%/100%for double paddle interactions
       * allow 'up_held' and 'down_held' to continue to dim lights without multiple hold actions when direct control is enabled
       * Implement support for automatically re-enabling Adaptive Lighting via adaptive_lighting.autoreset_control_seconds
+      * possibly remove manual control setting as the switch toggle overrides it anyway
   input:
     primary_lights:
       name: Primary lights
@@ -82,14 +87,14 @@ blueprint:
           domain: light
           multiple: true
     primary_lights_direct_control:
-      name: Primary lights direct control
-      description: Set to `true` when the selected lights should be updated by Home Assistant directly. This should be `false` when lights and switches are bound (Zigbee) or associated (ZWave) directly. Defaults to `false`.
+      name: Primary lights HA control
+      description: Set to `true` when Home Assistant should control the selected lights directly. This should be `false` when lights and switches are bound (Zigbee) or associated (ZWave) directly. Defaults to `false`.
       default: false
       selector:
         boolean:
     secondary_lights:
       name: Secondary lights
-      description: Optional. The secondary lights to toggle with `config_single` interactions. Lights must be Adaptive Lighting enabled. Direct control of secondary lights is assumed.
+      description: Optional. The secondary lights to toggle with `config_single` interactions. Lights must be Adaptive Lighting enabled. HA control of secondary lights is assumed.
       default: []
       selector:
         entity:
@@ -165,6 +170,14 @@ blueprint:
         entity:
           domain: light
           multiple: true
+    inovelli_blue_led_script:
+      name: Inovelli Blue LED (Zigbee2MQTT) script
+      description: Optional. Script for setting notifications on Inovelli Blue Series LED bar.
+      default: {}
+      selector:
+        entity:
+          domain: script
+          multiple: false
 mode: single
 trigger:
   - id: switch_0_action
@@ -287,6 +300,10 @@ variables:
       {%- set data.switches = data.switches + ['switch.adaptive_lighting_' + light.replace('light.','')] %}
     {%- endfor %}
     {{ data.switches }}
+  secondary_lights_switch_led_color: Cyan
+  secondary_lights_switch_led_effect: Open/Close
+  secondary_lights_switch_led_duration: 1 Second
+  secondary_lights_switch_led_level: 12
   phase_helper: !input phase_helper
   color_phases: !input color_phases
   current_phase: >
@@ -328,6 +345,7 @@ variables:
       {%- endif %}
     {%- endif %}
     {{ enable_sleep }}
+  inovelli_blue_led_script: !input inovelli_blue_led_script
 condition: []
 action:
   - choose:
@@ -433,43 +451,55 @@ action:
       # secondary lighting - mqtt "config_single"
       - conditions: "{{ event == 'config_single' and ((secondary_lights is defined) and (secondary_lights | length > 0)) }}"
         sequence:
-          - choose:
-              - conditions: "{{ secondary_lights_state == 'on' }}"
-                sequence:
+          - parallel:
+              - if: "{{ (inovelli_blue_led_script) is defined and (inovelli_blue_led_script | length > 0)}}"
+                then:
+                  - service: "{{ inovelli_blue_led_script }}"
+                    data:
+                      led: All
+                      color: "{{ secondary_lights_switch_led_color }}"
+                      level: "{{ secondary_lights_switch_led_level }}"
+                      effect: "{{ secondary_lights_switch_led_effect }}"
+                      duration: "{{ secondary_lights_switch_led_duration }}"
+                      target:
+                        entity_id: light.main_office_switch_lights
+              - choose:
+                  - conditions: "{{ secondary_lights_state == 'on' }}"
+                    sequence:
+                      - parallel:
+                          - service: adaptive_lighting.set_manual_control
+                            data:
+                              manual_control: true
+                              lights:
+                                "{{ secondary_lights }}"
+                          - service: switch.turn_off
+                            target:
+                              entity_id:
+                                "{{ secondary_lights_adaptive_lighting_switches }}"
+                      - service: light.turn_off
+                        target:
+                          entity_id:
+                            "{{ secondary_lights }}"
+                default:
                   - parallel:
                       - service: adaptive_lighting.set_manual_control
                         data:
-                          manual_control: true
+                          manual_control: false
                           lights:
                             "{{ secondary_lights }}"
-                      - service: switch.turn_off
+                      - service: switch.turn_on
                         target:
                           entity_id:
                             "{{ secondary_lights_adaptive_lighting_switches }}"
-                  - service: light.turn_off
-                    target:
-                      entity_id:
-                        "{{ secondary_lights }}"
-            default:
-              - parallel:
-                  - service: adaptive_lighting.set_manual_control
+                  - service: adaptive_lighting.apply
                     data:
-                      manual_control: false
                       lights:
                         "{{ secondary_lights }}"
-                  - service: switch.turn_on
-                    target:
-                      entity_id:
-                        "{{ secondary_lights_adaptive_lighting_switches }}"
-              - service: adaptive_lighting.apply
-                data:
-                  lights:
-                    "{{ secondary_lights }}"
-                  adapt_brightness: true
-                  turn_on_lights: true
-                  adapt_color: true
-                  prefer_rgb_color: false
-                  transition: '1'
+                      adapt_brightness: true
+                      turn_on_lights: true
+                      adapt_color: true
+                      prefer_rgb_color: false
+                      transition: '1'
       # sleep helper updated
       - conditions: "{{ trigger.id == 'sleep_helper_updated' }}"
         sequence:
