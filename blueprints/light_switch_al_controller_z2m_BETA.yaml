@@ -261,6 +261,24 @@ variables:
       {%- endif -%}
     {%- endif -%}
     {{ event }}
+  switch_0_topic: !input switch_0_topic
+  switch_1_topic: !input switch_1_topic
+  switch_2_topic: !input switch_2_topic
+  switch_3_topic: !input switch_3_topic
+  switch_4_topic: !input switch_4_topic
+  switch_5_topic: !input switch_5_topic
+  switch_entities: >
+    {%- set mqtt_topics = [switch_0_topic, switch_1_topic, switch_2_topic, switch_3_topic, switch_4_topic, switch_5_topic] %}
+    {%- set data = namespace(topics=[],switches=[]) %}
+    {%- for topic in mqtt_topics %}
+      {%- if (topic != 'none') and (topic != '') %}
+          {%- set data.topics = data.topics + [topic] %}
+      {%- endif %}
+    {%- endfor %}
+    {%- for topic in data.topics %}
+      {%- set data.switches = data.switches + ['light.' + topic.replace(topic.split('/')[0] + '/','').replace('-','').replace(' ','_') | lower] %}
+    {%- endfor %}
+    {{ data.switches }}
   primary_lights: !input primary_lights
   primary_lights_state: >
     {%- set primary_lights_state = 'off' %}
@@ -462,7 +480,8 @@ action:
                       effect: "{{ secondary_lights_switch_led_effect }}"
                       duration: "{{ secondary_lights_switch_led_duration }}"
                       target:
-                        entity_id: light.main_office_switch_lights
+                        entity_id:
+                          "{{ switch_entities }}"
               - choose:
                   - conditions: "{{ secondary_lights_state == 'on' }}"
                     sequence:
