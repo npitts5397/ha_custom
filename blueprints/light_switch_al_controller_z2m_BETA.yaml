@@ -61,6 +61,7 @@ blueprint:
       * 3.0.3 - HA-113 - Fix adaptive lighting not actually disabling when `manual_control: true`
       * 3.0.4 - HA-113 - Enable/disable adaptiving lighting for secondary lights
       * 3.1.0 - HA-118 - Animate Inovelli LED bar for secondary lighting
+      * 3.1.1 - HA-122 - Set automation mode to `restart` instead of `single`
 
     Known issues:
       * turning off a light results in the automation firing twice due to 'light_turned_off' trigger
@@ -178,7 +179,7 @@ blueprint:
         entity:
           domain: script
           multiple: false
-mode: single
+mode: restart
 trigger:
   - id: switch_0_action
     platform: mqtt
