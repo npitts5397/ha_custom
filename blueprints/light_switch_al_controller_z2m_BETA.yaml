@@ -62,6 +62,7 @@ blueprint:
       * 3.0.4 - HA-113 - Enable/disable adaptiving lighting for secondary lights
       * 3.1.0 - HA-118 - Animate Inovelli LED bar for secondary lighting
       * 3.1.1 - HA-122 - Set automation mode to `restart` instead of `single`
+      * 3.2.0 - HA-127 - Add toggle to always enable RGB for all sleep modes
 
     Known issues:
       * turning off a light results in the automation firing twice due to 'light_turned_off' trigger
@@ -165,12 +166,18 @@ blueprint:
         text:
     sleep_mode_additional_lights:
       name: Additional sleep mode lights
-      description: Optional. Lights in addition to primary lights for which sleep mode is activated. Lights must be Adaptive Lighting enabled.
+      description: Optional. Lights in addition to primary lights for which sleep mode is activated. Secondary lights are not included by default. Lights must be Adaptive Lighting enabled.
       default: []
       selector:
         entity:
           domain: light
           multiple: true
+    sleep_mode_rgb:
+      name: Color sleep mode
+      description: Optional. Apply AL color mode when sleep mode is activated. Sleep-related modes do not need to be specified in `color_phases` when this option is enabled. Defaults to `false`.
+      default: false
+      selector:
+        boolean:
     inovelli_blue_led_script:
       name: Inovelli Blue LED (Zigbee2MQTT) script
       description: Optional. Script for setting notifications on Inovelli Blue Series LED bar.
@@ -331,15 +338,6 @@ variables:
       {%- set current_phase = states(phase_helper) | lower %}
     {%- endif %}
     {{ current_phase }}
-  enable_rgb_color: >
-    {%- set enable_color = false %}
-    {%- if color_phases is defined and (color_phases | length > 0) %}
-      {%- set color_phases = color_phases.split(",") | map('trim') | map('lower') | list %}
-      {%- if current_phase in color_phases %}
-        {%- set enable_color = true %}
-      {%- endif %}
-    {%- endif %}
-    {{ enable_color }}
   sleep_helper: !input sleep_helper
   sleep_modes: !input sleep_modes
   sleep_mode_additional_lights: !input sleep_mode_additional_lights
@@ -364,6 +362,20 @@ variables:
       {%- endif %}
     {%- endif %}
     {{ enable_sleep }}
+  enable_rgb_color: >
+    {%- set enable_color = false %}
+    {%- if color_phases is defined and (color_phases | length > 0) %}
+      {%- set color_phases = color_phases.split(",") | map('trim') | map('lower') | list %}
+      {%- if current_phase in color_phases %}
+        {%- set enable_color = true %}
+      {%- endif %}
+    {%- endif %}
+    {%- if sleep_helper is defined and (sleep_helper | length > 0) %}
+      {%- if current_sleep_mode in sleep_modes %}
+        {%- set enable_color = true %}
+      {%- endif %}
+    {%- endif %}
+    {{ enable_color }}
   inovelli_blue_led_script: !input inovelli_blue_led_script
 condition: []
 action:
