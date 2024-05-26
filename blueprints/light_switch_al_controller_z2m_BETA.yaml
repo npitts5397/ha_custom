@@ -341,6 +341,7 @@ variables:
   sleep_helper: !input sleep_helper
   sleep_modes: !input sleep_modes
   sleep_mode_additional_lights: !input sleep_mode_additional_lights
+  sleep_mode_rgb: !input sleep_mode_rgb
   sleep_mode_switches: >
     {%- set data = namespace(switches=[]) %}
     {%- for light in (primary_lights + sleep_mode_additional_lights) %}
@@ -370,10 +371,8 @@ variables:
         {%- set enable_color = true %}
       {%- endif %}
     {%- endif %}
-    {%- if sleep_helper is defined and (sleep_helper | length > 0) %}
-      {%- if current_sleep_mode in sleep_modes %}
-        {%- set enable_color = true %}
-      {%- endif %}
+    {%- if (enable_sleep == true) and (sleep_mode_rgb == true) %}
+      {%- set enable_color = true %}
     {%- endif %}
     {{ enable_color }}
   inovelli_blue_led_script: !input inovelli_blue_led_script
