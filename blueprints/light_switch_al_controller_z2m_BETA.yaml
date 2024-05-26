@@ -62,7 +62,6 @@ blueprint:
       * 3.0.4 - HA-113 - Enable/disable adaptiving lighting for secondary lights
       * 3.1.0 - HA-118 - Animate Inovelli LED bar for secondary lighting
       * 3.1.1 - HA-122 - Set automation mode to `restart` instead of `single`
-      * 3.2.0 - HA-127 - Add toggle to always enable RGB for all sleep modes
 
     Known issues:
       * turning off a light results in the automation firing twice due to 'light_turned_off' trigger
@@ -166,18 +165,12 @@ blueprint:
         text:
     sleep_mode_additional_lights:
       name: Additional sleep mode lights
-      description: Optional. Lights in addition to primary lights for which sleep mode is activated. Secondary lights are not included by default. Lights must be Adaptive Lighting enabled.
+      description: Optional. Lights in addition to primary lights for which sleep mode is activated. Lights must be Adaptive Lighting enabled.
       default: []
       selector:
         entity:
           domain: light
           multiple: true
-    rgb_sleep_mode:
-      name: RGB sleep mode
-      description: Optional. Apply AL RGB when sleep mode is activated. Sleep-related modes do not need to be specified in `color_phases` when this option is enabled. Defaults to `false`.
-      default: false
-      selector:
-        boolean:
     inovelli_blue_led_script:
       name: Inovelli Blue LED (Zigbee2MQTT) script
       description: Optional. Script for setting notifications on Inovelli Blue Series LED bar.
@@ -350,13 +343,6 @@ variables:
   sleep_helper: !input sleep_helper
   sleep_modes: !input sleep_modes
   sleep_mode_additional_lights: !input sleep_mode_additional_lights
-  rgb_sleep_mode: !input rgb_sleep_mode
-  sleep_rgb_or_color_temp: >
-    {%- set rgb_or_temp = 'color_temp' %}
-    {%- if rgb_sleep_mode ==  true %}
-      {%- set rgb_or_temp = 'rgb_color' %}
-    {%- endif %}
-    {{ sleep_rgb_or_color_temp }}
   sleep_mode_switches: >
     {%- set data = namespace(switches=[]) %}
     {%- for light in (primary_lights + sleep_mode_additional_lights) %}
@@ -540,14 +526,6 @@ action:
           - choose:
               - conditions: "{{ enable_sleep == true }}"
                 sequence:
-                  - repeat:
-                      for_each: "{{ primary_lights_adaptive_lighting_switches }}"
-                      sequence:
-                        - service: adaptive_lighting.change_switch_settings
-                          data:
-                            use_defaults: configuration
-                            entity_id: "{{ repeat.item }}"
-                            sleep_rgb_or_color_temp: "{{ sleep_rgb_or_color_temp }}"
                   - service: switch.turn_on
                     target:
                       entity_id:
