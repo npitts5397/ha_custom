@@ -2,7 +2,7 @@ blueprint:
   name: Light-Switch-AL Controller (MQTT) BETA
   domain: automation
   author: Nathaniel Pitts
-  source_url: https://github.com/xenokira/ha_custom/blob/main/blueprints/light_switch_al_controller_z2m.yaml
+  source_url: https://github.com/xenokira/ha_custom/blob/main/blueprints/light_switch_al_controller_z2m_BETA.yaml
   description: |
     Set light configuration based on switch and Adaptive Lighting states. Designed for use with Inovelli Blue Series switches
     bound to smart bulb groups or directly controlling traditional lighting.
