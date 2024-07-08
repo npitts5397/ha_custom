@@ -62,6 +62,10 @@ blueprint:
       * 3.0.4 - HA-113 - Enable/disable adaptiving lighting for secondary lights
       * 3.1.0 - HA-118 - Animate Inovelli LED bar for secondary lighting
       * 3.1.1 - HA-122 - Set automation mode to `restart` instead of `single`
+      * 3.2.0 - HA-132
+          - Move secondary light control to triple taps on paddle
+          - TODO: Update animation to grow for secondary on, shrink for secondary off
+          - TODO: Optional 'config' button action? Could add 4x and 5x tap actions too
 
     Known issues:
       * turning off a light results in the automation firing twice due to 'light_turned_off' trigger
@@ -467,8 +471,9 @@ action:
                             "{{ primary_lights }}"
                         data:
                           brightness_step_pct: -5    
-      # secondary lighting - mqtt "config_single"
-      - conditions: "{{ event == 'config_single' and ((secondary_lights is defined) and (secondary_lights | length > 0)) }}"
+      # secondary lighting on - mqtt "up_triple"
+      # - conditions: "{{ event == 'config_single' and ((secondary_lights is defined) and (secondary_lights | length > 0)) }}"
+      - conditions: "{{ (event == 'up_triple' or event == 'secondary_on') and ((secondary_lights is defined) and (secondary_lights | length > 0)) }}"
         sequence:
           - parallel:
               - if: "{{ (inovelli_blue_led_script) is defined and (inovelli_blue_led_script | length > 0)}}"
@@ -483,43 +488,49 @@ action:
                       target:
                         entity_id:
                           "{{ switch_entities }}"
-              - choose:
-                  - conditions: "{{ secondary_lights_state == 'on' }}"
-                    sequence:
-                      - parallel:
-                          - service: adaptive_lighting.set_manual_control
-                            data:
-                              manual_control: true
-                              lights:
-                                "{{ secondary_lights }}"
-                          - service: switch.turn_off
-                            target:
-                              entity_id:
-                                "{{ secondary_lights_adaptive_lighting_switches }}"
-                      - service: light.turn_off
-                        target:
-                          entity_id:
-                            "{{ secondary_lights }}"
-                default:
-                  - parallel:
-                      - service: adaptive_lighting.set_manual_control
-                        data:
-                          manual_control: false
-                          lights:
-                            "{{ secondary_lights }}"
-                      - service: switch.turn_on
-                        target:
-                          entity_id:
-                            "{{ secondary_lights_adaptive_lighting_switches }}"
-                  - service: adaptive_lighting.apply
+              - service: adaptive_lighting.set_manual_control
+                data:
+                  manual_control: false
+                  lights:
+                    "{{ secondary_lights }}"
+              - service: switch.turn_on
+                target:
+                  entity_id:
+                    "{{ secondary_lights_adaptive_lighting_switches }}"
+          - service: adaptive_lighting.apply
+            data:
+              lights:
+                "{{ secondary_lights }}"
+              adapt_brightness: true
+              turn_on_lights: true
+              adapt_color: true
+              prefer_rgb_color: false
+              transition: '1'
+      # secondary lighting off - mqtt "down_triple"
+      - conditions: "{{ (event == 'down_triple' or event == 'secondary_off') and ((secondary_lights is defined) and (secondary_lights | length > 0)) }}"
+        sequence:
+          - parallel:
+              - if: "{{ (inovelli_blue_led_script) is defined and (inovelli_blue_led_script | length > 0)}}"
+                then:
+                  - service: "{{ inovelli_blue_led_script }}"
                     data:
-                      lights:
-                        "{{ secondary_lights }}"
-                      adapt_brightness: true
-                      turn_on_lights: true
-                      adapt_color: true
-                      prefer_rgb_color: false
-                      transition: '1'
+                      led: All
+                      color: "{{ secondary_lights_switch_led_color }}"
+                      level: "{{ secondary_lights_switch_led_level }}"
+                      effect: "{{ secondary_lights_switch_led_effect }}"
+                      duration: "{{ secondary_lights_switch_led_duration }}"
+                      target:
+                        entity_id:
+                          "{{ switch_entities }}"
+              - service: adaptive_lighting.set_manual_control
+                data:
+                  manual_control: true
+                  lights:
+                    "{{ secondary_lights }}"
+              - service: switch.turn_off
+                target:
+                  entity_id:
+                    "{{ secondary_lights_adaptive_lighting_switches }}"
       # sleep helper updated
       - conditions: "{{ trigger.id == 'sleep_helper_updated' }}"
         sequence:
