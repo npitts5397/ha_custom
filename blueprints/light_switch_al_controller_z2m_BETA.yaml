@@ -531,6 +531,10 @@ action:
                 target:
                   entity_id:
                     "{{ secondary_lights_adaptive_lighting_switches }}"
+          - service: light.turn_off
+            target:
+              entity_id:
+                "{{ secondary_lights }}"
       # sleep helper updated
       - conditions: "{{ trigger.id == 'sleep_helper_updated' }}"
         sequence:
