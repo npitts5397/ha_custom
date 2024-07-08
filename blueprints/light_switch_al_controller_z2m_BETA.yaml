@@ -64,7 +64,7 @@ blueprint:
       * 3.1.1 - HA-122 - Set automation mode to `restart` instead of `single`
       * 3.2.0 - HA-132
           - Move secondary light control to triple taps on paddle
-          - TODO: Update animation to grow for secondary on, shrink for secondary off
+          - Update animation to rise for secondary on, falling for secondary off
           - TODO: Optional 'config' button action? Could add 4x and 5x tap actions too
 
     Known issues:
@@ -324,7 +324,8 @@ variables:
     {%- endfor %}
     {{ data.switches }}
   secondary_lights_switch_led_color: Cyan
-  secondary_lights_switch_led_effect: Open/Close
+  secondary_lights_switch_led_effect_on: Medium Rising
+  secondary_lights_switch_led_effect_off: Medium Falling
   secondary_lights_switch_led_duration: 1 Second
   secondary_lights_switch_led_level: 12
   phase_helper: !input phase_helper
@@ -483,7 +484,7 @@ action:
                       led: All
                       color: "{{ secondary_lights_switch_led_color }}"
                       level: "{{ secondary_lights_switch_led_level }}"
-                      effect: "{{ secondary_lights_switch_led_effect }}"
+                      effect: "{{ secondary_lights_switch_led_effect_on }}"
                       duration: "{{ secondary_lights_switch_led_duration }}"
                       target:
                         entity_id:
@@ -517,7 +518,7 @@ action:
                       led: All
                       color: "{{ secondary_lights_switch_led_color }}"
                       level: "{{ secondary_lights_switch_led_level }}"
-                      effect: "{{ secondary_lights_switch_led_effect }}"
+                      effect: "{{ secondary_lights_switch_led_effect_off }}"
                       duration: "{{ secondary_lights_switch_led_duration }}"
                       target:
                         entity_id:
