@@ -10,18 +10,19 @@ blueprint:
     bound to smart bulb groups or directly controlling traditional lighting.
 
     Supported switch events in switch's MQTT payload:
-      * Enables AL:
+      * Enables AL on primary lights:
         - `"action": "on"` - also turns on lights
         - `"action": "up_single"` - also turns on lights when direct control is enabled
-      * Disables AL:
+      * Disables AL on primary lights:
         - `"action": "off"` - also turns off lights
         - `"action": "down_single"` - also turns off lights when direct control is enabled
         - `"action": "up_double"` - also dims to 100% when direct control is enabled
         - `"action": "down_double"` - also dims to 35% when direct control is enabled
         - `"action": "up_held"` - also dims up by 5% when direct control is enabled
         - `"action": "down_held"` - also dims down by 5% when direct control is enabled
-      * Other:
-        - `"action": "config_single"` - toggles optional secondary light
+      * Actions for secondary lights:
+        - `"action": "up_triple"` - turns on optional secondary light
+        - `"action": "down_triple"` - turns off options secondary light
 
     Prerequisites:
       * Lights
@@ -90,6 +91,7 @@ blueprint:
       name: Light Selection
       icon: mdi:lamps
       description: Options related to selecting Primary and Secondary lights.
+      collapsed: false
       input:
         primary_lights:
           name: Primary lights
@@ -116,6 +118,7 @@ blueprint:
       name: MQTT Topics
       icon: mdi:queue-first-in-last-out
       description: Subscribed MQTT topics which trigger the automation.
+      collapsed: false
       input:
         switch_0_topic:
           name: Primary switch topic
@@ -155,8 +158,9 @@ blueprint:
             text:
     home_assistant:
       name: Home Assistant Configuration
-      icon: mdi:settings-helper
+      icon: mdi:home-assistant
       description: Helpers and configuration that maintain external values used to determine configuration.
+      collapsed: true
       input:
         phase_helper:
           name: Phase helper
