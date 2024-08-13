@@ -2,7 +2,7 @@ blueprint:
   name: Fan Timer Controller (MQTT)
   domain: automation
   author: Nathaniel Pitts
-  source_url: https://github.com/xenokira/ha_custom/blob/main/blueprints/fan_timer_controller_mqtt.yaml
+  source_url: https://github.com/npitts5397/ha_custom/blob/main/blueprints/fan_timer_controller_mqtt.yaml
   description: | 
     Sets a timer for a fan. Intended for use with Invelli VZM35-SN switches.
 
@@ -28,7 +28,7 @@ blueprint:
         helper to be removed.
       * consolidate to only use 'switches' or mqtt topics, don't _need_ to do both
     
-    Source repository: https://github.com/xenokira/ha_custom
+    Source repository: https://github.com/npitts5397/ha_custom
   input:
     switches:
       name: Fan

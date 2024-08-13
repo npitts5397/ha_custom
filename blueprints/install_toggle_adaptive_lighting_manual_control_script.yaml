@@ -13,7 +13,7 @@ blueprint:
           data:
             switch: 'switch.adaptive_lighting_some_al_switch'
   author: Nathaniel Pitts
-  source_url: https://github.com/xenokira/ha_custom/blob/main/blueprints/holiday_scene_selector.yaml
+  source_url: https://github.com/npitts5397/ha_custom/blob/main/blueprints/holiday_scene_selector.yaml
   domain: script
 sequence:
   - if:

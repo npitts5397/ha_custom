@@ -2,7 +2,7 @@ blueprint:
   name: Light-Switch-AL Controller (MQTT)
   domain: automation
   author: Nathaniel Pitts
-  source_url: https://github.com/xenokira/ha_custom/blob/main/blueprints/light_switch_al_controller_z2m.yaml
+  source_url: https://github.com/npitts5397/ha_custom/blob/main/blueprints/light_switch_al_controller_z2m.yaml
   homeassistant:
     min_version: 2024.6.0
   description: |
