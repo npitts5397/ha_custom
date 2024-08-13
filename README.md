@@ -1,2 +1,2 @@
 # ha_custom
-A personal collection of blueprints, scripts, etc. for Home Assistant
+This repository holds various blueprints and scripts written for Home Assistant.
