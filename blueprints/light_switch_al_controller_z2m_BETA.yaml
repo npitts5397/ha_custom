@@ -91,6 +91,7 @@ blueprint:
       * allow 'up_held' and 'down_held' to continue to dim lights without multiple hold actions when direct control is enabled
       * Implement support for automatically re-enabling Adaptive Lighting via adaptive_lighting.autoreset_control_seconds
       * possibly remove manual control setting as the switch toggle overrides it anyway
+      * HIGH PRIORITY - Validate scene_helper_value is a real scene entity or else do not apply!
   input:
     lights:
       name: Light Selection
@@ -414,7 +415,12 @@ variables:
     {{ enable_sleep }}
   inovelli_blue_led_script: !input inovelli_blue_led_script
   scene_helper: !input scene_helper
-  scene_helper_value: "{{ states(scene_helper) }}"
+  scene_helper_value: >
+    {%- set scene_value = '' %}
+    {%- if scene_helper is defined (scene_helper | length > 0) %}
+      {%- scene_value = states(scene_helper) | lower %}
+    {%- endif %}
+    {{ scene_value }}
 condition: []
 action:
   - choose:
