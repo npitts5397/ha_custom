@@ -1,0 +1,80 @@
+blueprint:
+  name: Apply Native Light Effects on Scene Activation
+  domain: automation
+  author: Nathaniel Pitts
+  source_url: https://github.com/npitts5397/ha_custom/blob/main/blueprints/apply_native_light_effects_on_scene_activation.yaml
+  description: |
+    Automation is triggered when a specified scene is activated and applies specified native effects on bulbs.
+
+    Change log:
+      * 1.0.0 - HA-137 - Initial version.
+  homeassistant:
+    min_version: 2024.8.0
+  input:
+    target_lights:
+      name: Lights
+      description: Required. Lights onto which native effects are applied. Multiple areas, devices, entities, or labels may be specified.
+      selector:
+        target:
+          entity:
+            domain: light
+    trigger_scene:
+      name: Scenes
+      description: Required. Scene that will trigger this automation. Multiple areas, devices, entities, or labels may be specified.
+      selector:
+        entity:
+          filter:
+            domain: scene
+    effect_name:
+      name: Effect
+      description: Required. The effect to apply to the specified lights. Lights must natively support the specified effect.
+      selector:
+        text:
+    effect_brightness:
+      name: Brightness
+      description: Optional. The brightness percentage to apply to the lights after setting the effect.
+      default: null
+      selector:
+        number:
+          min: 0
+          max: 100
+          unit_of_measurement: "%"
+    effect_brightness_transition:
+      name: Brightness Transition
+      description: Optional. The brightess transition in seconds to apply to the lights after setting the effect. Has no impact if `Brightess` is not set.
+      default: 0
+      selector:
+        number:
+          min: 0
+          max: 600
+          unit_of_measurement: seconds
+          mode: box
+mode: restart
+trigger:
+  - trigger: state
+    entity_id: !input 'trigger_scene'
+    to: null
+variables:
+  target_lights: !input target_lights
+  effect_name: !input effect_name
+  effect_brightness: !input effect_brightness
+  effect_brightness_transition: !input effect_brightness_transition
+condition: []
+action:
+  - action: light.turn_on
+    target: "{{ target_lights }}"
+    data:
+      effect: "{{ effect_name }}"
+  - choose:
+      - conditions: "{{ effect_brightness is not none }}"
+        sequence:
+          - delay:
+              hours: 0
+              minutes: 0
+              seconds: 0
+              milliseconds: 500
+          - action: light.turn_on
+            target: "{{ target_lights }}"
+            data:
+              brightness_pct: "{{ effect_brightness }}"
+              transition: "{{ effect_brightness_transition }}"
