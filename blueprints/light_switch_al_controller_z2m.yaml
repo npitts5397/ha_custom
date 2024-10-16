@@ -4,7 +4,7 @@ blueprint:
   author: Nathaniel Pitts
   source_url: https://github.com/npitts5397/ha_custom/blob/main/blueprints/light_switch_al_controller_z2m.yaml
   homeassistant:
-    min_version: 2024.6.0
+    min_version: 2024.8.0
   description: |
     Set light configuration based on switch and Adaptive Lighting states. Designed for use with Inovelli Blue Series switches
     bound to smart bulb groups or directly controlling traditional lighting.
@@ -70,6 +70,10 @@ blueprint:
           - Update animation to rise for secondary on, falling for secondary off
           - Added blueprint input sections (min HA version is 2024.6)
       * 3.2.1 - HA-136 - Fix rendering of friendly names with apostrophes to entity names
+      * 3.3.0 - HA-138
+          - Add support for scene helpers.
+          - Use new schema introduced in HA 2024.8 (new min version for blueprint)
+          - Improve template readability
     Known issues:
       * turning off a light results in the automation firing twice due to 'light_turned_off' trigger
         Possible solution: Could create a trigger with a template, similar to how the switch_topic_x triggers work. The
@@ -98,7 +102,8 @@ blueprint:
           description: Required. The primary lights to control. Lights must be Adaptive Lighting enabled.
           selector:
             entity:
-              domain: light
+              filter:
+                domain: light
               multiple: true
         primary_lights_direct_control:
           name: Primary lights HA control
@@ -112,7 +117,8 @@ blueprint:
           default: []
           selector:
             entity:
-              domain: light
+              filter:
+                domain: light
               multiple: true
     mqtt_topics:
       name: MQTT Topics
@@ -168,7 +174,8 @@ blueprint:
           default: {}
           selector:
             entity:
-              domain: input_select
+              filter:
+                domain: input_select
         color_phases:
           name: Primary lights Adaptive Lighting color phases
           description: Optional. Comma separated list of phases during which AL color mode is activated for primary lights. Non-functional unless `phase_helper` is set.
@@ -181,7 +188,8 @@ blueprint:
           default: {}
           selector:
             entity:
-              domain: input_select
+              filter:
+                domain: input_select
         sleep_modes:
           name: Sleep modes
           description: Optional. Comma separated list of modes during which AL sleep mode is activated. Non-functional unless `sleep_helper` is set.
@@ -194,7 +202,8 @@ blueprint:
           default: []
           selector:
             entity:
-              domain: light
+              filter:
+                domain: light
               multiple: true
         inovelli_blue_led_script:
           name: Inovelli Blue LED (Zigbee2MQTT) script
@@ -202,12 +211,21 @@ blueprint:
           default: {}
           selector:
             entity:
-              domain: script
+              filter:
+                domain: script
               multiple: false
+        scene_helper:
+          name: Scene Helper
+          description: Optional. Helper that holds a scene to set. When helper has no value, lights behave normally, but when helper has a value, that scene is applied instead. Scene helper updates apply immediately if light is on.
+          default: {}
+          selector:
+            entity:
+              filter:
+                domain: input_text
 mode: restart
 trigger:
   - id: switch_0_action
-    platform: mqtt
+    trigger: mqtt
     topic: !input switch_0_topic
     value_template: |
       {%- if (value_json['action'] is defined) -%}
@@ -217,7 +235,7 @@ trigger:
       {%- endif -%}
     payload: action
   - id: switch_1_action
-    platform: mqtt
+    trigger: mqtt
     topic: !input switch_1_topic
     value_template: |
       {%- if (value_json['action'] is defined) -%}
@@ -227,7 +245,7 @@ trigger:
       {%- endif -%}
     payload: action
   - id: switch_2_action
-    platform: mqtt
+    trigger: mqtt
     topic: !input switch_2_topic
     value_template: |
       {%- if (value_json['action'] is defined) -%}
@@ -237,7 +255,7 @@ trigger:
       {%- endif -%}
     payload: action
   - id: switch_3_action
-    platform: mqtt
+    trigger: mqtt
     topic: !input switch_3_topic
     value_template: |
       {%- if (value_json['action'] is defined) -%}
@@ -247,7 +265,7 @@ trigger:
       {%- endif -%}
     payload: action
   - id: switch_4_action
-    platform: mqtt
+    trigger: mqtt
     topic: !input switch_4_topic
     value_template: |
       {%- if (value_json['action'] is defined) -%}
@@ -257,7 +275,7 @@ trigger:
       {%- endif -%}
     payload: action
   - id: switch_5_action
-    platform: mqtt
+    trigger: mqtt
     topic: !input switch_5_topic
     value_template: |
       {%- if (value_json['action'] is defined) -%}
@@ -266,16 +284,19 @@ trigger:
         {%- endif -%}
       {%- endif -%}
     payload: action
-  - platform: state
+  - trigger: state
     entity_id: !input primary_lights
     to: "off"
     id: light_turned_off
   - id: phase_helper_updated
-    platform: state
+    trigger: state
     entity_id: !input phase_helper
   - id: sleep_helper_updated
-    platform: state
+    trigger: state
     entity_id: !input sleep_helper
+  - id: scene_helper_updated
+    trigger: state
+    entity_id: !input scene_helper
 variables:
   event: >
     {%- set event = '' -%}
@@ -391,68 +412,79 @@ variables:
     {%- endif %}
     {{ enable_sleep }}
   inovelli_blue_led_script: !input inovelli_blue_led_script
+  scene_helper: !input scene_helper
+  scene_helper_value: "{{ states(scene_helper) }}"
 condition: []
 action:
   - choose:
-      # primary lights - mqtt "on" OR "up_single" OR (phase_helper_updated AND light is on)
-      - conditions: "{{ event == 'on' or event == 'up_single' or (trigger.id == 'phase_helper_updated' and primary_lights_state == 'on') }}"
+      # primary lights - mqtt "on" OR "up_single" OR (light is on and (phase_helper or scene_helper updated))
+      - conditions: "{{ event in ['on', 'up_single'] or ((primary_lights_state == 'on') and (trigger.id in ['phase_helper_updated', 'scene_helper_updated'])) }}"
         sequence:
-          - parallel:
-              - service: adaptive_lighting.set_manual_control
-                data:
-                  manual_control: false
-                  lights:
-                    "{{ primary_lights }}"
-              - service: switch.turn_on
-                target:
-                  entity_id:
-                    "{{ primary_lights_adaptive_lighting_switches }}"
-          - repeat:
-              for_each: "{{ primary_lights_adaptive_lighting_switches }}"
-              sequence:
-                - service: adaptive_lighting.change_switch_settings
-                  data:
-                    use_defaults: configuration
-                    entity_id: "{{ repeat.item }}"
-                    prefer_rgb_color: "{{ enable_rgb_color }}"
-          - if:
-              - condition: template
-                value_template: "{{ primary_lights_direct_control_enabled == true }}"
-            then:
-              - service: light.turn_on
-                target:
-                  entity_id:
-                    "{{ primary_lights }}"
+          - choose:
+              - conditions: "{{ scene_helper_value not in ['','unknown'] }}"
+                sequence:
+                  - action: scene.turn_on
+                    target:
+                      entity_id: "{{ scene_helper_value }}"
+                    data:
+                      transition: 2
+            default:
+              - parallel:
+                  - action: adaptive_lighting.set_manual_control
+                    data:
+                      manual_control: false
+                      lights:
+                        "{{ primary_lights }}"
+                  - action: switch.turn_on
+                    target:
+                      entity_id:
+                        "{{ primary_lights_adaptive_lighting_switches }}"
+              - repeat:
+                  for_each: "{{ primary_lights_adaptive_lighting_switches }}"
+                  sequence:
+                    - action: adaptive_lighting.change_switch_settings
+                      data:
+                        use_defaults: configuration
+                        entity_id: "{{ repeat.item }}"
+                        prefer_rgb_color: "{{ enable_rgb_color }}"
+              - if:
+                  - condition: template
+                    value_template: "{{ primary_lights_direct_control_enabled == true }}"
+                then:
+                  - action: light.turn_on
+                    target:
+                      entity_id:
+                        "{{ primary_lights }}"
       # primary lights - (mqtt "off" OR "down_single") OR light turned off
-      - conditions: "{{ event == 'off' or event == 'down_single' or trigger.id == 'light_turned_off' }}"
+      - conditions: "{{ event in ['off', 'down_single'] or trigger.id == 'light_turned_off' }}"
         sequence:
           - parallel:
-              - service: adaptive_lighting.set_manual_control
+              - action: adaptive_lighting.set_manual_control
                 data:
                   manual_control: true
                   lights:
                     "{{ primary_lights }}"
-              - service: switch.turn_off
+              - action: switch.turn_off
                 target:
                   entity_id:
                     "{{ primary_lights_adaptive_lighting_switches }}"
               - choose:
                   - conditions: "{{ (event == 'off' or primary_lights_direct_control_enabled == true) and primary_lights_state == 'on' }}"
                     sequence:
-                      - service: light.turn_off
+                      - action: light.turn_off
                         target:
                           entity_id:
                             "{{ primary_lights }}"
       # primary lights - mqtt "up_double" OR "up_held" OR "down_double" OR "down_held"
-      - conditions: "{{ event == 'up_double' or event == 'up_held' or event == 'down_double' or event == 'down_held' }}"
+      - conditions: "{{ event in ['up_double', 'up_held', 'down_double', 'down_held'] }}"
         sequence:
           - parallel:
-              - service: adaptive_lighting.set_manual_control
+              - action: adaptive_lighting.set_manual_control
                 data:
                   manual_control: true
                   lights:
                     "{{ primary_lights }}"
-              - service: switch.turn_off
+              - action: switch.turn_off
                 target:
                   entity_id:
                     "{{ primary_lights_adaptive_lighting_switches }}"
@@ -463,7 +495,7 @@ action:
               - choose:
                   - conditions: "{{ event == 'up_double' }}"
                     sequence:
-                      - service: light.turn_on
+                      - action: light.turn_on
                         target:
                           entity_id:
                             "{{ primary_lights }}"
@@ -471,7 +503,7 @@ action:
                           brightness_pct: 100
                   - conditions: "{{ event == 'up_held' }}"
                     sequence:
-                      - service: light.turn_on
+                      - action: light.turn_on
                         target:
                           entity_id:
                             "{{ primary_lights }}"
@@ -479,7 +511,7 @@ action:
                           brightness_step_pct: 5             
                   - conditions: "{{ event == 'down_double' }}"
                     sequence:
-                      - service: light.turn_on
+                      - action: light.turn_on
                         target:
                           entity_id:
                             "{{ primary_lights }}"
@@ -487,7 +519,7 @@ action:
                           brightness_pct: 35
                   - conditions: "{{ event == 'down_held' }}"
                     sequence:
-                      - service: light.turn_on
+                      - action: light.turn_on
                         target:
                           entity_id:
                             "{{ primary_lights }}"
@@ -495,12 +527,12 @@ action:
                           brightness_step_pct: -5    
       # secondary lighting on - mqtt "up_triple"
       # - conditions: "{{ event == 'config_single' and ((secondary_lights is defined) and (secondary_lights | length > 0)) }}"
-      - conditions: "{{ (event == 'up_triple' or event == 'secondary_on') and ((secondary_lights is defined) and (secondary_lights | length > 0)) }}"
+      - conditions: "{{ event in ['up_triple', 'secondary_on'] and ((secondary_lights is defined) and (secondary_lights | length > 0)) }}"
         sequence:
           - parallel:
               - if: "{{ (inovelli_blue_led_script) is defined and (inovelli_blue_led_script | length > 0)}}"
                 then:
-                  - service: "{{ inovelli_blue_led_script }}"
+                  - action: "{{ inovelli_blue_led_script }}"
                     data:
                       led: All
                       color: "{{ secondary_lights_switch_led_color }}"
@@ -510,16 +542,16 @@ action:
                       target:
                         entity_id:
                           "{{ switch_entities }}"
-              - service: adaptive_lighting.set_manual_control
+              - action: adaptive_lighting.set_manual_control
                 data:
                   manual_control: false
                   lights:
                     "{{ secondary_lights }}"
-              - service: switch.turn_on
+              - action: switch.turn_on
                 target:
                   entity_id:
                     "{{ secondary_lights_adaptive_lighting_switches }}"
-          - service: adaptive_lighting.apply
+          - action: adaptive_lighting.apply
             data:
               lights:
                 "{{ secondary_lights }}"
@@ -529,12 +561,12 @@ action:
               prefer_rgb_color: false
               transition: '1'
       # secondary lighting off - mqtt "down_triple"
-      - conditions: "{{ (event == 'down_triple' or event == 'secondary_off') and ((secondary_lights is defined) and (secondary_lights | length > 0)) }}"
+      - conditions: "{{ event in ['down_triple', 'secondary_off'] and ((secondary_lights is defined) and (secondary_lights | length > 0)) }}"
         sequence:
           - parallel:
               - if: "{{ (inovelli_blue_led_script) is defined and (inovelli_blue_led_script | length > 0)}}"
                 then:
-                  - service: "{{ inovelli_blue_led_script }}"
+                  - action: "{{ inovelli_blue_led_script }}"
                     data:
                       led: All
                       color: "{{ secondary_lights_switch_led_color }}"
@@ -544,16 +576,16 @@ action:
                       target:
                         entity_id:
                           "{{ switch_entities }}"
-              - service: adaptive_lighting.set_manual_control
+              - action: adaptive_lighting.set_manual_control
                 data:
                   manual_control: true
                   lights:
                     "{{ secondary_lights }}"
-              - service: switch.turn_off
+              - action: switch.turn_off
                 target:
                   entity_id:
                     "{{ secondary_lights_adaptive_lighting_switches }}"
-          - service: light.turn_off
+          - action: light.turn_off
             target:
               entity_id:
                 "{{ secondary_lights }}"
@@ -563,12 +595,12 @@ action:
           - choose:
               - conditions: "{{ enable_sleep == true }}"
                 sequence:
-                  - service: switch.turn_on
+                  - action: switch.turn_on
                     target:
                       entity_id:
                         "{{ sleep_mode_switches }}"
             default:
-              - service: switch.turn_off
+              - action: switch.turn_off
                 target:
                   entity_id:
                     "{{ sleep_mode_switches }}"
