@@ -74,6 +74,7 @@ blueprint:
           - Add support for scene helpers.
           - Use new schema introduced in HA 2024.8 (new min version for blueprint)
           - Improve template readability
+    
     Known issues:
       * turning off a light results in the automation firing twice due to 'light_turned_off' trigger
         Possible solution: Could create a trigger with a template, similar to how the switch_topic_x triggers work. The
