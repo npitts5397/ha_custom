@@ -417,8 +417,8 @@ variables:
   scene_helper: !input scene_helper
   scene_helper_value: >
     {%- set scene_value = '' %}
-    {%- if scene_helper is defined (scene_helper | length > 0) %}
-      {%- scene_value = states(scene_helper) | lower %}
+    {%- if scene_helper is defined and (scene_helper | length > 0) %}
+      {%- set scene_value = states(scene_helper) | lower %}
     {%- endif %}
     {{ scene_value }}
 condition: []
