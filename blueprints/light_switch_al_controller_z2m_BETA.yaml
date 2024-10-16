@@ -114,7 +114,7 @@ blueprint:
             entity:
               domain: light
               multiple: true
-    mqtt_toppics:
+    mqtt_topics:
       name: MQTT Topics
       icon: mdi:queue-first-in-last-out
       description: Subscribed MQTT topics which trigger the automation.
