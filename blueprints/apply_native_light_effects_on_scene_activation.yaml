@@ -53,7 +53,6 @@ mode: restart
 trigger:
   - trigger: state
     entity_id: !input 'trigger_scene'
-    to: null
 variables:
   target_lights: !input target_lights
   effect_name: !input effect_name
