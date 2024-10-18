@@ -74,6 +74,10 @@ blueprint:
           - Add support for scene helpers.
           - Use new schema introduced in HA 2024.8 (new min version for blueprint)
           - Improve template readability
+      * 3.3.1 - HA-138
+          - Validate scene helper value as a valid scene, default to standard behavior if scene is not valid
+          - Turn on primary lights before applying scene (ensures that switch is turned on)
+          - Delay call to activate scene after turning on primary lights to avoid clobbering
     
     Known issues:
       * turning off a light results in the automation firing twice due to 'light_turned_off' trigger
@@ -419,8 +423,12 @@ variables:
     {%- set scene_value = '' %}
     {%- if scene_helper is defined and (scene_helper | length > 0) %}
       {%- set scene_value = states(scene_helper) | lower %}
+      {%- if states(scene_value) != 'unknown' %}
+        {{ scene_value }}
+      {%- else %}
+        INVALID SCENE ENTITY
+      {%- endif -%}
     {%- endif %}
-    {{ scene_value }}
 condition: []
 action:
   - choose:
@@ -428,8 +436,14 @@ action:
       - conditions: "{{ event in ['on', 'up_single'] or ((primary_lights_state == 'on') and (trigger.id in ['phase_helper_updated', 'scene_helper_updated'])) }}"
         sequence:
           - choose:
-              - conditions: "{{ scene_helper_value not in ['','unknown'] }}"
+              - conditions: "{{ scene_helper_value not in ['unknown', 'INVALID SCENE ENTITY', ''] }}"
                 sequence:
+                  - action: light.turn_on
+                    target:
+                      entity_id:
+                        "{{ primary_lights }}"
+                  - delay:
+                      seconds: 1
                   - action: scene.turn_on
                     target:
                       entity_id: "{{ scene_helper_value }}"
