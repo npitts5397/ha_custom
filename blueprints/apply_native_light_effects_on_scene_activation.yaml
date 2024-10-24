@@ -8,6 +8,7 @@ blueprint:
 
     Change log:
       * 1.0.0 - HA-137 - Initial version.
+      * 1.0.1 - HA-137 - Adjust delay time to improve brightness getting set more reliably.
   homeassistant:
     min_version: 2024.8.0
   input:
@@ -70,8 +71,8 @@ action:
           - delay:
               hours: 0
               minutes: 0
-              seconds: 0
-              milliseconds: 500
+              seconds: 1
+              milliseconds: 0
           - action: light.turn_on
             target: "{{ target_lights }}"
             data:
