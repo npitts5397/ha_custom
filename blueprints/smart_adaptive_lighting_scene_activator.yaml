@@ -100,7 +100,7 @@ blueprint:
       input:
         secondary_lights:
           name: Secondary lights
-          description: Optional. The secondary lights to toggle with `config_single` interactions. HA control of secondary lights is assumed.
+          description: Optional. The secondary lights to toggle with interactions. HA control of secondary lights is assumed.
           default: [] 
           selector:
             target:
@@ -120,7 +120,7 @@ blueprint:
             text:
         mqtt_switches:
           name: MQTT Switches
-          description: Optional. Select MQTT devices with `up_single` and `down_single` `action` payloads that control lights. Monitored topics are constructed as follows- `{base_topic}/{friendly device name}`.
+          description: Optional. Select MQTT devices with `action` payloads that control lights. Monitored topics are constructed as follows- `{base_topic}/{friendly device name}`.
           selector:
             target:
               device:
@@ -132,7 +132,7 @@ blueprint:
         mqtt_custom_topics:
           name: Custom MQTT topics
           description: |
-            Optional. List of custom MQTT topics to monitor for additional triggers.
+            Optional. List of custom MQTT topics to monitor for additional triggers. Each supported topic should be on its own line.
 
             Example:
 
@@ -143,193 +143,212 @@ blueprint:
           selector:
             text:
               multiline: true
+        mqtt_on_actions:
+          name: MQTT 'on' Actions
+          description: |
+            Optional. List of supported action values from MQTT topics for turning on lights. Each supported action should be on its own line.
 
-          
-    #     mqtt_on_actions:
-    #       name: MQTT 'on' Actions
-    #       description: |
-    #         Optional. List of supported action values from MQTT topics for turning on lights.
+            Default:
 
-    #         Default:
-
-    #         ```
-    #         up_single
-    #         on
-    #         ```
-    #       default:
-    #         - up_single
-    #         - on
-    #       selector:
-    #         list:
-    #     mqtt_off_actions:
-    #       name: MQTT 'off' Actions
-    #       description: |
-    #         Optional. List of supported action values from MQTT topics for turning off lights.
+            ```
+            up_single
+            on
+            ```
+          default: |
+            up_single
+            on
+          selector:
+            text:
+              multiline: true
+        mqtt_off_actions:
+          name: MQTT 'off' Actions
+          description: |
+            Optional. List of supported action values from MQTT topics for turning off lights. Each supported action should be on its own line.
             
-    #         Default:
+            Default:
 
-    #         ```
-    #         down_single
-    #         off
-    #         ```
-    #       default:
-    #         - down_single
-    #         - off
-    #       selector:
-    #         list:
-    #     mqtt_dim_up_actions:
-    #       name: MQTT 'dim up' Actions
-    #       description: |
-    #         Optional. List of supported action values from MQTT topics. Only used when `Primary Lights HA Control` is enabled.
+            ```
+            down_single
+            off
+            ```
+          default: |
+            down_single
+            off
+          selector:
+            text:
+              multiline: true
+        mqtt_dim_up_actions:
+          name: MQTT 'dim up' Actions
+          description: |
+            Optional. List of supported action values from MQTT topics. Only used when `Primary Lights HA Control` is enabled. Each supported action should be on its own line.
             
-    #         Default:
+            Default:
 
-    #         ```
-    #         up_hold
-    #         up_double
-    #         ```
-    #       default:
-    #         - up_hold
-    #         - up_double
-    #       selector:
-    #         list:
-    #     mqtt_dim_down_actions:
-    #       name: MQTT 'dim down' Actions
-    #       description: |
-    #         Optional. List of supported action values from MQTT topics. Only used when `Primary Lights HA Control` is enabled.
+            ```
+            up_hold
+            up_double
+            ```
+          default: |
+            up_hold
+            up_double
+          selector:
+            text:
+              multiline: true
+        mqtt_dim_down_actions:
+          name: MQTT 'dim down' Actions
+          description: |
+            Optional. List of supported action values from MQTT topics. Only used when `Primary Lights HA Control` is enabled. Each supported action should be on its own line.
             
-    #         Default:
+            Default:
 
-    #         ```
-    #         down_hold
-    #         down_double
-    #         ```
-    #       default:
-    #         - down_hold
-    #         - down_double
-    #       selector:
-    #         list:
-    #     mqtt_secondary_on_actions:
-    #       name: MQTT secondary 'on' Actions
-    #       description: |
-    #         Optional. List of supported action values from MQTT topics.
+            ```
+            down_hold
+            down_double
+            ```
+          default: |
+            down_hold
+            down_double
+          selector:
+            text:
+              multiline: true
+        mqtt_secondary_on_actions:
+          name: MQTT secondary 'on' Actions
+          description: |
+            Optional. List of supported action values from MQTT topics. Each supported action should be on its own line.
             
-    #         Default:
+            Default:
 
-    #         ```
-    #         up_triple
-    #         ```
-    #       default:
-    #         - up_triple
-    #       selector:
-    #         list:
-    #     mqtt_secondary_off_actions:
-    #       name: MQTT secondary 'off' Actions
-    #       description: |
-    #         Optional. List of supported action values from MQTT topics.
+            ```
+            up_triple
+            ```
+          default: |
+            up_triple
+          selector:
+            text:
+              multiline: true
+        mqtt_secondary_off_actions:
+          name: MQTT secondary 'off' Actions
+          description: |
+            Optional. List of supported action values from MQTT topics. Each supported action should be on its own line.
             
-    #         Default:
+            Default:
 
-    #         ```
-    #         down_triple
-    #         ```
-    #       default:
-    #         - down_triple
-    #       selector:
-    #         list:
-    # inovelli:
-    #   name: Inovelli
-    #   icon: mdi:lamps
-    #   description: Optional. Specific 
-    #   collapsed: true
-    #   input:
-    #     inovelli_blue_led_script:
-    #       name: Inovelli Blue LED (Zigbee2MQTT) script
-    #       description: Optional. Script for setting notifications on Inovelli Blue Series LED bar. Script available here- `https://github.com/zanix/home-assistant-blueprints`
-    #       default: {}
-    #       selector:
-    #         entity:
-    #           filter:
-    #             domain: script
-    # adaptive_lighting:
-    #   name: Adaptive Lighting Options
-    #   icon: mdi:lamps
-    #   description: Options related to Adaptive Lighting lighting integration.
-    #   collapsed: true
-    #   input:
-    #     primary_adaptive_lighting_switches:
-    #       name: Primary Adaptive Lighting Switches
-    #       description: Optional. Adaptive Lighting switches for primary lights.
-    #       selector:
-    #         target:
-    #           entity:
-    #             integration: adaptive_lighting
-    #             domain:
-    #               - switch
-    #             filters:
-    #               - attribute: friendly_name
-    #                 op: starts_with
-    #                 value: "Adaptive Lighting:"
-    #     phase_helper:
-    #       name: Phase Helper
-    #       description: Optional. Helper that has current phase. Non-functional unless `color_phases` is set.
-    #       default: {}
-    #       selector:
-    #         entity:
-    #           filter:
-    #             domain: input_select
-    #     color_phases:
-    #       name: Adaptive Lighting Color Phases
-    #       description: |
-    #         Optional. List of phases during which Adaptive Lighting's color mode is activated. Non-functional unless `phase_helper` is set.
+            ```
+            down_triple
+            ```
+          default: |
+            down_triple
+          selector:
+            text:
+              multiline: true
+    inovelli:
+      name: Inovelli
+      icon: mdi:lamps
+      description: Optional. Specific 
+      collapsed: true
+      input:
+        inovelli_blue_led_script:
+          name: Inovelli Blue LED (Zigbee2MQTT) script
+          description: Optional. Script for setting notifications on Inovelli Blue Series LED bar. Script available here- `https://github.com/zanix/home-assistant-blueprints`
+          default: {}
+          selector:
+            entity:
+              filter:
+                domain: script
+    adaptive_lighting:
+      name: Adaptive Lighting Options
+      icon: mdi:lamps
+      description: Options related to Adaptive Lighting lighting integration.
+      collapsed: true
+      input:
+        primary_adaptive_lighting_switches:
+          name: Primary Adaptive Lighting Switches
+          description: Optional. Adaptive Lighting switches for primary lights.
+          selector:
+            target:
+              entity:
+                integration: adaptive_lighting
+                domain:
+                  - switch
+                filters:
+                  - attribute: friendly_name
+                    op: starts_with
+                    value: "Adaptive Lighting:"
+        secondary_adaptive_lighting_switches:
+          name: Secondary Adaptive Lighting Switches
+          description: Optional. Adaptive Lighting switches for secondary lights.
+          selector:
+            target:
+              entity:
+                integration: adaptive_lighting
+                domain:
+                  - switch
+                filters:
+                  - attribute: friendly_name
+                    op: starts_with
+                    value: "Adaptive Lighting:"
+        color_phases:
+          name: Adaptive Lighting Color Phases
+          description: |
+            Optional. List of phases during which Adaptive Lighting's color mode is activated. Non-functional unless `phase_helper` is set.
 
-    #         Default:
+            Default:
 
-    #         ```
-    #         Morning
-    #         Bedtime
-    #         Night
-    #         ```
-    #       default:
-    #         - Morning
-    #         - Bedtime
-    #         - Night
-    #       selector:
-    #         list:
-    #     mode_helper:
-    #       name: Mode Helper
-    #       description: Optional. Helper that holds values related to sleep mode. Valid helper values are `Awake`, `Nap`, and `Sleep` (case insensitive). Non-functional unless `sleep_modes` is set.
-    #       default: {}
-    #       selector:
-    #         entity:
-    #           filter:
-    #             domain: input_select
-    #     sleep_modes:
-    #       name: Adaptive Lighting Sleep Modes
-    #       description: |
-    #         Optional. List of modes during which Adaptive Lighting's sleep mode is activated. Non-functional unless `sleep_helper` is set.
-    #         Default:
+            ```
+            Morning
+            Bedtime
+            Night
+            ```
+          default: |
+            Morning
+            Bedtime
+            Night
+          selector:
+            text:
+              multiline: true
+        sleep_modes:
+          name: Adaptive Lighting Sleep Modes
+          description: |
+            Optional. List of modes during which Adaptive Lighting's sleep mode is activated. Non-functional unless `sleep_helper` is set.
+            Default:
 
-    #         ```
-    #         Sleep
-    #         ```
-    #       default:
-    #         - Sleep
-    #       selector:
-    #         list:
-    # home_assistant:
-      # name: Home Assistant Configuration
-      # description: Optionals related to Home Assistant configuration.
-      # collapsed: true
-      # input:
-      #   scene_helper:
-      #     name: Scene Helper
-      #     description: Optional. Helper that holds a scene to set. When helper has no value, lights behave normally, but when helper has a value, that scene is applied instead. Scene helper updates apply immediately if light is on.
-      #     default: {}
-      #     selector:
-      #       entity:
-      #         filter:
-      #           domain: input_text
+            ```
+            Sleep
+            ```
+          default: |
+            Sleep
+          selector:
+            text:
+              multiline: true
+    home_assistant:
+      name: Home Assistant Configuration
+      description: Optionals related to Home Assistant configuration.
+      collapsed: true
+      input:
+        scene_helper:
+          name: Scene Helper
+          description: Optional. Helper that holds a scene to set. When helper has no value, lights behave normally, but when helper has a value, that scene is applied instead. Scene helper updates apply immediately if light is on.
+          default: {}
+          selector:
+            entity:
+              filter:
+                domain: input_text
+        mode_helper:
+          name: Home Assistant Mode Helper
+          description: Optional. Helper that holds values related to sleep mode. Valid helper values are `Awake`, `Nap`, and `Sleep` (case insensitive). Non-functional unless `sleep_modes` is set.
+          default: {}
+          selector:
+            entity:
+              filter:
+                domain: input_select
+        phase_helper:
+          name: Home Assistant Phase Helper
+          description: Optional. Helper that has current phase. Non-functional unless `color_phases` is set.
+          default: {}
+          selector:
+            entity:
+              filter:
+                domain: input_select
 metadata:
   tags: 
     - "release:0.0.1"
