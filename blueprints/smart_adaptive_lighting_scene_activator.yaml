@@ -132,8 +132,8 @@ blueprint:
         mqtt_custom_topics:
           name: Custom MQTT topics
           description: |
-            Optional. List of custom MQTT topic to monitor for additional triggers.
-    
+            Optional. List of custom MQTT topics to monitor for additional triggers.
+
             Example:
 
             ```
@@ -141,12 +141,9 @@ blueprint:
             path/to/another/topic
             ```
           selector:
-            object:
-              multiple:
-                name: Topic
-                required: true
-                selector:
-                  text:
+            text:
+              multiline: true
+
           
     #     mqtt_on_actions:
     #       name: MQTT 'on' Actions
