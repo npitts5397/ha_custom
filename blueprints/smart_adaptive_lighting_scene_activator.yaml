@@ -15,6 +15,7 @@ blueprint:
   domain: automation
   author: Nathaniel Pitts
   source_url: https://github.com/npitts5397/ha_custom/blob/main/blueprints/smart_adaptive_lighting_scene_activator.yaml
+  release: "0.0.1"
   homeassistant:
     min_version: 2024.8.0
   description: |
@@ -143,180 +144,186 @@ blueprint:
             path/to/another/topic
             ```
           selector:
-            list:
-        mqtt_on_actions:
-          name: MQTT 'on' Actions
-          description: |
-            Optional. List of supported action values from MQTT topics for turning on lights.
+            object:
+              multiple:
+                name: Topic
+                required: true
+                selector:
+                  text:
+          
+    #     mqtt_on_actions:
+    #       name: MQTT 'on' Actions
+    #       description: |
+    #         Optional. List of supported action values from MQTT topics for turning on lights.
 
-            Default:
+    #         Default:
 
-            ```
-            up_single
-            on
-            ```
-          default:
-            - up_single
-            - on
-          selector:
-            list:
-        mqtt_off_actions:
-          name: MQTT 'off' Actions
-          description: |
-            Optional. List of supported action values from MQTT topics for turning off lights.
+    #         ```
+    #         up_single
+    #         on
+    #         ```
+    #       default:
+    #         - up_single
+    #         - on
+    #       selector:
+    #         list:
+    #     mqtt_off_actions:
+    #       name: MQTT 'off' Actions
+    #       description: |
+    #         Optional. List of supported action values from MQTT topics for turning off lights.
             
-            Default:
+    #         Default:
 
-            ```
-            down_single
-            off
-            ```
-          default:
-            - down_single
-            - off
-          selector:
-            list:
-        mqtt_dim_up_actions:
-          name: MQTT 'dim up' Actions
-          description: |
-            Optional. List of supported action values from MQTT topics. Only used when `Primary Lights HA Control` is enabled.
+    #         ```
+    #         down_single
+    #         off
+    #         ```
+    #       default:
+    #         - down_single
+    #         - off
+    #       selector:
+    #         list:
+    #     mqtt_dim_up_actions:
+    #       name: MQTT 'dim up' Actions
+    #       description: |
+    #         Optional. List of supported action values from MQTT topics. Only used when `Primary Lights HA Control` is enabled.
             
-            Default:
+    #         Default:
 
-            ```
-            up_hold
-            up_double
-            ```
-          default:
-            - up_hold
-            - up_double
-          selector:
-            list:
-        mqtt_dim_down_actions:
-          name: MQTT 'dim down' Actions
-          description: |
-            Optional. List of supported action values from MQTT topics. Only used when `Primary Lights HA Control` is enabled.
+    #         ```
+    #         up_hold
+    #         up_double
+    #         ```
+    #       default:
+    #         - up_hold
+    #         - up_double
+    #       selector:
+    #         list:
+    #     mqtt_dim_down_actions:
+    #       name: MQTT 'dim down' Actions
+    #       description: |
+    #         Optional. List of supported action values from MQTT topics. Only used when `Primary Lights HA Control` is enabled.
             
-            Default:
+    #         Default:
 
-            ```
-            down_hold
-            down_double
-            ```
-          default:
-            - down_hold
-            - down_double
-          selector:
-            list:
-        mqtt_secondary_on_actions:
-          name: MQTT secondary 'on' Actions
-          description: |
-            Optional. List of supported action values from MQTT topics.
+    #         ```
+    #         down_hold
+    #         down_double
+    #         ```
+    #       default:
+    #         - down_hold
+    #         - down_double
+    #       selector:
+    #         list:
+    #     mqtt_secondary_on_actions:
+    #       name: MQTT secondary 'on' Actions
+    #       description: |
+    #         Optional. List of supported action values from MQTT topics.
             
-            Default:
+    #         Default:
 
-            ```
-            up_triple
-            ```
-          default:
-            - up_triple
-          selector:
-            list:
-        mqtt_secondary_off_actions:
-          name: MQTT secondary 'off' Actions
-          description: |
-            Optional. List of supported action values from MQTT topics.
+    #         ```
+    #         up_triple
+    #         ```
+    #       default:
+    #         - up_triple
+    #       selector:
+    #         list:
+    #     mqtt_secondary_off_actions:
+    #       name: MQTT secondary 'off' Actions
+    #       description: |
+    #         Optional. List of supported action values from MQTT topics.
             
-            Default:
+    #         Default:
 
-            ```
-            down_triple
-            ```
-          default:
-            - down_triple
-          selector:
-            list:
-    inovelli:
-      name: Inovelli
-      icon: mdi:lamps
-      description: Optional. Specific 
-      collapsed: true
-      input:
-        inovelli_blue_led_script:
-          name: Inovelli Blue LED (Zigbee2MQTT) script
-          description: Optional. Script for setting notifications on Inovelli Blue Series LED bar. Script available here- `https://github.com/zanix/home-assistant-blueprints`
-          default: {}
-          selector:
-            entity:
-              filter:
-                domain: script
-    adaptive_lighting:
-      name: Adaptive Lighting Options
-      icon: mdi:lamps
-      description: Options related to Adaptive Lighting lighting integration.
-      collapsed: true
-      input:
-        primary_adaptive_lighting_switches:
-          name: Primary Adaptive Lighting Switches
-          description: Optional. Adaptive Lighting switches for primary lights.
-          selector:
-            target:
-              entity:
-                integration: adaptive_lighting
-                domain:
-                  - switch
-                filters:
-                  - attribute: friendly_name
-                    op: starts_with
-                    value: "Adaptive Lighting:"
-        phase_helper:
-          name: Phase Helper
-          description: Optional. Helper that has current phase. Non-functional unless `color_phases` is set.
-          default: {}
-          selector:
-            entity:
-              filter:
-                domain: input_select
-        color_phases:
-          name: Adaptive Lighting Color Phases
-          description: |
-            Optional. List of phases during which Adaptive Lighting's color mode is activated. Non-functional unless `phase_helper` is set.
+    #         ```
+    #         down_triple
+    #         ```
+    #       default:
+    #         - down_triple
+    #       selector:
+    #         list:
+    # inovelli:
+    #   name: Inovelli
+    #   icon: mdi:lamps
+    #   description: Optional. Specific 
+    #   collapsed: true
+    #   input:
+    #     inovelli_blue_led_script:
+    #       name: Inovelli Blue LED (Zigbee2MQTT) script
+    #       description: Optional. Script for setting notifications on Inovelli Blue Series LED bar. Script available here- `https://github.com/zanix/home-assistant-blueprints`
+    #       default: {}
+    #       selector:
+    #         entity:
+    #           filter:
+    #             domain: script
+    # adaptive_lighting:
+    #   name: Adaptive Lighting Options
+    #   icon: mdi:lamps
+    #   description: Options related to Adaptive Lighting lighting integration.
+    #   collapsed: true
+    #   input:
+    #     primary_adaptive_lighting_switches:
+    #       name: Primary Adaptive Lighting Switches
+    #       description: Optional. Adaptive Lighting switches for primary lights.
+    #       selector:
+    #         target:
+    #           entity:
+    #             integration: adaptive_lighting
+    #             domain:
+    #               - switch
+    #             filters:
+    #               - attribute: friendly_name
+    #                 op: starts_with
+    #                 value: "Adaptive Lighting:"
+    #     phase_helper:
+    #       name: Phase Helper
+    #       description: Optional. Helper that has current phase. Non-functional unless `color_phases` is set.
+    #       default: {}
+    #       selector:
+    #         entity:
+    #           filter:
+    #             domain: input_select
+    #     color_phases:
+    #       name: Adaptive Lighting Color Phases
+    #       description: |
+    #         Optional. List of phases during which Adaptive Lighting's color mode is activated. Non-functional unless `phase_helper` is set.
 
-            Default:
+    #         Default:
 
-            ```
-            Morning
-            Bedtime
-            Night
-            ```
-          default:
-            - Morning
-            - Bedtime
-            - Night
-          selector:
-            list:
-        mode_helper:
-          name: Mode Helper
-          description: Optional. Helper that holds values related to sleep mode. Valid helper values are `Awake`, `Nap`, and `Sleep` (case insensitive). Non-functional unless `sleep_modes` is set.
-          default: {}
-          selector:
-            entity:
-              filter:
-                domain: input_select
-        sleep_modes:
-          name: Adaptive Lighting Sleep Modes
-          description: |
-            Optional. List of modes during which Adaptive Lighting's sleep mode is activated. Non-functional unless `sleep_helper` is set.
-            Default:
+    #         ```
+    #         Morning
+    #         Bedtime
+    #         Night
+    #         ```
+    #       default:
+    #         - Morning
+    #         - Bedtime
+    #         - Night
+    #       selector:
+    #         list:
+    #     mode_helper:
+    #       name: Mode Helper
+    #       description: Optional. Helper that holds values related to sleep mode. Valid helper values are `Awake`, `Nap`, and `Sleep` (case insensitive). Non-functional unless `sleep_modes` is set.
+    #       default: {}
+    #       selector:
+    #         entity:
+    #           filter:
+    #             domain: input_select
+    #     sleep_modes:
+    #       name: Adaptive Lighting Sleep Modes
+    #       description: |
+    #         Optional. List of modes during which Adaptive Lighting's sleep mode is activated. Non-functional unless `sleep_helper` is set.
+    #         Default:
 
-            ```
-            Sleep
-            ```
-          default:
-            - Sleep
-          selector:
-            list:
-    home_assistant:
+    #         ```
+    #         Sleep
+    #         ```
+    #       default:
+    #         - Sleep
+    #       selector:
+    #         list:
+    # home_assistant:
       name: Home Assistant Configuration
       description: Optionals related to Home Assistant configuration.
       collapsed: true
