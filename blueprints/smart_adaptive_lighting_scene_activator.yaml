@@ -87,7 +87,6 @@ blueprint:
             target:
               entity:
                 domain: light
-              multiple: true
         primary_lights_ha_control:
           name: Primary Lights HA Control
           description: Optional. Set to `true` when Home Assistant should control the selected lights via `light_on` and `light_off` actions. This should be `false` when lights and switches are bound (Zigbee) or associated (ZWave) directly. Defaults to `false`.
@@ -108,7 +107,6 @@ blueprint:
             target:
               entity:
                 domain: light
-              multiple: true
     mqtt:
       name: MQTT Configuration
       icon: mdi:queue-first-in-last-out
