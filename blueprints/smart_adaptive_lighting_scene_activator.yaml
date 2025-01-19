@@ -266,31 +266,31 @@ blueprint:
           description: Optional. Adaptive Lighting switches for primary lights.
           selector:
             entity:
-              integration: adaptive_lighting
-              domain: switch
               multiple: true
+              include_entities:
+                - switch.adaptive_lighting_*
+              exclude_entities:
+                - switch.adaptive_lighting_sleep_mode_*
+                - switch.adaptive_lighting_adapt_color_*
+                - switch.adaptive_lighting_adapt_brightness_*
               filter:
-                include_entities:
-                  - switch.adaptive_lighting_*
-                exclude_entities:
-                  - switch.adaptive_lighting_sleep_mode_*
-                  - switch.adaptive_lighting_adapt_color_*
-                  - switch.adaptive_lighting_adapt_brightness_*
+                domain: switch
+                integration: adaptive_lighting
         secondary_adaptive_lighting_switches:
           name: Secondary Adaptive Lighting Switches
           description: Optional. Adaptive Lighting switches for secondary lights.
           selector:
             entity:
-              integration: adaptive_lighting
-              domain: switch
               multiple: true
+              include_entities:
+                - switch.adaptive_lighting_*
+              exclude_entities:
+                - switch.adaptive_lighting_sleep_mode_*
+                - switch.adaptive_lighting_adapt_color_*
+                - switch.adaptive_lighting_adapt_brightness_*
               filter:
-                include_entities:
-                  - switch.adaptive_lighting_*
-                exclude_entities:
-                  - switch.adaptive_lighting_sleep_mode_*
-                  - switch.adaptive_lighting_adapt_color_*
-                  - switch.adaptive_lighting_adapt_brightness_*
+                domain: switch
+                integration: adaptive_lighting
         color_phases:
           name: Adaptive Lighting Color Phases
           description: |
