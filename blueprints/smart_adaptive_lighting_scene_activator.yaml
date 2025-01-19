@@ -272,7 +272,7 @@ blueprint:
                 filters:
                   - attribute: entity_id
                     op: regex_match
-                    value: "^(?!switch\.adaptive_lighting_(sleep_mode|adapt_color|adapt_brightness)).*$"
+                    value: "^(?!switch\\.adaptive_lighting_(sleep_mode|adapt_color|adapt_brightness)).*$"
         secondary_adaptive_lighting_switches:
           name: Secondary Adaptive Lighting Switches
           description: Optional. Adaptive Lighting switches for secondary lights.
