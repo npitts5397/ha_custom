@@ -15,7 +15,6 @@ blueprint:
   domain: automation
   author: Nathaniel Pitts
   source_url: https://github.com/npitts5397/ha_custom/blob/main/blueprints/smart_adaptive_lighting_scene_activator.yaml
-  release: "0.0.1"
   homeassistant:
     min_version: 2024.8.0
   description: |
