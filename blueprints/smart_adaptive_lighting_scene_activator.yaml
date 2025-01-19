@@ -1,0 +1,349 @@
+# Rebuild
+# Requirements:
+#  * Adaptive lighting should be optional, but still a core feature.
+#       When adaptive lighting switches are not specified, then triggers simply turn on / off and if HA controled, dim.
+#  * input should allow the specification of a base topic
+#  * input should allow the selection of MQTT devices to be used as switches.... WAIT
+#  * NOT IN MQTT SECTION, but support selection of non-MQTT trigger devices? e.g., use non-zigbee devices/entities to trigger
+
+
+
+
+
+blueprint:
+  name: Smart Adaptive Lighting and Scene Activator (SALSA)
+  domain: automation
+  author: Nathaniel Pitts
+  source_url: https://github.com/npitts5397/ha_custom/blob/main/blueprints/smart_adaptive_lighting_scene_activator.yaml
+  homeassistant:
+    min_version: 2024.8.0
+  description: |
+    Set light configuration based on switch and Adaptive Lighting states. Designed for use with Inovelli Blue Series switches
+    bound to smart bulb groups or directly controlling traditional lighting.
+
+    Supported switch events in switch's MQTT payload:
+      * Enables AL on primary lights:
+        - `"action": "on"` - also turns on lights
+        - `"action": "up_single"` - also turns on lights when direct control is enabled
+      * Disables AL on primary lights:
+        - `"action": "off"` - also turns off lights
+        - `"action": "down_single"` - also turns off lights when direct control is enabled
+        - `"action": "up_double"` - also dims to 100% when direct control is enabled
+        - `"action": "down_double"` - also dims to 35% when direct control is enabled
+        - `"action": "up_held"` - also dims up by 5% when direct control is enabled
+        - `"action": "down_held"` - also dims down by 5% when direct control is enabled
+      * Actions for secondary lights:
+        - `"action": "up_triple"` - turns on optional secondary light
+        - `"action": "down_triple"` - turns off options secondary light
+
+    Prerequisites:
+      * Lights
+          - Adaptive Lighting is optional
+          - best when bound/associated to switches, but not required. For example, if using Zigbee lights, a Zigbee group works best.
+      * Switch (built for Inovelli Blue series)
+          - Dimmer mode: true
+          - The Zigbee switch device is added to the same group as the lights (not required when Primary Lights Direct Control is enabled).
+          - If lights are bound to switch, Zigbee switch binding has only `LevelCtrl` binding to the light goup.
+      * Adaptive Lighting
+          - Configured for any specified lights
+          - `take_over_control` is disabled
+      * Inovelli Blue LED (Zigbee2MQTT) script (Optional)
+          - Used to set notification for secondary lights
+          - Blueprint is available here: https://github.com/zanix/home-assistant-blueprints/blob/main/script/inovelli_blue_led_zigbee2mqtt.yaml
+          - After creating the script from the blueprint, set script's mode from 'single' to 'parallel'
+    
+    Version history:
+      * 1.0.0 - HA-82 - Initial version.
+      * 2.0.0 - HA-82 - Subscribe to switch MQTT topics instead of relying on HA entity state changes.
+      * 3.0.0 - HA-95 - General refactoring, bugfixes, and feature enhancements
+      * 4.0.0.beta-1 - HA-140
+          - General refactoring
+          - Significantly reworked inputs
+          - Clean up old comments
+          - Clean up unnecessary code
+    
+    To do:
+      * make Adaptive Lighting optional by validating list of generated switch names. Do not use AL if switch does not exist.
+      * build native support for illuminance sensor?
+      * support additional actions- quadruple_*, quintuple_*, etc. for ceiling lights, curtains, etc.
+      * specify transition times for default and various modes/phases
+      * Allow user to define dimming steps (default: 5%) and min/max brightness (default: 35%/100%for double paddle interactions
+      * allow 'up_held' and 'down_held' to continue to dim lights without multiple hold actions when direct control is enabled
+      * Implement support for automatically re-enabling Adaptive Lighting via adaptive_lighting.autoreset_control_seconds
+      * possibly remove manual control setting as the switch toggle overrides it anyway
+      * HIGH PRIORITY - Validate scene_helper_value is a real scene entity or else do not apply!
+  input:
+    primary_lights:
+      name: Primary Light Selection
+      icon: mdi:lamps
+      description: Options related to selecting primary lights.
+      collapsed: false
+      input:
+        primary_lights:
+          name: Primary Lights
+          description: Required. The primary lights to control.
+          selector:
+            target:
+              entity:
+                domain: light
+              multiple: true
+        primary_lights_ha_control:
+          name: Primary Lights HA Control
+          description: Optional. Set to `true` when Home Assistant should control the selected lights via `light_on` and `light_off` actions. This should be `false` when lights and switches are bound (Zigbee) or associated (ZWave) directly. Defaults to `false`.
+          default: false
+          selector:
+            boolean:
+    seconary_lights:
+      name: Secondary Light Selection
+      icon: mdi:lamps
+      description: Options related to selecting secondary lights.
+      collapsed: true
+      input:
+        secondary_lights:
+          name: Secondary lights
+          description: Optional. The secondary lights to toggle with `config_single` interactions. HA control of secondary lights is assumed.
+          default: [] 
+          selector:
+            target:
+              entity:
+                domain: light
+              multiple: true
+    mqtt:
+      name: MQTT Configuration
+      icon: mdi:queue-first-in-last-out
+      description: Subscribed MQTT topics which trigger the automation.
+      collapsed: true
+      input:
+        mqtt_base_topic:
+          name: Base Topic
+          description: Optional. Base topic for selected switch devices. Default is `zigbee2mqtt`.
+          default: zigbee2mqtt
+          selector:
+            text:
+        mqtt_switches:
+          name: MQTT Switches
+          description: Optional. Select MQTT devices with `up_single` and `down_single` `action` payloads that control lights. Monitored topics are constructed as follows- `{base_topic}/{friendly device name}`.
+          selector:
+            target:
+              device:
+                integration: mqtt
+              entity:
+                integration: mqtt
+                domain:
+                  - switch
+        mqtt_custom_topics:
+          name: Custom MQTT topics
+          description: |
+            Optional. List of custom MQTT topic to monitor for additional triggers.
+    
+            Example:
+
+            ```
+            path/to/topic
+            path/to/another/topic
+            ```
+          selector:
+            list:
+        mqtt_on_actions:
+          name: MQTT 'on' Actions
+          description: |
+            Optional. List of supported action values from MQTT topics for turning on lights.
+
+            Default:
+
+            ```
+            up_single
+            on
+            ```
+          default:
+            - up_single
+            - on
+          selector:
+            list:
+        mqtt_off_actions:
+          name: MQTT 'off' Actions
+          description: |
+            Optional. List of supported action values from MQTT topics for turning off lights.
+            
+            Default:
+
+            ```
+            down_single
+            off
+            ```
+          default:
+            - down_single
+            - off
+          selector:
+            list:
+        mqtt_dim_up_actions:
+          name: MQTT 'dim up' Actions
+          description: |
+            Optional. List of supported action values from MQTT topics. Only used when `Primary Lights HA Control` is enabled.
+            
+            Default:
+
+            ```
+            up_hold
+            up_double
+            ```
+          default:
+            - up_hold
+            - up_double
+          selector:
+            list:
+        mqtt_dim_down_actions:
+          name: MQTT 'dim down' Actions
+          description: |
+            Optional. List of supported action values from MQTT topics. Only used when `Primary Lights HA Control` is enabled.
+            
+            Default:
+
+            ```
+            down_hold
+            down_double
+            ```
+          default:
+            - down_hold
+            - down_double
+          selector:
+            list:
+        mqtt_secondary_on_actions:
+          name: MQTT secondary 'on' Actions
+          description: |
+            Optional. List of supported action values from MQTT topics.
+            
+            Default:
+
+            ```
+            up_triple
+            ```
+          default:
+            - up_triple
+          selector:
+            list:
+        mqtt_secondary_off_actions:
+          name: MQTT secondary 'off' Actions
+          description: |
+            Optional. List of supported action values from MQTT topics.
+            
+            Default:
+
+            ```
+            down_triple
+            ```
+          default:
+            - down_triple
+          selector:
+            list:
+    inovelli:
+      name: Inovelli
+      icon: mdi:lamps
+      description: Optional. Specific 
+      collapsed: true
+      input:
+        inovelli_blue_led_script:
+          name: Inovelli Blue LED (Zigbee2MQTT) script
+          description: Optional. Script for setting notifications on Inovelli Blue Series LED bar. Script available here- `https://github.com/zanix/home-assistant-blueprints`
+          default: {}
+          selector:
+            entity:
+              filter:
+                domain: script
+    adaptive_lighting:
+      name: Adaptive Lighting Options
+      icon: mdi:lamps
+      description: Options related to Adaptive Lighting lighting integration.
+      collapsed: true
+      input:
+        primary_adaptive_lighting_switches:
+          name: Primary Adaptive Lighting Switches
+          description: Optional. Adaptive Lighting switches for primary lights.
+          selector:
+            target:
+              entity:
+                integration: adaptive_lighting
+                domain:
+                  - switch
+                filters:
+                  - attribute: friendly_name
+                    op: starts_with
+                    value: "Adaptive Lighting:"
+        phase_helper:
+          name: Phase Helper
+          description: Optional. Helper that has current phase. Non-functional unless `color_phases` is set.
+          default: {}
+          selector:
+            entity:
+              filter:
+                domain: input_select
+        color_phases:
+          name: Adaptive Lighting Color Phases
+          description: |
+            Optional. List of phases during which Adaptive Lighting's color mode is activated. Non-functional unless `phase_helper` is set.
+
+            Default:
+
+            ```
+            Morning
+            Bedtime
+            Night
+            ```
+          default:
+            - Morning
+            - Bedtime
+            - Night
+          selector:
+            list:
+        mode_helper:
+          name: Mode Helper
+          description: Optional. Helper that holds values related to sleep mode. Valid helper values are `Awake`, `Nap`, and `Sleep` (case insensitive). Non-functional unless `sleep_modes` is set.
+          default: {}
+          selector:
+            entity:
+              filter:
+                domain: input_select
+        sleep_modes:
+          name: Adaptive Lighting Sleep Modes
+          description: |
+            Optional. List of modes during which Adaptive Lighting's sleep mode is activated. Non-functional unless `sleep_helper` is set.
+            Default:
+
+            ```
+            Sleep
+            ```
+          default:
+            - Sleep
+          selector:
+            list:
+    home_assistant:
+      name: Home Assistant Configuration
+      description: Optionals related to Home Assistant configuration.
+      collapsed: true
+      input:
+        scene_helper:
+          name: Scene Helper
+          description: Optional. Helper that holds a scene to set. When helper has no value, lights behave normally, but when helper has a value, that scene is applied instead. Scene helper updates apply immediately if light is on.
+          default: {}
+          selector:
+            entity:
+              filter:
+                domain: input_text
+mode: restart
+trigger:
+  - repeat:
+      for_each: !input mqtt_switches
+      sequence:
+        - platform: mqtt
+          topic: ! template "{{ base_topic }}/{{ device_attr(repeat.item, 'friendly_name') }}"
+          payload: action  # Use 'action' as the payload
+          value_template: > # Use the provided value_template
+            {%- if (value_json['action'] is defined) -%}
+              {%- if (value_json['action'] is not none) and (value_json['action'] | string != '') -%}
+                {{ 'action' }}
+              {%- endif -%}
+            {%- endif -%}
+          id: mqtt_trigger
+variables: []
+condition: []
+action: []
