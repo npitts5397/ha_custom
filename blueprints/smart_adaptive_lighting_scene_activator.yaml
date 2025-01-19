@@ -265,28 +265,32 @@ blueprint:
           name: Primary Adaptive Lighting Switches
           description: Optional. Adaptive Lighting switches for primary lights.
           selector:
-            target:
-              entity:
-                integration: adaptive_lighting
-                domain:
-                  - switch
-                filters:
-                  - attribute: friendly_name
-                    op: starts_with
-                    value: "Adaptive Lighting:"
+            entity:
+              integration: adaptive_lighting
+              domain: switch
+              multiple: true
+              filter:
+                include_entities:
+                  - switch.adaptive_lighting_*
+                exclude_entities:
+                  - switch.adaptive_lighting_sleep_mode_*
+                  - switch.adaptive_lighting_adapt_color_*
+                  - switch.adaptive_lighting_adapt_brightness_*
         secondary_adaptive_lighting_switches:
           name: Secondary Adaptive Lighting Switches
           description: Optional. Adaptive Lighting switches for secondary lights.
           selector:
-            target:
-              entity:
-                integration: adaptive_lighting
-                domain:
-                  - switch
-                filters:
-                  - attribute: friendly_name
-                    op: starts_with
-                    value: "Adaptive Lighting:"
+            entity:
+              integration: adaptive_lighting
+              domain: switch
+              multiple: true
+              filter:
+                include_entities:
+                  - switch.adaptive_lighting_*
+                exclude_entities:
+                  - switch.adaptive_lighting_sleep_mode_*
+                  - switch.adaptive_lighting_adapt_color_*
+                  - switch.adaptive_lighting_adapt_brightness_*
         color_phases:
           name: Adaptive Lighting Color Phases
           description: |
