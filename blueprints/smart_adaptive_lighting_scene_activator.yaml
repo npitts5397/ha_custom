@@ -321,18 +321,18 @@ blueprint:
     #       selector:
     #         list:
     # home_assistant:
-      name: Home Assistant Configuration
-      description: Optionals related to Home Assistant configuration.
-      collapsed: true
-      input:
-        scene_helper:
-          name: Scene Helper
-          description: Optional. Helper that holds a scene to set. When helper has no value, lights behave normally, but when helper has a value, that scene is applied instead. Scene helper updates apply immediately if light is on.
-          default: {}
-          selector:
-            entity:
-              filter:
-                domain: input_text
+      # name: Home Assistant Configuration
+      # description: Optionals related to Home Assistant configuration.
+      # collapsed: true
+      # input:
+      #   scene_helper:
+      #     name: Scene Helper
+      #     description: Optional. Helper that holds a scene to set. When helper has no value, lights behave normally, but when helper has a value, that scene is applied instead. Scene helper updates apply immediately if light is on.
+      #     default: {}
+      #     selector:
+      #       entity:
+      #         filter:
+      #           domain: input_text
 metadata:
   tags: 
     - "release:0.0.1"
