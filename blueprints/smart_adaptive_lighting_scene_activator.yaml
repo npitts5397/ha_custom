@@ -267,8 +267,6 @@ blueprint:
           selector:
             entity:
               multiple: true
-              include_entities:
-                - switch.adaptive_lighting_*
               exclude_entities:
                 - switch.adaptive_lighting_sleep_mode_*
                 - switch.adaptive_lighting_adapt_color_*
@@ -282,8 +280,6 @@ blueprint:
           selector:
             entity:
               multiple: true
-              include_entities:
-                - switch.adaptive_lighting_*
               exclude_entities:
                 - switch.adaptive_lighting_sleep_mode_*
                 - switch.adaptive_lighting_adapt_color_*
@@ -292,7 +288,7 @@ blueprint:
                 domain: switch
                 integration: adaptive_lighting
         color_phases:
-          name: Adaptive Lighting Color Phases
+          name: Color Phases
           description: |
             Optional. List of phases during which Adaptive Lighting's color mode is activated. Non-functional unless `phase_helper` is set.
 
@@ -311,7 +307,7 @@ blueprint:
             text:
               multiline: true
         sleep_modes:
-          name: Adaptive Lighting Sleep Modes
+          name: Sleep Modes
           description: |
             Optional. List of modes during which Adaptive Lighting's sleep mode is activated. Non-functional unless `sleep_helper` is set.
             Default:
@@ -338,16 +334,16 @@ blueprint:
               filter:
                 domain: input_text
         mode_helper:
-          name: Home Assistant Mode Helper
-          description: Optional. Helper that holds values related to sleep mode. Valid helper values are `Awake`, `Nap`, and `Sleep` (case insensitive). Non-functional unless `sleep_modes` is set.
+          name: Mode Helper
+          description: Optional. Helper whose value has the current mode. Non-functional unless `sleep_modes` is set.
           default: {}
           selector:
             entity:
               filter:
                 domain: input_select
         phase_helper:
-          name: Home Assistant Phase Helper
-          description: Optional. Helper that has current phase. Non-functional unless `color_phases` is set.
+          name: Phase Helper
+          description: Optional. Helper whose value has the current phase. Non-functional unless `color_phases` is set.
           default: {}
           selector:
             entity:
