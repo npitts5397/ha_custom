@@ -346,7 +346,7 @@ blueprint:
               filter:
                 domain: input_select
 mode: restart
-trigger:
+triggers:
   - repeat:
       for_each: !input mqtt_switches
       sequence:
