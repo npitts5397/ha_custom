@@ -341,10 +341,6 @@ blueprint:
             entity:
               filter:
                 domain: input_select
-metadata:
-  tags: 
-    - "release:0.0.1"
-    - "stable"
 mode: restart
 trigger:
   - repeat:
