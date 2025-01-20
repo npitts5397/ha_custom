@@ -129,6 +129,8 @@ blueprint:
                 integration: mqtt
                 domain:
                   - switch
+                  - light
+                  - fan
         mqtt_custom_topics:
           name: Custom MQTT topics
           description: |
