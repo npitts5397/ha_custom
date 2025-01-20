@@ -360,6 +360,6 @@ trigger:
               {%- endif -%}
             {%- endif -%}
           id: mqtt_trigger
-variables: []
-condition: []
-action: []
+variables: {}
+conditions: []
+actions: []
