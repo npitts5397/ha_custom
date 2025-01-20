@@ -121,6 +121,7 @@ blueprint:
         mqtt_switches:
           name: MQTT Switches
           description: Optional. Select MQTT devices with `action` payloads that control lights. Monitored topics are constructed as follows- `{base_topic}/{friendly device name}`.
+          default: 
           selector:
             target:
               device:
@@ -142,6 +143,7 @@ blueprint:
             path/to/topic
             path/to/another/topic
             ```
+          default: 
           selector:
             text:
               multiline: true
@@ -265,7 +267,8 @@ blueprint:
       input:
         primary_adaptive_lighting_switches:
           name: Primary Adaptive Lighting Switches
-          description: Optional. Adaptive Lighting switches for primary lights. When choosing the primary switch, not ones 
+          description: Optional. Adaptive Lighting switches for primary lights. When choosing the primary Adaptive Lighting switch, not ones controlling brightness, color, or sleep.
+          default: 
           selector:
             target:
               entity:
@@ -273,7 +276,8 @@ blueprint:
                 integration: adaptive_lighting
         secondary_adaptive_lighting_switches:
           name: Secondary Adaptive Lighting Switches
-          description: Optional. Adaptive Lighting switches for secondary lights.
+          description: Optional. Adaptive Lighting switches for secondary lights. When choosing the secondary Adaptive Lighting switch, not ones controlling brightness, color, or sleep.
+          default: 
           selector:
             target:
               entity:
