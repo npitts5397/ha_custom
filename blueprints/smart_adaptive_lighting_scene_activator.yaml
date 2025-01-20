@@ -263,27 +263,18 @@ blueprint:
       input:
         primary_adaptive_lighting_switches:
           name: Primary Adaptive Lighting Switches
-          description: Optional. Adaptive Lighting switches for primary lights.
+          description: Optional. Adaptive Lighting switches for primary lights. When choosing the primary switch, not ones 
           selector:
             target:
               entity:
                 domain: switch
                 integration: adaptive_lighting
-                filters:
-                  - attribute: entity_id
-                    op: regex_match
-                    value: "^(?!switch\\.adaptive_lighting_(sleep_mode|adapt_color|adapt_brightness)).*$"
         secondary_adaptive_lighting_switches:
           name: Secondary Adaptive Lighting Switches
           description: Optional. Adaptive Lighting switches for secondary lights.
           selector:
-            entity:
-              multiple: true
-              exclude_entities:
-                - switch.adaptive_lighting_sleep_mode_*
-                - switch.adaptive_lighting_adapt_color_*
-                - switch.adaptive_lighting_adapt_brightness_*
-              filter:
+            target:
+              entity:
                 domain: switch
                 integration: adaptive_lighting
         color_phases:
