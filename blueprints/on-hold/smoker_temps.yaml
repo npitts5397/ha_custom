@@ -1,0 +1,21 @@
+# Smoker blueprint for notifications and the like
+
+
+## Reset temp sensors when smoker off/unavailable
+### actual temp sensors = 0F, otherwise may continually keep alerting that temp is reached
+
+## Alert for the following: Can probably use sensor.smoker_probe_x_status
+### Grill reaches target temperature
+### Probe A is approaching target temperature
+### Probe A has reached target temperature
+### Probe A is overcooked!!!
+### Probe B is approaching target temperature
+### Probe B has reached target temperature
+### Probe B is overcooked
+
+### May not be a bad idea to alert when smoker is first turned on
+
+
+
+##### NOTIFICATIONS #####
+# should send to appropriate targets. Doing this right likely means reworking notifications entirely

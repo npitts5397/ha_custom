@@ -1,0 +1,677 @@
+blueprint:
+  name: Configure Inovelli VZM31-SN Switches (Z2M)
+  description: Sets configuration for VZM31-SN devices using Zigbee2MQTT. Default values represent my own most common configuration. Device params are based on those available as of firmware v2.15.
+  author: Nathaniel Pitts
+  domain: script
+  input:
+    switches:
+      name: Inovelli Switches
+      description: Required. The switches to which configuration will be applied.
+      selector:
+        device:
+          filter:
+            - integration: mqtt
+              manufacturer: Inovelli
+              model: 2-in-1 switch + dimmer (VZM31-SN)
+          multiple: true
+    dimmingSpeedUpRemote:
+      description: This changes the speed that the light dims up when controlled from the hub. A setting of 0 turns the light immediately on. Increasing the value slows down the transition speed. Every number represents 100ms. Default = 25 (2.5s)
+      default: 5
+      selector:
+        number:
+          min: 0
+          max: 127
+    dimmingSpeedUpLocal:
+      description: This changes the speed that the light dims up when controlled at the switch. A setting of 0 turns the light immediately on. Increasing the value slows down the transition speed. Every number represents 100ms. Default = 127 - Keep in sync with dimmingSpeedUpRemote setting.
+      default: 127
+      selector:
+        number:
+          min: 0
+          max: 127
+    rampRateOffToOnRemote:
+      description: This changes the speed that the light turns on when controlled from the hub. A setting of 0 turns the light immediately on. Increasing the value slows down the transition speed. Every number represents 100ms. Default = 127 - Keep in sync with dimmingSpeedUpRemote setting.
+      default: 127
+      selector:
+        number:
+          min: 0
+          max: 127
+    rampRateOffToOnLocal:
+      description: This changes the speed that the light turns on when controlled at the switch. A setting of 0 turns the light immediately on. Increasing the value slows down the transition speed. Every number represents 100ms. Default = 127 - Keep in sync with dimmingSpeedUpRemote setting.
+      default: 127
+      selector:
+        number:
+          min: 0
+          max: 127
+    dimmingSpeedDownRemote:
+      description: This changes the speed that the light dims down when controlled from the hub. A setting of 0 turns the light immediately off. Increasing the value slows down the transition speed. Every number represents 100ms. Default = 127 - Keep in sync with dimmingSpeedUpRemote setting.
+      default: 127
+      selector:
+        number:
+          min: 0
+          max: 127
+    dimmingSpeedDownLocal:
+      description: This changes the speed that the light dims down when controlled at the switch. A setting of 0 turns the light immediately off. Increasing the value slows down the transition speed. Every number represents 100ms. Default = 127 - Keep in sync with dimmingSpeedUpLocal setting.
+      default: 127
+      selector:
+        number:
+          min: 0
+          max: 127
+    rampRateOnToOffRemote:
+      description: This changes the speed that the light turns off when controlled from the hub. A setting of 'instant' turns the light immediately off. Increasing the value slows down the transition speed. Every number represents 100ms. Default = 127 - Keep in sync with rampRateOffToOnRemote setting.
+      default: 127
+      selector:
+        number:
+          min: 0
+          max: 127
+    rampRateOnToOffLocal:
+      description: This changes the speed that the light turns off when controlled at the switch. A setting of 'instant' turns the light immediately off. Increasing the value slows down the transition speed. Every number represents 100ms. Default = 127 - Keep in sync with rampRateOffToOnLocal setting.
+      default: 127
+      selector:
+        number:
+          min: 0
+          max: 127
+    minimumLevel:
+      description: The minimum level that the dimmer allows the bulb to be dimmed to. Useful when the user has an LED bulb that does not turn on or flickers at a lower level.
+      default: 1
+      selector:
+        number:
+          min: 1
+          max: 253
+    maximumLevel:
+      description: The maximum level that the dimmer allows the bulb to be dimmed to.Useful when the user has an LED bulb that reaches its maximum level before the dimmer value of 99 or when the user wants to limit the maximum brightness.
+      default: 255
+      selector:
+        number:
+          min: 1
+          max: 255
+    invertSwitch:
+      description: Inverts the orientation of the switch. Useful when the switch is installed upside down. Essentially up becomes down and down becomes up.
+      default: "No"
+      selector:
+        select:
+          options:
+            - "No"
+            - "Yes"
+    autoTimerOff:
+      description: Automatically turns the switch off after this many seconds. When the switch is turned on a timer is started. When the timer expires, the switch is turned off. 0 = Auto off is disabled.
+      default: 0
+      selector:
+        number:
+          min: 0
+          max: 32767
+    defaultLevelLocal:
+      description: Default level for the dimmer when it is turned on at the switch. A setting of 255 means that the switch will return to the level that it was on before it was turned off.
+      default: 255
+      selector:
+        number:
+          min: 0
+          max: 255
+    defaultLevelRemote:
+      description: Default level for the dimmer when it is turned on from the hub. A setting of 255 means that the switch will return to the level that it was on before it was turned off.
+      default: 255
+      selector:
+        number:
+          min: 0
+          max: 255
+    stateAfterPowerRestored:
+      description: The state the switch should return to when power is restored after power failure. 0 = off, 1-254 = level, 255 = previous.
+      default: 255
+      selector:
+        number:
+          min: 0
+          max: 255
+    loadLevelIndicatorTimeout:
+      description: Shows the level that the load is at for x number of seconds after the load is adjusted and then returns to the Default LED state. 0 = Stay Off, 1-10 = seconds, 11 = Stay On.
+      default: 11
+      selector:
+        number:
+          min: 0
+          max: 11
+    switchType:
+      description: Set the switch configuration.
+      default: Single-Pole Full Sine Wave
+      selector:
+        select:
+          options:
+            - Single Pole
+            - 3-Way Dumb Switch
+            - 3-Way Aux Switch
+            - Single-Pole Full Sine Wave
+    buttonDelay:
+      description: This will set the button press delay. 0 = no delay (Disables Button Press Events),Default = 500ms.
+      default: 100ms
+      selector:
+        select:
+          options:
+            - 0ms
+            - 100ms
+            - 200ms
+            - 300ms
+            - 400ms
+            - 500ms
+            - 600ms
+            - 700ms
+            - 800ms
+            - 900ms
+    smartBulbMode:
+      description: For use with Smart Bulbs that need constant power and are controlled via commands rather than power.
+      default: Smart Bulb Mode
+      selector:
+        select:
+          options:
+            - Disabled
+            - Smart Bulb Mode
+    doubleTapUpToParam55:
+      description: Enable or Disable setting brightness to parameter 55 on double-tap UP.
+      default: Enabled
+      selector:
+        select:
+          options:
+            - Disabled
+            - Enabled
+    doubleTapDownToParam56:
+      description: Enable or Disable setting brightness to parameter 56 on double-tap DOWN.
+      default: Enabled
+      selector:
+        select:
+          options:
+            - Disabled
+            - Enabled
+    brightnessLevelForDoubleTapUp:
+      description: Set this level on double-tap UP (if enabled by P53). 255 = send ON command.
+      default: 254
+      selector:
+        number:
+          min: 0
+          max: 255
+    brightnessLevelForDoubleTapDown:
+      description: Set this level on double-tap DOWN (if enabled by P54). 255 = send OFF command.
+      default: 89
+      selector:
+        number:
+          min: 0
+          max: 255
+    ledColorWhenOn:
+      description: Set the color of the LED Indicator when the load is on.
+      default: 85
+      selector:
+        number:
+          min: 0
+          max: 255
+    ledColorWhenOff:
+      description: Set the color of the LED Indicator when the load is off.
+      default: 170
+      selector:
+        number:
+          min: 0
+          max: 255
+    ledIntensityWhenOn:
+      description: Set the intensity of the LED Indicator when the load is on.
+      default: 5
+      selector:
+        number:
+          min: 0
+          max: 100
+    ledIntensityWhenOff:
+      description: Set the intensity of the LED Indicator when the load is off.
+      default: 5
+      selector:
+        number:
+          min: 0
+          max: 100
+    auxSwitchUniqueScenes:
+      description: Have unique scene numbers for scenes activated with the aux switch.
+      default: Disabled
+      selector:
+        select:
+          options:
+            - Disabled
+            - Enabled
+    bindingOffToOnSyncLevel:
+      description: Send Move_To_Level using Default Level with Off/On to bound devices.
+      default: Disabled
+      selector:
+        select:
+          options:
+            - Disabled
+            - Enabled
+    localProtection:
+      description: Ability to control switch from the wall.
+      default: Disabled
+      selector:
+        select:
+          options:
+            - Disabled
+            - Enabled
+    outputMode:
+      description: Use device as a Dimmer or an On/Off switch.
+      default: Dimmer
+      selector:
+        select:
+          options:
+            - On/Off
+            - Dimmer
+    onOffLedMode:
+      description: When the device is in On/Off mode, use full LED bar or just one LED.
+      default: All
+      selector:
+        select:
+          options:
+            - All
+            - One
+    firmwareUpdateInProgressIndicator: 
+      description: Display progress on LED bar during firmware update.
+      default: Enabled
+      selector:
+        select:
+          options:
+            - Disabled
+            - Enabled
+    defaultLed1ColorWhenOn:
+      description: 0-254:This is the color of the LED strip in a hex representation. 255:Synchronization with default all LED strip color parameter.
+      default: 255
+      selector:
+        number:
+          min: 0
+          max: 255
+    defaultLed1ColorWhenOff:
+      description: 0-254:This is the color of the LED strip in a hex representation. 255:Synchronization with default all LED strip color parameter.
+      default: 255
+      selector:
+        number:
+          min: 0
+          max: 255
+    defaultLed1IntensityWhenOn:
+      description: Intesity of LED strip when on. 101 = Synchronized with default all LED strip intensity parameter.
+      default: 101
+      selector:
+        number:
+          min: 0
+          max: 101
+    defaultLed1IntensityWhenOff:
+      description: Intesity of LED strip when off. 101 = Synchronized with default all LED strip intensity parameter.
+      default: 101
+      selector:
+        number:
+          min: 0
+          max: 101
+    defaultLed2ColorWhenOn:
+      description: 0-254:This is the color of the LED strip in a hex representation. 255:Synchronization with default all LED strip color parameter.
+      default: 255
+      selector:
+        number:
+          min: 0
+          max: 255
+    defaultLed2ColorWhenOff:
+      description: 0-254:This is the color of the LED strip in a hex representation. 255:Synchronization with default all LED strip color parameter.
+      default: 255
+      selector:
+        number:
+          min: 0
+          max: 255
+    defaultLed2IntensityWhenOn:
+      description: Intesity of LED strip when on. 101 = Synchronized with default all LED strip intensity parameter.
+      default: 101
+      selector:
+        number:
+          min: 0
+          max: 101
+    defaultLed2IntensityWhenOff:
+      description: Intesity of LED strip when off. 101 = Synchronized with default all LED strip intensity parameter.
+      default: 101
+      selector:
+        number:
+          min: 0
+          max: 101
+    defaultLed3ColorWhenOn:
+      description: 0-254:This is the color of the LED strip in a hex representation. 255:Synchronization with default all LED strip color parameter.
+      default: 255
+      selector:
+        number:
+          min: 0
+          max: 255
+    defaultLed3ColorWhenOff:
+      description: 0-254:This is the color of the LED strip in a hex representation. 255:Synchronization with default all LED strip color parameter.
+      default: 255
+      selector:
+        number:
+          min: 0
+          max: 255
+    defaultLed3IntensityWhenOn:
+      description: Intesity of LED strip when on. 101 = Synchronized with default all LED strip intensity parameter.
+      default: 101
+      selector:
+        number:
+          min: 0
+          max: 101
+    defaultLed3IntensityWhenOff:
+      description: Intesity of LED strip when off. 101 = Synchronized with default all LED strip intensity parameter.
+      default: 101
+      selector:
+        number:
+          min: 0
+          max: 101
+    defaultLed4ColorWhenOn:
+      description: 0-254:This is the color of the LED strip in a hex representation. 255:Synchronization with default all LED strip color parameter.
+      default: 255
+      selector:
+        number:
+          min: 0
+          max: 255
+    defaultLed4ColorWhenOff:
+      description: 0-254:This is the color of the LED strip in a hex representation. 255:Synchronization with default all LED strip color parameter.
+      default: 255
+      selector:
+        number:
+          min: 0
+          max: 255
+    defaultLed4IntensityWhenOn:
+      description: Intesity of LED strip when on. 101 = Synchronized with default all LED strip intensity parameter.
+      default: 101
+      selector:
+        number:
+          min: 0
+          max: 101
+    defaultLed4IntensityWhenOff:
+      description: Intesity of LED strip when off. 101 = Synchronized with default all LED strip intensity parameter.
+      default: 101
+      selector:
+        number:
+          min: 0
+          max: 101
+    defaultLed5ColorWhenOn:
+      description: 0-254:This is the color of the LED strip in a hex representation. 255:Synchronization with default all LED strip color parameter.
+      default: 255
+      selector:
+        number:
+          min: 0
+          max: 255
+    defaultLed5ColorWhenOff:
+      description: 0-254:This is the color of the LED strip in a hex representation. 255:Synchronization with default all LED strip color parameter.
+      default: 255
+      selector:
+        number:
+          min: 0
+          max: 255
+    defaultLed5IntensityWhenOn:
+      description: Intesity of LED strip when on. 101 = Synchronized with default all LED strip intensity parameter.
+      default: 101
+      selector:
+        number:
+          min: 0
+          max: 101
+    defaultLed5IntensityWhenOff:
+      description: Intesity of LED strip when off. 101 = Synchronized with default all LED strip intensity parameter.
+      default: 101
+      selector:
+        number:
+          min: 0
+          max: 101
+    defaultLed6ColorWhenOn:
+      description: 0-254:This is the color of the LED strip in a hex representation. 255:Synchronization with default all LED strip color parameter.
+      default: 255
+      selector:
+        number:
+          min: 0
+          max: 255
+    defaultLed6ColorWhenOff:
+      description: 0-254:This is the color of the LED strip in a hex representation. 255:Synchronization with default all LED strip color parameter.
+      default: 255
+      selector:
+        number:
+          min: 0
+          max: 255
+    defaultLed6IntensityWhenOn:
+      description: Intesity of LED strip when on. 101 = Synchronized with default all LED strip intensity parameter.
+      default: 101
+      selector:
+        number:
+          min: 0
+          max: 101
+    defaultLed6IntensityWhenOff:
+      description: Intesity of LED strip when off. 101 = Synchronized with default all LED strip intensity parameter.
+      default: 101
+      selector:
+        number:
+          min: 0
+          max: 101
+    defaultLed7ColorWhenOn:
+      description: 0-254:This is the color of the LED strip in a hex representation. 255:Synchronization with default all LED strip color parameter.
+      default: 255
+      selector:
+        number:
+          min: 0
+          max: 255
+    defaultLed7ColorWhenOff:
+      description: 0-254:This is the color of the LED strip in a hex representation. 255:Synchronization with default all LED strip color parameter.
+      default: 255
+      selector:
+        number:
+          min: 0
+          max: 255
+    defaultLed7IntensityWhenOn:
+      description: Intesity of LED strip when on. 101 = Synchronized with default all LED strip intensity parameter.
+      default: 101
+      selector:
+        number:
+          min: 0
+          max: 101
+    defaultLed7IntensityWhenOff:
+      description: Intesity of LED strip when off. 101 = Synchronized with default all LED strip intensity parameter.
+      default: 101
+      selector:
+        number:
+          min: 0
+          max: 101
+    doubleTapClearNotifications:
+      description: Double-Tap the Config button to clear notifications.
+      default: Enabled (Default)
+      selector:
+        select:
+          options:
+            - Enabled (Default)
+            - Disabled
+    activePowerReports:
+      description: Percent power level change that will result in a new power report being sent. 0 = Disabled
+      default: 0
+      selector:
+        number:
+          min: 0
+          max: 100
+    periodicPowerAndEnergyReports:
+      description: Time period between consecutive power & energy reports being sent (in seconds). The timer is reset after each report is sent.
+      default: 0
+      selector:
+        number:
+          min: 0
+          max: 32767
+    activeEnergyReports:
+      description: "Energy reports Energy level change which will result in sending a new energy report.0 = disabled, 1-32767 = 0.01kWh-327.67kWh. Default setting: 10 (0.1 kWh)"
+      default: 0
+      selector:
+        number:
+          min: 0
+          max: 32767
+    higherOutputInNonNeutral:
+      description: Increase level in non-neutral mode
+      default: Disabled (Default)
+      selector:
+        select:
+          options:
+            - Disabled (Default)
+            - Enabled
+    ledBarScaling:
+      description: Method used for scaling.
+      default: Gen3 method (VZM-style)
+      selector:
+        select:
+          options:
+            - Gen3 method (VZM-style)
+            - Gen2 method (LZW-style)
+    relayClick:
+      description: In neutral on/off setups, the default is to have a clicking sound to notify you that the relay is open or closed. You may disable this sound by creating a, “simulated” on/off where the switch only will turn onto 100 or off to 0.
+      default: Disabled (Click Sound On)
+      selector:
+        select:
+          options:
+            - Disabled (Click Sound On)
+            - Enabled (Click Sound Off)
+mode: single
+variables:
+  switches: !input switches
+  switch_names: >
+    {%- set data = namespace(switch_names=[]) %}
+    {%- for switch in switches %}
+      {%- set data.switch_names = data.switch_names + [ device_attr(switch, "name")] %}
+    {%- endfor %}
+    {{ data.switch_names }}
+  dimmingSpeedUpRemote: !input dimmingSpeedUpRemote
+  dimmingSpeedUpLocal: !input dimmingSpeedUpLocal
+  rampRateOffToOnRemote: !input rampRateOffToOnRemote
+  rampRateOffToOnLocal: !input rampRateOffToOnLocal
+  dimmingSpeedDownRemote: !input dimmingSpeedDownRemote
+  dimmingSpeedDownLocal: !input dimmingSpeedDownLocal
+  rampRateOnToOffRemote: !input rampRateOnToOffRemote
+  rampRateOnToOffLocal: !input rampRateOnToOffLocal
+  minimumLevel: !input minimumLevel
+  maximumLevel: !input maximumLevel
+  invertSwitch: !input invertSwitch
+  autoTimerOff: !input autoTimerOff
+  defaultLevelLocal: !input defaultLevelLocal
+  defaultLevelRemote: !input defaultLevelRemote
+  stateAfterPowerRestored: !input stateAfterPowerRestored
+  loadLevelIndicatorTimeout: !input loadLevelIndicatorTimeout
+  switchType: !input switchType
+  buttonDelay: !input buttonDelay
+  smartBulbMode: !input smartBulbMode
+  doubleTapUpToParam55: !input doubleTapUpToParam55
+  doubleTapDownToParam56: !input doubleTapDownToParam56
+  brightnessLevelForDoubleTapUp: !input brightnessLevelForDoubleTapUp
+  brightnessLevelForDoubleTapDown: !input brightnessLevelForDoubleTapDown
+  ledColorWhenOn: !input ledColorWhenOn
+  ledColorWhenOff: !input ledColorWhenOff
+  ledIntensityWhenOn: !input ledIntensityWhenOn
+  ledIntensityWhenOff: !input ledIntensityWhenOff
+  auxSwitchUniqueScenes: !input auxSwitchUniqueScenes
+  bindingOffToOnSyncLevel: !input bindingOffToOnSyncLevel
+  localProtection: !input localProtection
+  outputMode: !input outputMode
+  onOffLedMode: !input onOffLedMode
+  firmwareUpdateInProgressIndicator: !input firmwareUpdateInProgressIndicator
+  defaultLed1ColorWhenOn: !input defaultLed1ColorWhenOn
+  defaultLed1ColorWhenOff: !input defaultLed1ColorWhenOff
+  defaultLed1IntensityWhenOn: !input defaultLed1IntensityWhenOn
+  defaultLed1IntensityWhenOff: !input defaultLed1IntensityWhenOff
+  defaultLed2ColorWhenOn: !input defaultLed2ColorWhenOn
+  defaultLed2ColorWhenOff: !input defaultLed2ColorWhenOff
+  defaultLed2IntensityWhenOn: !input defaultLed2IntensityWhenOn
+  defaultLed2IntensityWhenOff: !input defaultLed2IntensityWhenOff
+  defaultLed3ColorWhenOn: !input defaultLed3ColorWhenOn
+  defaultLed3ColorWhenOff: !input defaultLed3ColorWhenOff
+  defaultLed3IntensityWhenOn: !input defaultLed3IntensityWhenOn
+  defaultLed3IntensityWhenOff: !input defaultLed3IntensityWhenOff
+  defaultLed4ColorWhenOn: !input defaultLed4ColorWhenOn
+  defaultLed4ColorWhenOff: !input defaultLed4ColorWhenOff
+  defaultLed4IntensityWhenOn: !input defaultLed4IntensityWhenOn
+  defaultLed4IntensityWhenOff: !input defaultLed4IntensityWhenOff
+  defaultLed5ColorWhenOn: !input defaultLed5ColorWhenOn
+  defaultLed5ColorWhenOff: !input defaultLed5ColorWhenOff
+  defaultLed5IntensityWhenOn: !input defaultLed5IntensityWhenOn
+  defaultLed5IntensityWhenOff: !input defaultLed5IntensityWhenOff
+  defaultLed6ColorWhenOn: !input defaultLed6ColorWhenOn
+  defaultLed6ColorWhenOff: !input defaultLed6ColorWhenOff
+  defaultLed6IntensityWhenOn: !input defaultLed6IntensityWhenOn
+  defaultLed6IntensityWhenOff: !input defaultLed6IntensityWhenOff
+  defaultLed7ColorWhenOn: !input defaultLed7ColorWhenOn
+  defaultLed7ColorWhenOff: !input defaultLed7ColorWhenOff
+  defaultLed7IntensityWhenOn: !input defaultLed7IntensityWhenOn
+  defaultLed7IntensityWhenOff: !input defaultLed7IntensityWhenOff
+  doubleTapClearNotifications: !input doubleTapClearNotifications
+  activePowerReports: !input activePowerReports
+  periodicPowerAndEnergyReports: !input periodicPowerAndEnergyReports
+  activeEnergyReports: !input activeEnergyReports
+  higherOutputInNonNeutral: !input higherOutputInNonNeutral
+  ledBarScaling: !input ledBarScaling
+  relayClick: !input relayClick
+  config_payload: >
+    '{
+      "dimmingSpeedUpRemote": "{{ dimmingSpeedUpRemote }}",
+      "dimmingSpeedUpLocal": "{{ dimmingSpeedUpLocal }}",
+      "rampRateOffToOnRemote": "{{ rampRateOffToOnRemote }}",
+      "rampRateOffToOnLocal": "{{ rampRateOffToOnLocal }}",
+      "dimmingSpeedDownRemote": "{{ dimmingSpeedDownRemote }}",
+      "dimmingSpeedDownLocal": "{{ dimmingSpeedDownLocal }}",
+      "rampRateOnToOffRemote": "{{ rampRateOnToOffRemote }}",
+      "rampRateOnToOffLocal": "{{ rampRateOnToOffLocal }}",
+      "minimumLevel": "{{ minimumLevel }}",
+      "maximumLevel": "{{ maximumLevel }}",
+      "invertSwitch": "{{ invertSwitch }}",
+      "autoTimerOff": "{{ autoTimerOff }}",
+      "defaultLevelLocal": "{{ defaultLevelLocal }}",
+      "defaultLevelRemote": "{{ defaultLevelRemote }}",
+      "stateAfterPowerRestored": "{{ stateAfterPowerRestored }}",
+      "loadLevelIndicatorTimeout": "{{ loadLevelIndicatorTimeout }}",
+      "switchType": "{{ switchType }}",
+      "buttonDelay": "{{ buttonDelay }}",
+      "smartBulbMode": "{{ smartBulbMode }}",
+      "doubleTapUpToParam55": "{{ doubleTapUpToParam55 }}",
+      "doubleTapDownToParam56": "{{ doubleTapDownToParam56 }}",
+      "brightnessLevelForDoubleTapUp": "{{ brightnessLevelForDoubleTapUp }}",
+      "brightnessLevelForDoubleTapDown": "{{ brightnessLevelForDoubleTapDown }}",
+      "ledColorWhenOn": "{{ ledColorWhenOn }}",
+      "ledColorWhenOff": "{{ ledColorWhenOff }}",
+      "ledIntensityWhenOn": "{{ ledIntensityWhenOn }}",
+      "ledIntensityWhenOff": "{{ ledIntensityWhenOff }}",
+      "auxSwitchUniqueScenes": "{{ auxSwitchUniqueScenes }}",
+      "bindingOffToOnSyncLevel": "{{ bindingOffToOnSyncLevel }}",
+      "localProtection": "{{ localProtection }}",
+      "outputMode": "{{ outputMode }}",
+      "onOffLedMode": "{{ onOffLedMode }}",
+      "firmwareUpdateInProgressIndicator": "{{ firmwareUpdateInProgressIndicator }}", 
+      "defaultLed1ColorWhenOn": "{{ defaultLed1ColorWhenOn }}",
+      "defaultLed1ColorWhenOff": "{{ defaultLed1ColorWhenOff }}",
+      "defaultLed1IntensityWhenOn": "{{ defaultLed1IntensityWhenOn }}",
+      "defaultLed1IntensityWhenOff": "{{ defaultLed1IntensityWhenOff }}",
+      "defaultLed2ColorWhenOn": "{{ defaultLed2ColorWhenOn }}",
+      "defaultLed2ColorWhenOff": "{{ defaultLed2ColorWhenOff }}",
+      "defaultLed2IntensityWhenOn": "{{ defaultLed2IntensityWhenOn }}",
+      "defaultLed2IntensityWhenOff": "{{ defaultLed2IntensityWhenOff }}",
+      "defaultLed3ColorWhenOn": "{{ defaultLed3ColorWhenOn }}",
+      "defaultLed3ColorWhenOff": "{{ defaultLed3ColorWhenOff }}",
+      "defaultLed3IntensityWhenOn": "{{ defaultLed3IntensityWhenOn }}",
+      "defaultLed3IntensityWhenOff": "{{ defaultLed3IntensityWhenOff }}",
+      "defaultLed4ColorWhenOn": "{{ defaultLed4ColorWhenOn }}",
+      "defaultLed4ColorWhenOff": "{{ defaultLed4ColorWhenOff }}",
+      "defaultLed4IntensityWhenOn": "{{ defaultLed4IntensityWhenOn }}",
+      "defaultLed4IntensityWhenOff": "{{ defaultLed4IntensityWhenOff }}",
+      "defaultLed5ColorWhenOn": "{{ defaultLed5ColorWhenOn }}",
+      "defaultLed5ColorWhenOff": "{{ defaultLed5ColorWhenOff }}",
+      "defaultLed5IntensityWhenOn": "{{ defaultLed5IntensityWhenOn }}",
+      "defaultLed5IntensityWhenOff": "{{ defaultLed5IntensityWhenOff }}",
+      "defaultLed6ColorWhenOn": "{{ defaultLed6ColorWhenOn }}",
+      "defaultLed6ColorWhenOff": "{{ defaultLed6ColorWhenOff }}",
+      "defaultLed6IntensityWhenOn": "{{ defaultLed6IntensityWhenOn }}",
+      "defaultLed6IntensityWhenOff": "{{ defaultLed6IntensityWhenOff }}",
+      "defaultLed7ColorWhenOn": "{{ defaultLed7ColorWhenOn }}",
+      "defaultLed7ColorWhenOff": "{{ defaultLed7ColorWhenOff }}",
+      "defaultLed7IntensityWhenOn": "{{ defaultLed7IntensityWhenOn }}",
+      "defaultLed7IntensityWhenOff": "{{ defaultLed7IntensityWhenOff }}",
+      "doubleTapClearNotifications": "{{ doubleTapClearNotifications }}",
+      "activePowerReports": "{{ activePowerReports }}",
+      "periodicPowerAndEnergyReports": "{{ periodicPowerAndEnergyReports }}",
+      "activeEnergyReports": "{{ activeEnergyReports }}",
+      "higherOutputInNonNeutral": "{{ higherOutputInNonNeutral }}",
+      "ledBarScaling": "{{ ledBarScaling }}",
+      "relayClick": "{{ relayClick }}"
+    }'
+sequence:
+  - repeat:
+      sequence:
+        - service: mqtt.publish
+          data:
+            qos: 0
+            retain: false
+            topic: zigbee2mqtt/{{repeat.item}}/set
+            payload: "{{ config_payload }}"
+      for_each:
+        "{{ switch_names }}"
