@@ -1,173 +1,318 @@
 blueprint:
-  name: Light-Switch-AL Controller (MQTT) BETA
+  name: Smart Adaptive Lighting and Scene Activator (SALSA)
   domain: automation
   author: Nathaniel Pitts
-  source_url: https://github.com/npitts5397/ha_custom/blob/main/blueprints/light_switch_al_controller_z2m_BETA.yaml
+  source_url: https://github.com/npitts5397/ha_custom/blob/main/blueprints/smart_adaptive_lighting_scene_activator.yaml
   homeassistant:
     min_version: 2024.8.0
   description: |
-    Set light configuration based on switch and Adaptive Lighting states. Designed for use with Inovelli Blue Series switches
-    bound to smart bulb groups or directly controlling traditional lighting.
-
-    Supported switch events in switch's MQTT payload:
-      * Enables AL on primary lights:
-        - `"action": "on"` - also turns on lights
-        - `"action": "up_single"` - also turns on lights when direct control is enabled
-      * Disables AL on primary lights:
-        - `"action": "off"` - also turns off lights
-        - `"action": "down_single"` - also turns off lights when direct control is enabled
-        - `"action": "up_double"` - also dims to 100% when direct control is enabled
-        - `"action": "down_double"` - also dims to 35% when direct control is enabled
-        - `"action": "up_held"` - also dims up by 5% when direct control is enabled
-        - `"action": "down_held"` - also dims down by 5% when direct control is enabled
-      * Actions for secondary lights:
-        - `"action": "up_triple"` - turns on optional secondary light
-        - `"action": "down_triple"` - turns off options secondary light
-
-    Prerequisites:
-      * Lights
-          - must be Adaptive Lighting enabled
-          - best when bound/associated to switches, but not required. For example, if using Zigbee lights, a Zigbee group works best.
-      * Switch (built for Inovelli Blue series)
-          - Dimmer mode: true
-          - The Zigbee switch device is added to the same group as the lights (not required when Primary Lights Direct Control is enabled).
-          - If lights are bound to switch, Zigbee switch binding has only `LevelCtrl` binding to the light goup.
-      * Adaptive Lighting
-          - Configured for any specified lights
-          - `take_over_control` is disabled
-      * Inovelli Blue LED (Zigbee2MQTT) script (Optional)
-          - Used to set notification for secondary lights
-          - Blueprint is available here: https://github.com/zanix/home-assistant-blueprints/blob/main/script/inovelli_blue_led_zigbee2mqtt.yaml
-          - After creating the script from the blueprint, set script's mode from 'single' to 'parallel'
+    Set light configuration based on switch and Adaptive Lighting states. Designed with Inovelli Blue Series switches 
+    bound to smart bulb groups.
     
-    Change log:
-      * 1.0.0 - HA-82 - Initial version.
-      * 1.1.0 - HA-82 - Add ability to handle multiple switches.
-      * 1.2.0 - HA-82 - `config_double` always enables AL. 'off', `up_double` and `down_double` disable AL.
-      * 2.0.0 - HA-82 - Breaking change. Subscribe to switch MQTT topics instead of relying on HA entity state changes.
-      * 2.0.1 - HA-89 - Set manual control state on the AL switch instead of lights.
-      * 2.1.0 - HA-90 - Additional input topics and support generic on/off payloads.
-      * 2.2.0 - HA-86 - Support toggling secondary light with `config_single` action.
-      * 2.3.0 - HA-92 - Support enable/disable of AL Sleep mode and support multiple secondary lights.
-      * 3.0.0 - HA-95 
+    Version history:
+      * 4.0.0.beta-1 - HA-140
           - General refactoring
-          - Enable color mode conditionally on current phase
-          - Enable sleep mode conditionally on current sleep mode
-          - Specify additional lights (beyond primary lights) strictly for sleep mode
-          - Automatically determine Adaptive Lighting related switches (based on light entity name)
-          - Fix AL apply service calls
-          - Remove `config_double` functionality to reset AL config as it's redundant with `up_single`
-          - Add toggle for smart lights not bound do a switch (needs testing)
-          - Make use of adaptive_lighting.change_switch_settings service
-      * 3.0.1 - HA-104 - Fix primary lighting direct control scenarios
-      * 3.0.2 - HA-105 - Do not statically set sleep lighting values
-      * 3.0.3 - HA-113 - Fix adaptive lighting not actually disabling when `manual_control: true`
-      * 3.0.4 - HA-113 - Enable/disable adaptiving lighting for secondary lights
-      * 3.1.0 - HA-118 - Animate Inovelli LED bar for secondary lighting
-      * 3.1.1 - HA-122 - Set automation mode to `restart` instead of `single`
-      * 3.2.0 - HA-132
-          - Move secondary light control to triple taps on paddle
-          - Update animation to rise for secondary on, falling for secondary off
-          - Added blueprint input sections (min HA version is 2024.6)
-      * 3.2.1 - HA-136 - Fix rendering of friendly names with apostrophes to entity names
-      * 3.3.0 - HA-138
-          - Add support for scene helpers.
-          - Use new schema introduced in HA 2024.8 (new min version for blueprint)
-          - Improve template readability
-      * 3.3.1 - HA-138
-          - Validate scene helper value as a valid scene, default to standard behavior if scene is not valid
-          - Turn on primary lights before applying scene (ensures that switch is turned on)
-          - Delay call to activate scene after turning on primary lights to avoid clobbering
-    
-    Known issues:
-      * turning off a light results in the automation firing twice due to 'light_turned_off' trigger
-        Possible solution: Could create a trigger with a template, similar to how the switch_topic_x triggers work. The
-        template would need to evaulate the most recent runtime and block the execution. This approach (in theory) will
-        prevent new traces from showing up.
-      * unable to use adaptive_lighting.change_switch_settings service to turn on lights (https://github.com/basnijholt/adaptive-lighting/issues/951)
-
-    To do:
-      * make Adaptive Lighting optional by validating list of generated switch names. Do not use AL if switch does not exist.
-      * build native support for illuminance sensor?
-      * support additional actions- quadruple_*, quintuple_*, etc. for ceiling lights, curtains, etc.
-      * specify transition times for default and various modes/phases
-      * Allow user to define dimming steps (default: 5%) and min/max brightness (default: 35%/100%for double paddle interactions
-      * allow 'up_held' and 'down_held' to continue to dim lights without multiple hold actions when direct control is enabled
-      * Implement support for automatically re-enabling Adaptive Lighting via adaptive_lighting.autoreset_control_seconds
-      * possibly remove manual control setting as the switch toggle overrides it anyway
-      * HIGH PRIORITY - Validate scene_helper_value is a real scene entity or else do not apply!
+          - Significantly reworked inputs
+          - Clean up old comments
+          - Clean up unnecessary code
+      * 3.0.0 - HA-95 - General refactoring, bugfixes, and feature enhancements
+      * 2.0.0 - HA-82 - Subscribe to switch MQTT topics instead of relying on HA entity state changes.
+      * 1.0.0 - HA-82 - Initial version.
   input:
-    lights:
-      name: Light Selection
+    primary_lights:
+      name: Primary Light Selection
       icon: mdi:lamps
-      description: Options related to selecting Primary and Secondary lights.
+      description: Options related to selecting primary lights.
       collapsed: false
       input:
         primary_lights:
-          name: Primary lights
-          description: Required. The primary lights to control. Lights must be Adaptive Lighting enabled.
+          name: Primary Lights
+          description: Required. The primary lights to control.
           selector:
             entity:
-              filter:
-                domain: light
+              domain: light
               multiple: true
-        primary_lights_direct_control:
-          name: Primary lights HA control
-          description: Set to `true` when Home Assistant should control the selected lights directly. This should be `false` when lights and switches are bound (Zigbee) or associated (ZWave) directly. Defaults to `false`.
+        primary_lights_ha_control:
+          name: Primary Lights HA Control
+          description: Optional. Set to `true` when Home Assistant should control the selected lights via `light_on` and `light_off` actions. This should be `false` when lights and switches are bound (Zigbee) or associated (ZWave) directly. Defaults to `false`.
           default: false
           selector:
             boolean:
+        primary_lights_min_brightness:
+          name: Primary Lights Minimum Brightness
+          description: Optional. Set to minimum desired brightess level for primary lights when `mqtt_min_brightness_actions` is specified. Does not apply when `primary_lights_ha_control` is `false`. Defaults to 35%. 
+          default: 35
+          selector:
+            number:
+              min: 0
+              max: 100
+              step: 1
+              unit_of_measurement: '%'
+        primary_lights_max_brightness:
+          name: Primary Lights Maximum Brightness
+          description: Optional. Set to maximum desired brightess level for primary lights when `mqtt_max_brightness_actions` is specified. Does not apply when `primary_lights_ha_control` is `false`. Defaults to 100%.
+          default: 100
+          selector:
+            number:
+              min: 0
+              max: 100
+              step: 1
+              unit_of_measurement: '%'
+        primary_lights_dim_step_pct:
+          name: Primary Lights Dim Step Percentage
+          description: Optional. Set to the percentage to dim the primary lights when `mqtt_dim_up_actions` or `mqtt_dim_down_actions` is specified. Does not apply when `primary_lights_ha_control` is `false`. Defaults to 5%.
+          default: 5
+          selector:
+            number:
+              min: 1
+              max: 100
+              step: 1
+              unit_of_measurement: '%'
+    seconary_lights:
+      name: Secondary Light Selection
+      icon: mdi:lamps
+      description: Options related to selecting secondary lights.
+      collapsed: true
+      input:
         secondary_lights:
           name: Secondary lights
-          description: Optional. The secondary lights to toggle with `config_single` interactions. Lights must be Adaptive Lighting enabled. HA control of secondary lights is assumed.
-          default: []
+          description: Optional. The secondary lights to toggle with interactions. HA control of secondary lights is assumed.
+          default: [] 
+          selector:
+            entity:
+              domain: light
+              multiple: true
+    mqtt:
+      name: MQTT Configuration
+      icon: mdi:queue-first-in-last-out
+      description: Subscribed MQTT topics and supported action values which trigger the automation.
+      collapsed: true
+      input:
+        mqtt_topic_0:
+          name: Topic 0
+          description: Optional. MQTT topic to monitor for action messages. Typically, monitored topic is constructed as follows- `{base_topic}/{friendly device name}`, e.g., `zigbee2mqtt/Office switch`.
+          default: 'none'
+          selector:
+            text:
+        mqtt_topic_1:
+          name: Topic 1
+          description: Optional. MQTT topic to monitor for action messages. Typically, monitored topic is constructed as follows- `{base_topic}/{friendly device name}`, e.g., `zigbee2mqtt/Office switch`.
+          default: 'none'
+          selector:
+            text:
+        mqtt_topic_2:
+          name: Topic 2
+          description: Optional. MQTT topic to monitor for action messages. Typically, monitored topic is constructed as follows- `{base_topic}/{friendly device name}`, e.g., `zigbee2mqtt/Office switch`.
+          default: 'none'
+          selector:
+            text:
+        mqtt_topic_3:
+          name: Topic 3
+          description: Optional. MQTT topic to monitor for action messages. Typically, monitored topic is constructed as follows- `{base_topic}/{friendly device name}`, e.g., `zigbee2mqtt/Office switch`.
+          default: 'none'
+          selector:
+            text:
+        mqtt_topic_4:
+          name: Topic 4
+          description: Optional. MQTT topic to monitor for action messages. Typically, monitored topic is constructed as follows- `{base_topic}/{friendly device name}`, e.g., `zigbee2mqtt/Office switch`.
+          default: 'none'
+          selector:
+            text:
+        mqtt_on_actions:
+          name: MQTT 'on' Actions
+          description: |
+            Optional. List of supported action values from MQTT topics for turning on lights. Each supported action should be on its own line.
+
+            Default:
+
+            ```
+            up_single
+            on
+            ```
+          default: |
+            up_single
+            on
+          selector:
+            text:
+              multiline: true
+        mqtt_off_actions:
+          name: MQTT 'off' Actions
+          description: |
+            Optional. List of supported action values from MQTT topics for turning off lights. Each supported action should be on its own line.
+            
+            Default:
+
+            ```
+            down_single
+            off
+            ```
+          default: |
+            down_single
+            off
+          selector:
+            text:
+              multiline: true
+        mqtt_dim_up_actions:
+          name: MQTT 'dim up' Actions
+          description: |
+            Optional. List of supported action values from MQTT topics. Only used when `Primary Lights HA Control` is enabled. Each supported action should be on its own line.
+            
+            Default:
+
+            ```
+            up_hold
+            ```
+          default: |
+            up_hold
+          selector:
+            text:
+              multiline: true
+        mqtt_dim_down_actions:
+          name: MQTT 'dim down' Actions
+          description: |
+            Optional. List of supported action values from MQTT topics. Only used when `Primary Lights HA Control` is enabled. Each supported action should be on its own line.
+            
+            Default:
+
+            ```
+            down_hold
+            ```
+          default: |
+            down_hold
+          selector:
+            text:
+              multiline: true
+        mqtt_min_brightness_actions:
+          name: MQTT 'min brightness' Actions
+          description: |
+            Optional. List of supported action values from MQTT topics. Only used when `Primary Lights HA Control` is enabled. Each supported action should be on its own line.
+            
+            Default:
+
+            ```
+            down_double
+            ```
+          default: |
+            down_double
+          selector:
+            text:
+              multiline: true
+        mqtt_max_brightness_actions:
+          name: MQTT 'max brightness' Actions
+          description: |
+            Optional. List of supported action values from MQTT topics. Only used when `Primary Lights HA Control` is enabled. Each supported action should be on its own line.
+            
+            Default:
+
+            ```
+            up_double
+            ```
+          default: |
+            up_double
+          selector:
+            text:
+              multiline: true
+        mqtt_secondary_on_actions:
+          name: MQTT secondary 'on' Actions
+          description: |
+            Optional. List of supported action values from MQTT topics. Each supported action should be on its own line.
+            
+            Default:
+
+            ```
+            up_triple
+            ```
+          default: |
+            up_triple
+          selector:
+            text:
+              multiline: true
+        mqtt_secondary_off_actions:
+          name: MQTT secondary 'off' Actions
+          description: |
+            Optional. List of supported action values from MQTT topics. Each supported action should be on its own line.
+            
+            Default:
+
+            ```
+            down_triple
+            ```
+          default: |
+            down_triple
+          selector:
+            text:
+              multiline: true
+    inovelli:
+      name: Inovelli
+      icon: mdi:lamps
+      description: Optional. Specific 
+      collapsed: true
+      input:
+        inovelli_blue_led_script:
+          name: Inovelli Blue LED (Zigbee2MQTT) script
+          description: Optional. Script for setting notifications on Inovelli Blue Series LED bar. Script available here- `https://github.com/zanix/home-assistant-blueprints`
+          default: {}
           selector:
             entity:
               filter:
-                domain: light
-              multiple: true
-    mqtt_topics:
-      name: MQTT Topics
-      icon: mdi:queue-first-in-last-out
-      description: Subscribed MQTT topics which trigger the automation.
-      collapsed: false
+                domain: script
+    adaptive_lighting:
+      name: Adaptive Lighting Options
+      icon: mdi:lamps
+      description: Options related to Adaptive Lighting lighting integration.
+      collapsed: true
       input:
-        switch_0_topic:
-          name: Primary switch topic
-          description: Optional. Device MQTT topic for primary switch.
-          default: 'none'
+        primary_adaptive_lighting_switches:
+          name: Primary Adaptive Lighting Switches
+          description: Optional. Adaptive Lighting switches for primary lights. Specifying switches here ensures Adaptive Lighting is reset appropriately. When choosing the primary Adaptive Lighting switch, not ones controlling brightness, color, or sleep.
+          default: 
+          selector:
+            target:
+              entity:
+                domain: switch
+                integration: adaptive_lighting
+        secondary_adaptive_lighting_switches:
+          name: Secondary Adaptive Lighting Switches
+          description: Optional. Adaptive Lighting switches for secondary lights. Specifying switches here ensures Adaptive Lighting is reset appropriately. When choosing the secondary Adaptive Lighting switch, not ones controlling brightness, color, or sleep.
+          default: 
+          selector:
+            target:
+              entity:
+                domain: switch
+                integration: adaptive_lighting
+        color_phases:
+          name: Color Phases
+          description: |
+            Optional. List of phases during which Adaptive Lighting's color mode is activated. Non-functional unless `phase_helper` is set.
+
+            Default:
+
+            ```
+            Morning
+            Bedtime
+            Night
+            ```
+          default: |
+            Morning
+            Bedtime
+            Night
           selector:
             text:
-        switch_1_topic:
-          name: Secondary switch topic
-          description: Optional. Device MQTT topic for secondary switch.
-          default: 'none'
+              multiline: true
+        sleep_modes:
+          name: Sleep Modes
+          description: |
+            Optional. List of modes during which Adaptive Lighting's sleep mode is activated. Non-functional unless `sleep_helper` is set.
+            Default:
+
+            ```
+            Sleep
+            ```
+          default: |
+            Sleep
           selector:
             text:
-        switch_2_topic:
-          name: Tertiary switch topic
-          description: Optional. Device MQTT topic for tertiary switch.
-          default: 'none'
-          selector:
-            text:
-        switch_3_topic:
-          name: Quaternary switch topic
-          description: Optional. Device MQTT topic for quaternary switch.
-          default: 'none'
-          selector:
-            text:
-        switch_4_topic:
-          name: Quinary switch topic
-          description: Optional. Device MQTT topic for quinary switch.
-          default: 'none'
-          selector:
-            text:
-        switch_5_topic:
-          name: Senary switch topic
-          description: Optional. Device MQTT topic for senary switch.
-          default: 'none'
-          selector:
-            text:
+              multiline: true
     home_assistant:
       name: Home Assistant Configuration
       icon: mdi:home-assistant
@@ -230,98 +375,84 @@ blueprint:
                 domain: input_text
 mode: restart
 trigger:
-  - id: switch_0_action
+  - alias: mqtt_trigger_0 action
+    id: mqtt_trigger_0
     trigger: mqtt
-    topic: !input switch_0_topic
-    value_template: |
-      {%- if (value_json['action'] is defined) -%}
-        {%- if (value_json['action'] is not none) and (value_json['action'] | string != '') -%}
-          {{ 'action' }}
-        {%- endif -%}
-      {%- endif -%}
+    topic: !input mqtt_topic_0
     payload: action
-  - id: switch_1_action
+    value_template: |
+      {%- set action = value_json.get('action') -%}
+      {%- if action is not none and ((action | string) != '') -%}
+        {{ 'action' }}
+      {%- endif -%}
+  - alias: mqtt_trigger_1 action
+    id: mqtt_trigger_1
     trigger: mqtt
-    topic: !input switch_1_topic
-    value_template: |
-      {%- if (value_json['action'] is defined) -%}
-        {%- if (value_json['action'] is not none) and (value_json['action'] | string != '') -%}
-          {{ 'action' }}
-        {%- endif -%}
-      {%- endif -%}
+    topic: !input mqtt_topic_1
     payload: action
-  - id: switch_2_action
+    value_template: |
+      {%- set action = value_json.get('action') -%}
+      {%- if action is not none and ((action | string) != '') -%}
+        {{ 'action' }}
+      {%- endif -%}
+  - alias: mqtt_trigger_2 action
+    id: mqtt_trigger_2
     trigger: mqtt
-    topic: !input switch_2_topic
-    value_template: |
-      {%- if (value_json['action'] is defined) -%}
-        {%- if (value_json['action'] is not none) and (value_json['action'] | string != '') -%}
-          {{ 'action' }}
-        {%- endif -%}
-      {%- endif -%}
+    topic: !input mqtt_topic_2
     payload: action
-  - id: switch_3_action
+    value_template: |
+      {%- set action = value_json.get('action') -%}
+      {%- if action is not none and action | string != '' -%}
+        {{ 'action' }}
+      {%- endif -%}
+  - alias: mqtt_trigger_3 action
+    id: mqtt_trigger_3
     trigger: mqtt
-    topic: !input switch_3_topic
-    value_template: |
-      {%- if (value_json['action'] is defined) -%}
-        {%- if (value_json['action'] is not none) and (value_json['action'] | string != '') -%}
-          {{ 'action' }}
-        {%- endif -%}
-      {%- endif -%}
+    topic: !input mqtt_topic_3
     payload: action
-  - id: switch_4_action
+    value_template: |
+      {%- set action = value_json.get('action') -%}
+      {%- if action is not none and action | string != '' -%}
+        {{ 'action' }}
+      {%- endif -%}
+  - alias: mqtt_trigger_4 action
+    id: mqtt_trigger_4
     trigger: mqtt
-    topic: !input switch_4_topic
-    value_template: |
-      {%- if (value_json['action'] is defined) -%}
-        {%- if (value_json['action'] is not none) and (value_json['action'] | string != '') -%}
-          {{ 'action' }}
-        {%- endif -%}
-      {%- endif -%}
+    topic: !input mqtt_topic_4
     payload: action
-  - id: switch_5_action
-    trigger: mqtt
-    topic: !input switch_5_topic
     value_template: |
-      {%- if (value_json['action'] is defined) -%}
-        {%- if (value_json['action'] is not none) and (value_json['action'] | string != '') -%}
-          {{ 'action' }}
-        {%- endif -%}
+      {%- set action = value_json.get('action') -%}
+      {%- if action is not none and action | string != '' -%}
+        {{ 'action' }}
       {%- endif -%}
-    payload: action
-  - trigger: state
-    entity_id: !input primary_lights
-    to: "off"
-    id: light_turned_off
-  - id: phase_helper_updated
-    trigger: state
-    entity_id: !input phase_helper
-  - id: sleep_helper_updated
-    trigger: state
-    entity_id: !input sleep_helper
-  - id: scene_helper_updated
+  - alias: scene_helper updated
+    id: scene_helper_updated
     trigger: state
     entity_id: !input scene_helper
+  - alias: mode_helper updated
+    id: mode_helper_updated
+    trigger: state
+    entity_id: !input mode_helper
+  - alias: phase_helper updated
+    id: phase_helper_updated
+    trigger: state
+    entity_id: !input phase_helper
 variables:
-  event: >
-    {%- set event = '' -%}
-    {%- if trigger is defined -%}
-      {%- if trigger.payload_json is defined -%}
-        {%- if trigger.payload_json.action -%}
-          {%- set event = trigger.payload_json.action -%}
-        {%- endif -%}
-      {%- endif -%}
+  action: >
+    {%- set action = '' -%}
+    {%- if trigger is defined and trigger.payload_json is defined -%}
+      {%- set action = trigger.payload_json.get('action') -%}
     {%- endif -%}
-    {{ event }}
-  switch_0_topic: !input switch_0_topic
-  switch_1_topic: !input switch_1_topic
-  switch_2_topic: !input switch_2_topic
-  switch_3_topic: !input switch_3_topic
-  switch_4_topic: !input switch_4_topic
-  switch_5_topic: !input switch_5_topic
+    {{ action }}
+  mqtt_topic_0: !input mqtt_topic_0
+  mqtt_topic_1: !input mqtt_topic_1
+  mqtt_topic_2: !input mqtt_topic_2
+  mqtt_topic_3: !input mqtt_topic_3
+  mqtt_topic_4: !input mqtt_topic_4
+  mqtt_on_actions: !input mqtt_on_actions
+  mqtt_on_actions_list: "{{ mqtt_on_actions.strip().split('\n') }}"
   switch_entities: >
-    {%- set mqtt_topics = [switch_0_topic, switch_1_topic, switch_2_topic, switch_3_topic, switch_4_topic, switch_5_topic] %}
+    {%- set mqtt_topics = [mqtt_topic_0, mqtt_topic_1, mqtt_topic_2, mqtt_topic_3, mqtt_topic_4] %}
     {%- set data = namespace(topics=[],switches=[]) %}
     {%- for topic in mqtt_topics %}
       {%- if (topic != 'none') and (topic != '') %}
@@ -345,7 +476,7 @@ variables:
   primary_lights_direct_control: !input primary_lights_direct_control
   primary_lights_direct_control_enabled: >
     {%- set direct_control = false %}
-    {%- if (primary_lights_direct_control == true) or (event == 'on') or (event == 'off') %}
+    {%- if (primary_lights_direct_control == true) or (action == 'on') or (action == 'off') %}
       {%- set direct_control = true %}
     {%- endif %}
     {{ direct_control }}
@@ -420,54 +551,87 @@ variables:
   inovelli_blue_led_script: !input inovelli_blue_led_script
   scene_helper: !input scene_helper
   scene_helper_value: >
-    {%- set scene_value = '' %}
+    {%- set scene = None -%}
     {%- if scene_helper is defined and (scene_helper | length > 0) %}
-      {%- set scene_value = states(scene_helper) | lower %}
-      {%- if states(scene_value) != 'unknown' %}
-        {{ scene_value }}
-      {%- else %}
-        INVALID SCENE ENTITY
+      {%- if states(scene_helper).startswith('scene.') and (states(scene_helper) in (states.scene | map(attribute='entity_id') | list)) %}
+        {%- set scene = states(scene_helper) | lower -%}
       {%- endif -%}
-    {%- endif %}
+    {%- endif -%}
+    {{ scene }}
 condition: []
 action:
-  - choose:
-      # primary lights - mqtt "on" OR "up_single" OR (light is on and (phase_helper or scene_helper updated))
-      - conditions: "{{ event in ['on', 'up_single'] or ((primary_lights_state == 'on') and (trigger.id in ['phase_helper_updated', 'scene_helper_updated'])) }}"
+  - alias: "Debug: Log MQTT Payload"
+    action: logbook.log
+    data:
+      name: "MQTT Payload"
+      message: "{{ trigger.payload_json }}"
+  - alias: "turn on lights"
+    choose:
+      - conditions:
+          - alias: action is in mqtt_on_actions or scene_helper updated
+            condition: template
+            value_template: "{{ (action in mqtt_on_actions_list) or ((primary_lights_state == 'on') and (trigger.id in ['phase_helper_updated','scene_helper_updated'])) }}" # phase helper action is really only to update AL switch conf, it should be its own triggered action
         sequence:
           - choose:
-              - conditions: "{{ scene_helper_value not in ['unknown', 'INVALID SCENE ENTITY', ''] }}"
+              - alias: scene_helper is specified
+                conditions:
+                  - condition: template
+                    value_template: "{{ scene_helper_value is not none }}"
                 sequence:
+                  # TODO: IF ADAPTIVE LIGHTING SWITCHES ARE SPECIFIED
+                  - action: adaptive_lighting.set_manual_control
+                    data:
+                      manual_control: true
+                      lights:
+                        "{{ primary_lights }}"
                   - action: light.turn_on
                     target:
                       entity_id:
                         "{{ primary_lights }}"
                   - delay:
-                      seconds: 1
+                      milliseconds: 300
+                  - wait_template: >
+                      {% set lights_on = primary_lights | map('states') | select('equalto', 'on') | list %}
+                      {{ lights_on | length == primary_lights | length }}
+                    timeout: '00:00:10'
                   - action: scene.turn_on
                     target:
                       entity_id: "{{ scene_helper_value }}"
                     data:
-                      transition: 2
+                      transition: 1
             default:
-              - parallel:
-                  - action: adaptive_lighting.set_manual_control
+              # TODO: IF ADAPTIVE LIGHTING SWITCHES ARE SPECIFIED
+              - alias: Default- scene_helper is not set
+                parallel:
+                  - action: adaptive_lighting.apply
+                    metadata: {}
                     data:
-                      manual_control: false
-                      lights:
-                        "{{ primary_lights }}"
-                  - action: switch.turn_on
-                    target:
-                      entity_id:
+                      entity_id: >-
                         "{{ primary_lights_adaptive_lighting_switches }}"
-              - repeat:
-                  for_each: "{{ primary_lights_adaptive_lighting_switches }}"
-                  sequence:
-                    - action: adaptive_lighting.change_switch_settings
-                      data:
-                        use_defaults: configuration
-                        entity_id: "{{ repeat.item }}"
-                        prefer_rgb_color: "{{ enable_rgb_color }}"
+                      turn_on_lights: true
+                  - sequence:
+                      - action: switch.turn_off
+                        target:
+                          entity_id: >-
+                            "{{ primary_lights_adaptive_lighting_switches }}"
+                        data: {}
+                      - action: switch.turn_on
+                        target:
+                          entity_id: >-
+                            "{{ primary_lights_adaptive_lighting_switches }}"
+                        data: {}
+
+
+
+
+              # - repeat:
+              #     for_each: "{{ primary_lights_adaptive_lighting_switches }}"
+              #     sequence:
+              #       - action: adaptive_lighting.change_switch_settings
+              #         data:
+              #           use_defaults: configuration
+              #           entity_id: "{{ repeat.item }}"
+              #           prefer_rgb_color: "{{ enable_rgb_color }}"
               - if:
                   - condition: template
                     value_template: "{{ primary_lights_direct_control_enabled == true }}"
@@ -477,7 +641,7 @@ action:
                       entity_id:
                         "{{ primary_lights }}"
       # primary lights - (mqtt "off" OR "down_single") OR light turned off
-      - conditions: "{{ event in ['off', 'down_single'] or trigger.id == 'light_turned_off' }}"
+      - conditions: "{{ action in ['off', 'down_single'] or trigger.id == 'light_turned_off' }}"
         sequence:
           - parallel:
               - action: adaptive_lighting.set_manual_control
@@ -490,14 +654,14 @@ action:
                   entity_id:
                     "{{ primary_lights_adaptive_lighting_switches }}"
               - choose:
-                  - conditions: "{{ (event == 'off' or primary_lights_direct_control_enabled == true) and primary_lights_state == 'on' }}"
+                  - conditions: "{{ (action == 'off' or primary_lights_direct_control_enabled == true) and primary_lights_state == 'on' }}"
                     sequence:
                       - action: light.turn_off
                         target:
                           entity_id:
                             "{{ primary_lights }}"
       # primary lights - mqtt "up_double" OR "up_held" OR "down_double" OR "down_held"
-      - conditions: "{{ event in ['up_double', 'up_held', 'down_double', 'down_held'] }}"
+      - conditions: "{{ action in ['up_double', 'up_held', 'down_double', 'down_held'] }}"
         sequence:
           - parallel:
               - action: adaptive_lighting.set_manual_control
@@ -514,7 +678,7 @@ action:
                 value_template: "{{ primary_lights_direct_control_enabled == true }}"
             then:
               - choose:
-                  - conditions: "{{ event == 'up_double' }}"
+                  - conditions: "{{ action == 'up_double' }}"
                     sequence:
                       - action: light.turn_on
                         target:
@@ -522,7 +686,7 @@ action:
                             "{{ primary_lights }}"
                         data:
                           brightness_pct: 100
-                  - conditions: "{{ event == 'up_held' }}"
+                  - conditions: "{{ action == 'up_held' }}"
                     sequence:
                       - action: light.turn_on
                         target:
@@ -530,7 +694,7 @@ action:
                             "{{ primary_lights }}"
                         data:
                           brightness_step_pct: 5             
-                  - conditions: "{{ event == 'down_double' }}"
+                  - conditions: "{{ action == 'down_double' }}"
                     sequence:
                       - action: light.turn_on
                         target:
@@ -538,7 +702,7 @@ action:
                             "{{ primary_lights }}"
                         data:
                           brightness_pct: 35
-                  - conditions: "{{ event == 'down_held' }}"
+                  - conditions: "{{ action == 'down_held' }}"
                     sequence:
                       - action: light.turn_on
                         target:
@@ -547,8 +711,8 @@ action:
                         data:
                           brightness_step_pct: -5    
       # secondary lighting on - mqtt "up_triple"
-      # - conditions: "{{ event == 'config_single' and ((secondary_lights is defined) and (secondary_lights | length > 0)) }}"
-      - conditions: "{{ event in ['up_triple', 'secondary_on'] and ((secondary_lights is defined) and (secondary_lights | length > 0)) }}"
+      # - conditions: "{{ action == 'config_single' and ((secondary_lights is defined) and (secondary_lights | length > 0)) }}"
+      - conditions: "{{ action in ['up_triple', 'secondary_on'] and ((secondary_lights is defined) and (secondary_lights | length > 0)) }}"
         sequence:
           - parallel:
               - if: "{{ (inovelli_blue_led_script) is defined and (inovelli_blue_led_script | length > 0)}}"
@@ -582,7 +746,7 @@ action:
               prefer_rgb_color: false
               transition: '1'
       # secondary lighting off - mqtt "down_triple"
-      - conditions: "{{ event in ['down_triple', 'secondary_off'] and ((secondary_lights is defined) and (secondary_lights | length > 0)) }}"
+      - conditions: "{{ action in ['down_triple', 'secondary_off'] and ((secondary_lights is defined) and (secondary_lights | length > 0)) }}"
         sequence:
           - parallel:
               - if: "{{ (inovelli_blue_led_script) is defined and (inovelli_blue_led_script | length > 0)}}"
@@ -625,3 +789,14 @@ action:
                 target:
                   entity_id:
                     "{{ sleep_mode_switches }}"
+      # UPDATE ADAPTIVE LIGHTING SWITCH CONFIGURATION              
+      # - conditions: "{{ trigger.id == 'phase_helper_updated' }}"
+      #   sequence: 
+              # - repeat:
+              #     for_each: "{{ primary_lights_adaptive_lighting_switches }}"
+              #     sequence:
+              #       - action: adaptive_lighting.change_switch_settings
+              #         data:
+              #           use_defaults: configuration
+              #           entity_id: "{{ repeat.item }}"
+              #           prefer_rgb_color: "{{ enable_rgb_color }}"
