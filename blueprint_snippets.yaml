@@ -1,7 +1,7 @@
 Lighting Blueprint to-dos:
   - Support non-adaptive lighting configurations (Update every block with condition)
   - Detect Inovelli switches for applying inovelli_blue_led_script, don't assume all switches are Inovelli
-  
+  - AL switch updates are broken (enable color, sleep, etc.)
 
 
 

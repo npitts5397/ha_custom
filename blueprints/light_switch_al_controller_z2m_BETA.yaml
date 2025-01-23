@@ -327,12 +327,6 @@ blueprint:
             entity:
               filter:
                 domain: input_select
-        color_phases:
-          name: Primary lights Adaptive Lighting color phases
-          description: Optional. Comma separated list of phases during which AL color mode is activated for primary lights. Non-functional unless `phase_helper` is set.
-          default: ''
-          selector:
-            text:
         sleep_helper:
           name: Sleep helper
           description: Optional. Helper that holds values related to sleep mode. Valid helper values are `Awake`, `Nap`, and `Sleep` (case insensitive). Non-functional unless `sleep_modes` is set.
@@ -341,12 +335,6 @@ blueprint:
             entity:
               filter:
                 domain: input_select
-        sleep_modes:
-          name: Sleep modes
-          description: Optional. Comma separated list of modes during which AL sleep mode is activated. Non-functional unless `sleep_helper` is set.
-          default: ''
-          selector:
-            text:
         sleep_mode_additional_lights:
           name: Additional sleep mode lights
           description: Optional. Lights in addition to primary lights for which sleep mode is activated. Lights must be Adaptive Lighting enabled.
