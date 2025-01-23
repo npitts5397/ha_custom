@@ -302,7 +302,7 @@ blueprint:
         sleep_modes:
           name: Sleep Modes
           description: |
-            Optional. List of modes during which Adaptive Lighting's sleep mode is activated. Non-functional unless `sleep_helper` is set.
+            Optional. List of modes during which Adaptive Lighting's sleep mode is activated. Non-functional unless `mode_helper` is set.
             Default:
 
             ```
@@ -466,10 +466,10 @@ variables:
       {%- endif %}
     {%- endif %}
     {{ primary_lights_state }}
-  primary_lights_direct_control: !input primary_lights_direct_control
-  primary_lights_direct_control_enabled: >
+  primary_lights_ha_control: !input primary_lights_ha_control
+  primary_lights_ha_control_enabled: >
     {%- set direct_control = false %}
-    {%- if (primary_lights_direct_control == true) or (action == 'on') or (action == 'off') %}
+    {%- if (primary_lights_ha_control == true) or (action == 'on') or (action == 'off') %}
       {%- set direct_control = true %}
     {%- endif %}
     {{ direct_control }}
@@ -520,7 +520,7 @@ variables:
       {%- endif %}
     {%- endif %}
     {{ enable_color }}
-  sleep_helper: !input sleep_helper
+  mode_helper: !input mode_helper
   sleep_modes: !input sleep_modes
   sleep_mode_additional_lights: !input sleep_mode_additional_lights
   sleep_mode_switches: >
@@ -531,8 +531,8 @@ variables:
     {{ data.switches }}
   current_sleep_mode: >
     {%- set current_mode = '' %}
-    {%- if sleep_helper is defined and (sleep_helper | length > 0) %}
-      {%- set current_mode = states(sleep_helper) | lower %}
+    {%- if mode_helper is defined and (mode_helper | length > 0) %}
+      {%- set current_mode = states(mode_helper) | lower %}
     {%- endif %}
     {{ current_mode }}
   enable_sleep: >
@@ -626,7 +626,7 @@ action:
                 "{{ primary_lights }}"
           - if:
               - condition: template
-                value_template: "{{ primary_lights_direct_control_enabled == true }}"
+                value_template: "{{ primary_lights_ha_control_enabled == true }}"
             then:
               - action: light.turn_on
                 target:
@@ -644,7 +644,7 @@ action:
                 "{{ primary_lights }}"
           - if:
               - condition: template
-                value_template: "{{ primary_lights_direct_control_enabled == true }}"
+                value_template: "{{ primary_lights_ha_control_enabled == true }}"
             then:
               - action: light.turn_on
                 target:
@@ -662,7 +662,7 @@ action:
                 "{{ primary_lights }}"
           - if:
               - condition: template
-                value_template: "{{ primary_lights_direct_control_enabled == true }}"
+                value_template: "{{ primary_lights_ha_control_enabled == true }}"
             then:
               - action: light.turn_on
                 target:
@@ -680,7 +680,7 @@ action:
                 "{{ primary_lights }}"
           - if:
               - condition: template
-                value_template: "{{ primary_lights_direct_control_enabled == true }}"
+                value_template: "{{ primary_lights_ha_control_enabled == true }}"
             then:
               - action: light.turn_on
                 target:
@@ -750,7 +750,7 @@ action:
                   entity_id: >-
                     "{{ secondary_lights_adaptive_lighting_switches }}"
       - alias: helpers updated
-        conditions: "{{ trigger.id == 'sleep_helper_updated' }}"
+        conditions: "{{ trigger.id == 'mode_helper_updated' }}"
         sequence:
           - choose:
               - conditions: "{{ enable_sleep == true }}"
