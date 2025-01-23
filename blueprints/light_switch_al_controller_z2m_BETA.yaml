@@ -38,20 +38,20 @@ blueprint:
           default: false
           selector:
             boolean:
-        primary_lights_min_brightness:
-          name: Primary Lights Minimum Brightness
-          description: Optional. Set to minimum desired brightess level for primary lights when `mqtt_min_brightness_actions` is specified. Does not apply when `primary_lights_ha_control` is `false`. Defaults to 35%. 
-          default: 35
+        primary_lights_max_brightness:
+          name: Primary Lights Maximum Brightness
+          description: Optional. Set to maximum desired brightess level for primary lights when `mqtt_max_brightness_actions` is specified. Only applies when `primary_lights_ha_control` is `true`. Defaults to 100%.
+          default: 100
           selector:
             number:
               min: 0
               max: 100
               step: 1
               unit_of_measurement: '%'
-        primary_lights_max_brightness:
-          name: Primary Lights Maximum Brightness
-          description: Optional. Set to maximum desired brightess level for primary lights when `mqtt_max_brightness_actions` is specified. Does not apply when `primary_lights_ha_control` is `false`. Defaults to 100%.
-          default: 100
+        primary_lights_min_brightness:
+          name: Primary Lights Minimum Brightness
+          description: Optional. Set to minimum desired brightess level for primary lights when `mqtt_min_brightness_actions` is specified. Only applies when `primary_lights_ha_control` is `true`. Defaults to 35%. 
+          default: 35
           selector:
             number:
               min: 0
@@ -60,7 +60,7 @@ blueprint:
               unit_of_measurement: '%'
         primary_lights_dim_step_pct:
           name: Primary Lights Dim Step Percentage
-          description: Optional. Set to the percentage to dim the primary lights when `mqtt_dim_up_actions` or `mqtt_dim_down_actions` is specified. Does not apply when `primary_lights_ha_control` is `false`. Defaults to 5%.
+          description: Optional. Set to the percentage to dim the primary lights when `mqtt_dim_up_actions` or `mqtt_dim_down_actions` is specified. Only applies when `primary_lights_ha_control` is `true`. Defaults to 5%.
           default: 5
           selector:
             number:
@@ -451,6 +451,20 @@ variables:
   mqtt_topic_4: !input mqtt_topic_4
   mqtt_on_actions: !input mqtt_on_actions
   mqtt_on_actions_list: "{{ mqtt_on_actions.strip().split('\n') }}"
+  mqtt_off_actions: !input mqtt_off_actions
+  mqtt_off_actions_list: "{{ mqtt_off_actions.strip().split('\n') }}"
+  mqtt_dim_up_actions: !input mqtt_dim_up_actions
+  mqtt_dim_up_actions_list: "{{ mqtt_dim_up_actions.strip().split('\n') }}"
+  mqtt_dim_down_actions: !input mqtt_dim_down_actions
+  mqtt_dim_down_actions_list: "{{ mqtt_dim_down_actions.strip().split('\n') }}"
+  mqtt_min_brightness_actions: !input mqtt_min_brightness_actions
+  mqtt_min_brightness_actions_list: "{{ mqtt_min_brightness_actions.strip().split('\n') }}"
+  mqtt_max_brightness_actions: !input mqtt_max_brightness_actions
+  mqtt_max_brightness_actions_list: "{{ mqtt_max_brightness_actions.strip().split('\n') }}"
+  mqtt_secondary_on_actions: !input mqtt_secondary_on_actions
+  mqtt_secondary_on_actions_list: "{{ mqtt_secondary_on_actions.strip().split('\n') }}"
+  mqtt_secondary_off_actions: !input mqtt_secondary_off_actions
+  mqtt_secondary_off_actions_list: "{{ mqtt_secondary_off_actions.strip().split('\n') }}"
   switch_entities: >
     {%- set mqtt_topics = [mqtt_topic_0, mqtt_topic_1, mqtt_topic_2, mqtt_topic_3, mqtt_topic_4] %}
     {%- set data = namespace(topics=[],switches=[]) %}
@@ -480,6 +494,9 @@ variables:
       {%- set direct_control = true %}
     {%- endif %}
     {{ direct_control }}
+  primary_lights_max_brightness: !input primary_lights_max_brightness
+  primary_lights_min_brightness: !input primary_lights_min_brightness
+  primary_lights_dim_step_pct: !input primary_lights_dim_step_pct
   primary_lights_adaptive_lighting_switches: >
     {%- set data = namespace(switches=[]) %}
     {%- for light in primary_lights %}
@@ -579,21 +596,12 @@ action:
                     value_template: "{{ scene_helper_value is not none }}"
                 sequence:
                   # TODO: IF ADAPTIVE LIGHTING SWITCHES ARE SPECIFIED
+                  #       ELSE ONLY APPLY SCENE
                   - action: adaptive_lighting.set_manual_control
                     data:
                       manual_control: true
                       lights:
                         "{{ primary_lights }}"
-                  - action: light.turn_on
-                    target:
-                      entity_id:
-                        "{{ primary_lights }}"
-                  - delay:
-                      milliseconds: 300
-                  - wait_template: >
-                      {% set lights_on = primary_lights | map('states') | select('equalto', 'on') | list %}
-                      {{ lights_on | length == primary_lights | length }}
-                    timeout: '00:00:10'
                   - action: scene.turn_on
                     target:
                       entity_id: "{{ scene_helper_value }}"
@@ -601,181 +609,172 @@ action:
                       transition: 1
             default:
               # TODO: IF ADAPTIVE LIGHTING SWITCHES ARE SPECIFIED
-              - alias: Default- scene_helper is not set
-                parallel:
-                  - action: adaptive_lighting.apply
-                    metadata: {}
-                    data:
+              #       ELSE Just turn on lights?
+              - alias: Turn on lights
+                action: adaptive_lighting.apply
+                data:
+                  entity_id: >-
+                    "{{ primary_lights_adaptive_lighting_switches }}"
+                  turn_on_lights: true
+              - alias: Reset Adaptive Lighting
+                sequence:
+                  - action: switch.turn_off
+                    target:
                       entity_id: >-
                         "{{ primary_lights_adaptive_lighting_switches }}"
-                      turn_on_lights: true
-                  - sequence:
-                      - action: switch.turn_off
-                        target:
-                          entity_id: >-
-                            "{{ primary_lights_adaptive_lighting_switches }}"
-                        data: {}
-                      - action: switch.turn_on
-                        target:
-                          entity_id: >-
-                            "{{ primary_lights_adaptive_lighting_switches }}"
-                        data: {}
-
-
-
-
-              # - repeat:
-              #     for_each: "{{ primary_lights_adaptive_lighting_switches }}"
-              #     sequence:
-              #       - action: adaptive_lighting.change_switch_settings
-              #         data:
-              #           use_defaults: configuration
-              #           entity_id: "{{ repeat.item }}"
-              #           prefer_rgb_color: "{{ enable_rgb_color }}"
-              - if:
-                  - condition: template
-                    value_template: "{{ primary_lights_direct_control_enabled == true }}"
-                then:
-                  - action: light.turn_on
+                  - action: switch.turn_on
                     target:
-                      entity_id:
-                        "{{ primary_lights }}"
-      # primary lights - (mqtt "off" OR "down_single") OR light turned off
-      - conditions: "{{ action in ['off', 'down_single'] or trigger.id == 'light_turned_off' }}"
+                      entity_id: >-
+                        "{{ primary_lights_adaptive_lighting_switches }}"
+      - alias: action is in mqtt_off_actions
+        conditions: "{{ action in mqtt_off_actions_list }}"
         sequence:
-          - parallel:
-              - action: adaptive_lighting.set_manual_control
-                data:
-                  manual_control: true
-                  lights:
-                    "{{ primary_lights }}"
-              - action: switch.turn_off
+          - conditions: "{{ (primary_lights_direct_control_enabled == true) }}"
+            sequence:
+              - action: light.turn_off
                 target:
                   entity_id:
-                    "{{ primary_lights_adaptive_lighting_switches }}"
-              - choose:
-                  - conditions: "{{ (action == 'off' or primary_lights_direct_control_enabled == true) and primary_lights_state == 'on' }}"
-                    sequence:
-                      - action: light.turn_off
-                        target:
-                          entity_id:
-                            "{{ primary_lights }}"
-      # primary lights - mqtt "up_double" OR "up_held" OR "down_double" OR "down_held"
-      - conditions: "{{ action in ['up_double', 'up_held', 'down_double', 'down_held'] }}"
-        sequence:
-          - parallel:
-              - action: adaptive_lighting.set_manual_control
-                data:
-                  manual_control: true
-                  lights:
                     "{{ primary_lights }}"
-              - action: switch.turn_off
+              # TODO: IF ADAPTIVE LIGHTING SWITCHES ARE SPECIFIED, RESET
+              - action: switch.turn_on
                 target:
-                  entity_id:
+                  entity_id: >-
                     "{{ primary_lights_adaptive_lighting_switches }}"
+      - alias: action is in mqtt_dim_up_actions
+        conditions: "{{ action in mqtt_dim_up_actions_list }}"
+        sequence:
+          - action: adaptive_lighting.set_manual_control
+            data:
+              manual_control: true
+              lights:
+                "{{ primary_lights }}"
           - if:
               - condition: template
                 value_template: "{{ primary_lights_direct_control_enabled == true }}"
             then:
-              - choose:
-                  - conditions: "{{ action == 'up_double' }}"
-                    sequence:
-                      - action: light.turn_on
-                        target:
-                          entity_id:
-                            "{{ primary_lights }}"
-                        data:
-                          brightness_pct: 100
-                  - conditions: "{{ action == 'up_held' }}"
-                    sequence:
-                      - action: light.turn_on
-                        target:
-                          entity_id:
-                            "{{ primary_lights }}"
-                        data:
-                          brightness_step_pct: 5             
-                  - conditions: "{{ action == 'down_double' }}"
-                    sequence:
-                      - action: light.turn_on
-                        target:
-                          entity_id:
-                            "{{ primary_lights }}"
-                        data:
-                          brightness_pct: 35
-                  - conditions: "{{ action == 'down_held' }}"
-                    sequence:
-                      - action: light.turn_on
-                        target:
-                          entity_id:
-                            "{{ primary_lights }}"
-                        data:
-                          brightness_step_pct: -5    
-      # secondary lighting on - mqtt "up_triple"
-      # - conditions: "{{ action == 'config_single' and ((secondary_lights is defined) and (secondary_lights | length > 0)) }}"
-      - conditions: "{{ action in ['up_triple', 'secondary_on'] and ((secondary_lights is defined) and (secondary_lights | length > 0)) }}"
-        sequence:
-          - parallel:
-              - if: "{{ (inovelli_blue_led_script) is defined and (inovelli_blue_led_script | length > 0)}}"
-                then:
-                  - action: "{{ inovelli_blue_led_script }}"
-                    data:
-                      led: All
-                      color: "{{ secondary_lights_switch_led_color }}"
-                      level: "{{ secondary_lights_switch_led_level }}"
-                      effect: "{{ secondary_lights_switch_led_effect_on }}"
-                      duration: "{{ secondary_lights_switch_led_duration }}"
-                      target:
-                        entity_id:
-                          "{{ switch_entities }}"
-              - action: adaptive_lighting.set_manual_control
-                data:
-                  manual_control: false
-                  lights:
-                    "{{ secondary_lights }}"
-              - action: switch.turn_on
+              - action: light.turn_on
                 target:
                   entity_id:
-                    "{{ secondary_lights_adaptive_lighting_switches }}"
-          - action: adaptive_lighting.apply
-            data:
-              lights:
-                "{{ secondary_lights }}"
-              adapt_brightness: true
-              turn_on_lights: true
-              adapt_color: true
-              prefer_rgb_color: false
-              transition: '1'
-      # secondary lighting off - mqtt "down_triple"
-      - conditions: "{{ action in ['down_triple', 'secondary_off'] and ((secondary_lights is defined) and (secondary_lights | length > 0)) }}"
-        sequence:
-          - parallel:
-              - if: "{{ (inovelli_blue_led_script) is defined and (inovelli_blue_led_script | length > 0)}}"
-                then:
-                  - action: "{{ inovelli_blue_led_script }}"
-                    data:
-                      led: All
-                      color: "{{ secondary_lights_switch_led_color }}"
-                      level: "{{ secondary_lights_switch_led_level }}"
-                      effect: "{{ secondary_lights_switch_led_effect_off }}"
-                      duration: "{{ secondary_lights_switch_led_duration }}"
-                      target:
-                        entity_id:
-                          "{{ switch_entities }}"
-              - action: adaptive_lighting.set_manual_control
+                    "{{ primary_lights }}"
                 data:
-                  manual_control: true
-                  lights:
+                  brightness_step_pct: "{{ primary_lights_dim_step_pct }}"
+      - alias: action is in mqtt_dim_down_actions
+        conditions: "{{ action in mqtt_dim_down_actions_list }}"
+        sequence:
+          - action: adaptive_lighting.set_manual_control
+            data:
+              manual_control: true
+              lights:
+                "{{ primary_lights }}"
+          - if:
+              - condition: template
+                value_template: "{{ primary_lights_direct_control_enabled == true }}"
+            then:
+              - action: light.turn_on
+                target:
+                  entity_id:
+                    "{{ primary_lights }}"
+                data:
+                  brightness_step_pct: "-{{ primary_lights_dim_step_pct }}"
+      - alias: action is in mqtt_max_brightness_actions
+        conditions: "{{ action in mqtt_max_brightness_actions_list }}"
+        sequence:
+          - action: adaptive_lighting.set_manual_control
+            data:
+              manual_control: true
+              lights:
+                "{{ primary_lights }}"
+          - if:
+              - condition: template
+                value_template: "{{ primary_lights_direct_control_enabled == true }}"
+            then:
+              - action: light.turn_on
+                target:
+                  entity_id:
+                    "{{ primary_lights }}"
+                data:
+                  brightness_pct: "{{ primary_lights_max_brightness }}"
+      - alias: action is in mqtt_min_brightness_actions
+        conditions: "{{ action in mqtt_min_brightness_actions_list }}"
+        sequence:
+          - action: adaptive_lighting.set_manual_control
+            data:
+              manual_control: true
+              lights:
+                "{{ primary_lights }}"
+          - if:
+              - condition: template
+                value_template: "{{ primary_lights_direct_control_enabled == true }}"
+            then:
+              - action: light.turn_on
+                target:
+                  entity_id:
+                    "{{ primary_lights }}"
+                data:
+                  brightness_pct: "{{ primary_lights_min_brightness_list }}"
+      - alias: action is in mqtt_secondary_on_actions
+        conditions: "{{ action in mqtt_secondary_on_actions_list and ((secondary_lights is defined) and (secondary_lights | length > 0)) }}"
+        parallel:
+          # TODO: DETECT INOVELLI SWITCHES AND ONLY APPLY TO THOSE
+          - if: "{{ (inovelli_blue_led_script) is defined and (inovelli_blue_led_script | length > 0)}}"
+            then:
+              - action: "{{ inovelli_blue_led_script }}"
+                data:
+                  led: All
+                  color: "{{ secondary_lights_switch_led_color }}"
+                  level: "{{ secondary_lights_switch_led_level }}"
+                  effect: "{{ secondary_lights_switch_led_effect_on }}"
+                  duration: "{{ secondary_lights_switch_led_duration }}"
+                  target:
+                    entity_id:
+                      "{{ switch_entities }}"
+          - sequence:
+              # TODO: IF ADAPTIVE LIGHTING SWITCHES ARE SPECIFIED
+              - alias: Turn on lights
+                action: adaptive_lighting.apply
+                data:
+                  entity_id: >-
+                    "{{ secondary_lights_adaptive_lighting_switches }}"
+                  turn_on_lights: true
+              - alias: Reset Adaptive Lighting
+                sequence:
+                  - action: switch.turn_off
+                    target:
+                      entity_id: >-
+                        "{{ secondary_lights_adaptive_lighting_switches }}"
+                  - action: switch.turn_on
+                    target:
+                      entity_id: >-
+                        "{{ secondary_lights_adaptive_lighting_switches }}"
+      # secondary lighting off - mqtt "down_triple"
+      - alias: action is in mqtt_secondary_off_actions
+        conditions: "{{ action in mqtt_secondary_off_actions_list and ((secondary_lights is defined) and (secondary_lights | length > 0)) }}"
+        parallel:
+          - if: "{{ (inovelli_blue_led_script) is defined and (inovelli_blue_led_script | length > 0)}}"
+            then:
+              - action: "{{ inovelli_blue_led_script }}"
+                data:
+                  led: All
+                  color: "{{ secondary_lights_switch_led_color }}"
+                  level: "{{ secondary_lights_switch_led_level }}"
+                  effect: "{{ secondary_lights_switch_led_effect_off }}"
+                  duration: "{{ secondary_lights_switch_led_duration }}"
+                  target:
+                    entity_id:
+                      "{{ switch_entities }}"
+          - sequence:
+              - action: light.turn_off
+                target:
+                  entity_id:
                     "{{ secondary_lights }}"
+              # TODO: IF ADAPTIVE LIGHTING SWITCHES ARE SPECIFIED, RESET
               - action: switch.turn_off
                 target:
                   entity_id:
                     "{{ secondary_lights_adaptive_lighting_switches }}"
-          - action: light.turn_off
-            target:
-              entity_id:
-                "{{ secondary_lights }}"
       # sleep helper updated
-      - conditions: "{{ trigger.id == 'sleep_helper_updated' }}"
+      - alias: helpers updated
+        conditions: "{{ trigger.id == 'sleep_helper_updated' }}"
         sequence:
           - choose:
               - conditions: "{{ enable_sleep == true }}"
