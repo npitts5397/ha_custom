@@ -570,7 +570,7 @@ action:
       - conditions:
           - alias: action is in mqtt_on_actions or scene_helper updated
             condition: template
-            value_template: "{{ (action in mqtt_on_actions_list) or ((primary_lights_state == 'on') and (trigger.id in ['phase_helper_updated','scene_helper_updated'])) }}" # phase helper action is really only to update AL switch conf, it should be its own triggered action
+            value_template: "{{ (action in mqtt_on_actions_list) or ((primary_lights_state == 'on') and (trigger.id in ['scene_helper_updated'])) }}"
         sequence:
           - choose:
               - alias: scene_helper is specified
@@ -789,7 +789,11 @@ action:
                 target:
                   entity_id:
                     "{{ sleep_mode_switches }}"
-      # UPDATE ADAPTIVE LIGHTING SWITCH CONFIGURATION              
+      # UPDATE ADAPTIVE LIGHTING SWITCH CONFIGURATION 
+      #  "Passive switch updates"
+      #  * Also trigger on reload? Need to make sure correct conf is applied to !env_var 
+      #    Adaptive Lighting switch, but changes here are not persistent.
+      #  * Consider consolidating all switch updates here, include phase, room mode, and sleep helpers.
       # - conditions: "{{ trigger.id == 'phase_helper_updated' }}"
       #   sequence: 
               # - repeat:
