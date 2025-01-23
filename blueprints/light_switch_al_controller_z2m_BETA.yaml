@@ -327,9 +327,9 @@ blueprint:
             entity:
               filter:
                 domain: input_select
-        sleep_helper:
-          name: Sleep helper
-          description: Optional. Helper that holds values related to sleep mode. Valid helper values are `Awake`, `Nap`, and `Sleep` (case insensitive). Non-functional unless `sleep_modes` is set.
+        mode_helper:
+          name: Mode helper
+          description: Optional. Helper that holds values related to room mode. Valid helper values are `Awake`, `Nap`, and `Sleep` (case insensitive). Non-functional unless `sleep_modes` is set.
           default: {}
           selector:
             entity:
@@ -344,15 +344,6 @@ blueprint:
               filter:
                 domain: light
               multiple: true
-        inovelli_blue_led_script:
-          name: Inovelli Blue LED (Zigbee2MQTT) script
-          description: Optional. Script for setting notifications on Inovelli Blue Series LED bar.
-          default: {}
-          selector:
-            entity:
-              filter:
-                domain: script
-              multiple: false
         scene_helper:
           name: Scene Helper
           description: Optional. Helper that holds a scene to set. When helper has no value, lights behave normally, but when helper has a value, that scene is applied instead. Scene helper updates apply immediately if light is on.
