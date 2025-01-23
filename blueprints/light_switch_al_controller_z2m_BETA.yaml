@@ -584,9 +584,9 @@ action:
       message: "{{ trigger.payload_json }}"
   - alias: "turn on lights"
     choose:
-      - conditions:
-          - alias: action is in mqtt_on_actions or scene_helper updated
-            condition: template
+      - alias: action is in mqtt_on_actions or scene_helper updated
+        conditions:
+          - condition: template
             value_template: "{{ (action in mqtt_on_actions_list) or ((primary_lights_state == 'on') and (trigger.id in ['scene_helper_updated'])) }}"
         sequence:
           - choose:
@@ -595,8 +595,6 @@ action:
                   - condition: template
                     value_template: "{{ scene_helper_value is not none }}"
                 sequence:
-                  # TODO: IF ADAPTIVE LIGHTING SWITCHES ARE SPECIFIED
-                  #       ELSE ONLY APPLY SCENE
                   - action: adaptive_lighting.set_manual_control
                     data:
                       manual_control: true
@@ -608,8 +606,6 @@ action:
                     data:
                       transition: 1
             default:
-              # TODO: IF ADAPTIVE LIGHTING SWITCHES ARE SPECIFIED
-              #       ELSE Just turn on lights?
               - alias: Turn on lights
                 action: adaptive_lighting.apply
                 data:
@@ -629,17 +625,18 @@ action:
       - alias: action is in mqtt_off_actions
         conditions: "{{ action in mqtt_off_actions_list }}"
         sequence:
-          - conditions: "{{ (primary_lights_direct_control_enabled == true) }}"
-            sequence:
-              - action: light.turn_off
-                target:
-                  entity_id:
-                    "{{ primary_lights }}"
-              # TODO: IF ADAPTIVE LIGHTING SWITCHES ARE SPECIFIED, RESET
-              - action: switch.turn_on
-                target:
-                  entity_id: >-
-                    "{{ primary_lights_adaptive_lighting_switches }}"
+          - action: light.turn_off
+            target:
+              entity_id:
+                "{{ primary_lights }}"
+          - action: switch.turn_off
+            target:
+              entity_id: >-
+                "{{ primary_lights_adaptive_lighting_switches }}"
+          - action: switch.turn_on
+            target:
+              entity_id: >-
+                "{{ primary_lights_adaptive_lighting_switches }}"
       - alias: action is in mqtt_dim_up_actions
         conditions: "{{ action in mqtt_dim_up_actions_list }}"
         sequence:
@@ -715,7 +712,6 @@ action:
       - alias: action is in mqtt_secondary_on_actions
         conditions: "{{ action in mqtt_secondary_on_actions_list and ((secondary_lights is defined) and (secondary_lights | length > 0)) }}"
         parallel:
-          # TODO: DETECT INOVELLI SWITCHES AND ONLY APPLY TO THOSE
           - if: "{{ (inovelli_blue_led_script) is defined and (inovelli_blue_led_script | length > 0)}}"
             then:
               - action: "{{ inovelli_blue_led_script }}"
@@ -729,7 +725,6 @@ action:
                     entity_id:
                       "{{ switch_entities }}"
           - sequence:
-              # TODO: IF ADAPTIVE LIGHTING SWITCHES ARE SPECIFIED
               - alias: Turn on lights
                 action: adaptive_lighting.apply
                 data:
@@ -746,7 +741,6 @@ action:
                     target:
                       entity_id: >-
                         "{{ secondary_lights_adaptive_lighting_switches }}"
-      # secondary lighting off - mqtt "down_triple"
       - alias: action is in mqtt_secondary_off_actions
         conditions: "{{ action in mqtt_secondary_off_actions_list and ((secondary_lights is defined) and (secondary_lights | length > 0)) }}"
         parallel:
@@ -772,7 +766,10 @@ action:
                 target:
                   entity_id:
                     "{{ secondary_lights_adaptive_lighting_switches }}"
-      # sleep helper updated
+              - action: switch.turn_on
+                target:
+                  entity_id: >-
+                    "{{ secondary_lights_adaptive_lighting_switches }}"
       - alias: helpers updated
         conditions: "{{ trigger.id == 'sleep_helper_updated' }}"
         sequence:
