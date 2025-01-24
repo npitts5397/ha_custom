@@ -29,9 +29,9 @@ blueprint:
           name: Primary Lights
           description: Required. The primary lights to control.
           selector:
-            entity:
-              domain: light
-              multiple: true
+            target:
+              entity:
+                domain: light
         primary_lights_ha_control:
           name: Primary Lights HA Control
           description: Optional. Set to `true` when Home Assistant should control the selected lights via `light_on` and `light_off` actions. This should be `false` when lights and switches are bound (Zigbee) or associated (ZWave) directly. Defaults to `false`.
@@ -79,9 +79,9 @@ blueprint:
           description: Optional. The secondary lights to toggle with interactions. HA control of secondary lights is assumed.
           default: [] 
           selector:
-            entity:
-              domain: light
-              multiple: true
+            target:
+              entity:
+                domain: light
     mqtt:
       name: MQTT Configuration
       icon: mdi:queue-first-in-last-out
@@ -460,8 +460,8 @@ variables:
   primary_lights: !input primary_lights
   primary_lights_state: >
     {%- set primary_lights_state = 'off' %}
-    {%- if primary_lights is defined and (primary_lights | length > 0) %}
-      {%- set primary_lights_states = expand(primary_lights) | selectattr('state') | map(attribute='state') | join(',') %}
+    {%- if primary_lights.entity_id is defined and (primary_lights | length > 0) %}
+      {%- set primary_lights_states = expand(primary_lights.entity_id) | selectattr('state') | map(attribute='state') | join(',') %}
       {%- if 'on' in primary_lights_states %}
         {%- set primary_lights_state = 'on' %}
       {%- endif %}
@@ -499,9 +499,10 @@ variables:
   mode_helper: !input mode_helper
   sleep_modes: !input sleep_modes
   sleep_mode_additional_lights: !input sleep_mode_additional_lights
+  # BELOW: should secondary lights be added? I don't think so...but maybe? Concern over ceiling fan lights in middle of the night.
   sleep_mode_switches: >
     {%- set data = namespace(switches=[]) %}
-    {%- for light in (primary_lights + sleep_mode_additional_lights) %}
+    {%- for light in (primary_lights.entity_id + sleep_mode_additional_lights) %} 
       {%- set data.switches = data.switches + ['switch.adaptive_lighting_sleep_mode_' + light.replace('light.','')] %}
     {%- endfor %}
     {{ data.switches }}
@@ -532,11 +533,11 @@ variables:
     {{ scene }}
 condition: []
 action:
-  # - alias: "Debug: Log MQTT Payload"
+  # - alias: "Debug: SALSA"
   #   action: logbook.log
   #   data:
-  #     name: "MQTT Payload"
-  #     message: "{{ trigger.payload_json }}"
+  #     name: "primary lights"
+  #     message: "{{ primary_lights }}"
   - choose:
       - alias: action is in mqtt_on_actions or scene_helper updated
         conditions:
@@ -553,7 +554,7 @@ action:
                     data:
                       manual_control: true
                       lights:
-                        "{{ primary_lights }}"
+                        "{{ primary_lights.entity_id }}"
                   - action: scene.turn_on
                     target:
                       entity_id: "{{ scene_helper_value }}"
@@ -579,11 +580,10 @@ action:
               "{{ primary_lights_adaptive_lighting_switches }}"
           - action: light.turn_off
             target:
-              entity_id:
-                "{{ primary_lights }}"
+              "{{ primary_lights }}"
           - wait_template: >
-              {% set lights_off = primary_lights | map('states') | select('equalto', 'off') | list %}
-              {{ lights_off | length == primary_lights | length }}
+              {% set lights_off = primary_lights.entity_id | map('states') | select('equalto', 'off') | list %}
+              {{ lights_off | length == primary_lights.entity_id | length }}
             timeout: '00:00:10'
           - action: switch.turn_on
             target:
@@ -595,15 +595,14 @@ action:
             data:
               manual_control: true
               lights:
-                "{{ primary_lights }}"
+                "{{ primary_lights.entity_id }}"
           - if:
               - condition: template
                 value_template: "{{ primary_lights_ha_control == true }}"
             then:
               - action: light.turn_on
                 target:
-                  entity_id:
-                    "{{ primary_lights }}"
+                  "{{ primary_lights }}"
                 data:
                   brightness_step_pct: "{{ primary_lights_dim_step_pct }}"
       - alias: action is in mqtt_dim_down_actions
@@ -613,14 +612,13 @@ action:
             data:
               manual_control: true
               lights:
-                "{{ primary_lights }}"
+                "{{ primary_lights.entity_id }}"
           - if:
               - condition: template
                 value_template: "{{ primary_lights_ha_control == true }}"
             then:
               - action: light.turn_on
                 target:
-                  entity_id:
                     "{{ primary_lights }}"
                 data:
                   brightness_step_pct: "-{{ primary_lights_dim_step_pct }}"
@@ -631,15 +629,14 @@ action:
             data:
               manual_control: true
               lights:
-                "{{ primary_lights }}"
+                "{{ primary_lights.entity_id }}"
           - if:
               - condition: template
                 value_template: "{{ primary_lights_ha_control == true }}"
             then:
               - action: light.turn_on
                 target:
-                  entity_id:
-                    "{{ primary_lights }}"
+                  "{{ primary_lights }}"
                 data:
                   brightness_pct: "{{ primary_lights_max_brightness }}"
       - alias: action is in mqtt_min_brightness_actions
@@ -649,19 +646,18 @@ action:
             data:
               manual_control: true
               lights:
-                "{{ primary_lights }}"
+                "{{ primary_lights.entity_id }}"
           - if:
               - condition: template
                 value_template: "{{ primary_lights_ha_control == true }}"
             then:
               - action: light.turn_on
                 target:
-                  entity_id:
-                    "{{ primary_lights }}"
+                  "{{ primary_lights }}"
                 data:
                   brightness_pct: "{{ primary_lights_min_brightness_list }}"
       - alias: action is in mqtt_secondary_on_actions
-        conditions: "{{ action in mqtt_secondary_on_actions_list and ((secondary_lights is defined) and (secondary_lights | length > 0)) }}"
+        conditions: "{{ action in mqtt_secondary_on_actions_list and ((secondary_lights.entity_id is defined) and (secondary_lights.entity_id | length > 0)) }}"
         sequence:
           - parallel:
               - if: "{{ (inovelli_blue_led_script) is defined and (inovelli_blue_led_script | length > 0)}}"
@@ -689,7 +685,7 @@ action:
                     target:
                         "{{ secondary_lights_adaptive_lighting_switches }}"
       - alias: action is in mqtt_secondary_off_actions
-        conditions: "{{ action in mqtt_secondary_off_actions_list and ((secondary_lights is defined) and (secondary_lights | length > 0)) }}"
+        conditions: "{{ action in mqtt_secondary_off_actions_list and ((secondary_lights.entity_id is defined) and (secondary_lights.entity_id | length > 0)) }}"
         sequence:
           - parallel:
               - if: "{{ (inovelli_blue_led_script) is defined and (inovelli_blue_led_script | length > 0)}}"
@@ -710,11 +706,10 @@ action:
                       "{{ secondary_lights_adaptive_lighting_switches }}"
                   - action: light.turn_off
                     target:
-                      entity_id:
                         "{{ secondary_lights }}"
                   - wait_template: >
-                      {% set lights_off = secondary_lights | map('states') | select('equalto', 'off') | list %}
-                      {{ lights_off | length == secondary_lights | length }}
+                      {% set lights_off = secondary_lights.entity_id | map('states') | select('equalto', 'off') | list %}
+                      {{ lights_off | length == secondary_lights.entity_id | length }}
                     timeout: '00:00:10'
                   - action: switch.turn_on
                     target:
