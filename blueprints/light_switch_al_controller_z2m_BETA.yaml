@@ -467,21 +467,10 @@ variables:
     {%- endif %}
     {{ primary_lights_state }}
   primary_lights_ha_control: !input primary_lights_ha_control
-  primary_lights_ha_control_enabled: >
-    {%- set direct_control = false %}
-    {%- if (primary_lights_ha_control == true) or (action == 'on') or (action == 'off') %}
-      {%- set direct_control = true %}
-    {%- endif %}
-    {{ direct_control }}
   primary_lights_max_brightness: !input primary_lights_max_brightness
   primary_lights_min_brightness: !input primary_lights_min_brightness
   primary_lights_dim_step_pct: !input primary_lights_dim_step_pct
-  primary_lights_adaptive_lighting_switches: >
-    {%- set data = namespace(switches=[]) %}
-    {%- for light in primary_lights %}
-      {%- set data.switches = data.switches + ['switch.adaptive_lighting_' + light.replace('light.','')] %}
-    {%- endfor %}
-    {{ data.switches }}
+  primary_lights_adaptive_lighting_switches: !input primary_adaptive_lighting_switches
   secondary_lights: !input secondary_lights
   secondary_lights_state: >
     {%- set secondary_lights_state = 'off' %}
@@ -492,12 +481,7 @@ variables:
       {%- endif %}
     {%- endif %}
     {{ secondary_lights_state }}
-  secondary_lights_adaptive_lighting_switches: >
-    {%- set data = namespace(switches=[]) %}
-    {%- for light in secondary_lights %}
-      {%- set data.switches = data.switches + ['switch.adaptive_lighting_' + light.replace('light.','')] %}
-    {%- endfor %}
-    {{ data.switches }}
+  secondary_lights_adaptive_lighting_switches: !input secondary_adaptive_lighting_switches
   secondary_lights_switch_led_color: Cyan
   secondary_lights_switch_led_effect_on: Medium Rising
   secondary_lights_switch_led_effect_off: Medium Falling
@@ -561,8 +545,7 @@ action:
     data:
       name: "MQTT Payload"
       message: "{{ trigger.payload_json }}"
-  - alias: "turn on lights"
-    choose:
+  - choose:
       - alias: action is in mqtt_on_actions or scene_helper updated
         conditions:
           - condition: template
@@ -588,34 +571,31 @@ action:
               - alias: Turn on lights
                 action: adaptive_lighting.apply
                 data:
-                  entity_id: >-
-                    "{{ primary_lights_adaptive_lighting_switches }}"
+                  entity_id: "{{ primary_lights_adaptive_lighting_switches.entity_id }}"
                   turn_on_lights: true
-              - alias: Reset Adaptive Lighting
-                sequence:
-                  - action: switch.turn_off
-                    target:
-                      entity_id: >-
-                        "{{ primary_lights_adaptive_lighting_switches }}"
-                  - action: switch.turn_on
-                    target:
-                      entity_id: >-
-                        "{{ primary_lights_adaptive_lighting_switches }}"
+              - action: switch.turn_off
+                target:
+                  "{{ primary_lights_adaptive_lighting_switches }}"
+              - action: switch.turn_on
+                target:
+                  "{{ primary_lights_adaptive_lighting_switches }}"
       - alias: action is in mqtt_off_actions
         conditions: "{{ action in mqtt_off_actions_list }}"
         sequence:
+          - action: switch.turn_off
+            target:
+              "{{ primary_lights_adaptive_lighting_switches }}"
           - action: light.turn_off
             target:
               entity_id:
                 "{{ primary_lights }}"
-          - action: switch.turn_off
-            target:
-              entity_id: >-
-                "{{ primary_lights_adaptive_lighting_switches }}"
+          - wait_template: >
+              {% set lights_off = primary_lights | map('states') | select('equalto', 'off') | list %}
+              {{ lights_off | length == primary_lights | length }}
+            timeout: '00:00:10'
           - action: switch.turn_on
             target:
-              entity_id: >-
-                "{{ primary_lights_adaptive_lighting_switches }}"
+              "{{ primary_lights_adaptive_lighting_switches }}"
       - alias: action is in mqtt_dim_up_actions
         conditions: "{{ action in mqtt_dim_up_actions_list }}"
         sequence:
@@ -626,7 +606,7 @@ action:
                 "{{ primary_lights }}"
           - if:
               - condition: template
-                value_template: "{{ primary_lights_ha_control_enabled == true }}"
+                value_template: "{{ primary_lights_ha_control == true }}"
             then:
               - action: light.turn_on
                 target:
@@ -644,7 +624,7 @@ action:
                 "{{ primary_lights }}"
           - if:
               - condition: template
-                value_template: "{{ primary_lights_ha_control_enabled == true }}"
+                value_template: "{{ primary_lights_ha_control == true }}"
             then:
               - action: light.turn_on
                 target:
@@ -662,7 +642,7 @@ action:
                 "{{ primary_lights }}"
           - if:
               - condition: template
-                value_template: "{{ primary_lights_ha_control_enabled == true }}"
+                value_template: "{{ primary_lights_ha_control == true }}"
             then:
               - action: light.turn_on
                 target:
@@ -680,7 +660,7 @@ action:
                 "{{ primary_lights }}"
           - if:
               - condition: template
-                value_template: "{{ primary_lights_ha_control_enabled == true }}"
+                value_template: "{{ primary_lights_ha_control == true }}"
             then:
               - action: light.turn_on
                 target:
@@ -690,65 +670,63 @@ action:
                   brightness_pct: "{{ primary_lights_min_brightness_list }}"
       - alias: action is in mqtt_secondary_on_actions
         conditions: "{{ action in mqtt_secondary_on_actions_list and ((secondary_lights is defined) and (secondary_lights | length > 0)) }}"
-        parallel:
-          - if: "{{ (inovelli_blue_led_script) is defined and (inovelli_blue_led_script | length > 0)}}"
-            then:
-              - action: "{{ inovelli_blue_led_script }}"
-                data:
-                  led: All
-                  color: "{{ secondary_lights_switch_led_color }}"
-                  level: "{{ secondary_lights_switch_led_level }}"
-                  effect: "{{ secondary_lights_switch_led_effect_on }}"
-                  duration: "{{ secondary_lights_switch_led_duration }}"
-                  target:
-                    entity_id:
-                      "{{ switch_entities }}"
-          - sequence:
-              - alias: Turn on lights
-                action: adaptive_lighting.apply
-                data:
-                  entity_id: >-
-                    "{{ secondary_lights_adaptive_lighting_switches }}"
-                  turn_on_lights: true
-              - alias: Reset Adaptive Lighting
-                sequence:
+        sequence:
+          - parallel:
+              - if: "{{ (inovelli_blue_led_script) is defined and (inovelli_blue_led_script | length > 0)}}"
+                then:
+                  - action: "{{ inovelli_blue_led_script }}"
+                    data:
+                      led: All
+                      color: "{{ secondary_lights_switch_led_color }}"
+                      level: "{{ secondary_lights_switch_led_level }}"
+                      effect: "{{ secondary_lights_switch_led_effect_on }}"
+                      duration: "{{ secondary_lights_switch_led_duration }}"
+                      target:
+                        entity_id:
+                          "{{ switch_entities }}"
+              - sequence:
+                  - alias: Turn on lights
+                    action: adaptive_lighting.apply
+                    data:
+                      entity_id: "{{ secondary_lights_adaptive_lighting_switches.entity_id }}"
+                      turn_on_lights: true
                   - action: switch.turn_off
                     target:
-                      entity_id: >-
                         "{{ secondary_lights_adaptive_lighting_switches }}"
                   - action: switch.turn_on
                     target:
-                      entity_id: >-
                         "{{ secondary_lights_adaptive_lighting_switches }}"
       - alias: action is in mqtt_secondary_off_actions
         conditions: "{{ action in mqtt_secondary_off_actions_list and ((secondary_lights is defined) and (secondary_lights | length > 0)) }}"
-        parallel:
-          - if: "{{ (inovelli_blue_led_script) is defined and (inovelli_blue_led_script | length > 0)}}"
-            then:
-              - action: "{{ inovelli_blue_led_script }}"
-                data:
-                  led: All
-                  color: "{{ secondary_lights_switch_led_color }}"
-                  level: "{{ secondary_lights_switch_led_level }}"
-                  effect: "{{ secondary_lights_switch_led_effect_off }}"
-                  duration: "{{ secondary_lights_switch_led_duration }}"
-                  target:
-                    entity_id:
-                      "{{ switch_entities }}"
-          - sequence:
-              - action: light.turn_off
-                target:
-                  entity_id:
-                    "{{ secondary_lights }}"
-              # TODO: IF ADAPTIVE LIGHTING SWITCHES ARE SPECIFIED, RESET
-              - action: switch.turn_off
-                target:
-                  entity_id:
-                    "{{ secondary_lights_adaptive_lighting_switches }}"
-              - action: switch.turn_on
-                target:
-                  entity_id: >-
-                    "{{ secondary_lights_adaptive_lighting_switches }}"
+        sequence:
+          - parallel:
+              - if: "{{ (inovelli_blue_led_script) is defined and (inovelli_blue_led_script | length > 0)}}"
+                then:
+                  - action: "{{ inovelli_blue_led_script }}"
+                    data:
+                      led: All
+                      color: "{{ secondary_lights_switch_led_color }}"
+                      level: "{{ secondary_lights_switch_led_level }}"
+                      effect: "{{ secondary_lights_switch_led_effect_off }}"
+                      duration: "{{ secondary_lights_switch_led_duration }}"
+                      target:
+                        entity_id:
+                          "{{ switch_entities }}"
+              - sequence:
+                  - action: switch.turn_off
+                    target:
+                      "{{ secondary_lights_adaptive_lighting_switches }}"
+                  - action: light.turn_off
+                    target:
+                      entity_id:
+                        "{{ secondary_lights }}"
+                  - wait_template: >
+                      {% set lights_off = secondary_lights | map('states') | select('equalto', 'off') | list %}
+                      {{ lights_off | length == secondary_lights | length }}
+                    timeout: '00:00:10'
+                  - action: switch.turn_on
+                    target:
+                      "{{ secondary_lights_adaptive_lighting_switches }}"
       - alias: helpers updated
         conditions: "{{ trigger.id == 'mode_helper_updated' }}"
         sequence:
