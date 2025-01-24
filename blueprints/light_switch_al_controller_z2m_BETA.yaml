@@ -11,7 +11,7 @@ blueprint:
     
     Version history:
       * 4.0.0.beta-1 - HA-140
-          - General refactoring
+          - Lots of refactoring
           - Significantly reworked inputs
           - Clean up old comments
           - Clean up unnecessary code
@@ -303,6 +303,7 @@ blueprint:
           name: Sleep Modes
           description: |
             Optional. List of modes during which Adaptive Lighting's sleep mode is activated. Non-functional unless `mode_helper` is set.
+            
             Default:
 
             ```
@@ -472,15 +473,6 @@ variables:
   primary_lights_dim_step_pct: !input primary_lights_dim_step_pct
   primary_lights_adaptive_lighting_switches: !input primary_adaptive_lighting_switches
   secondary_lights: !input secondary_lights
-  secondary_lights_state: >
-    {%- set secondary_lights_state = 'off' %}
-    {%- if secondary_lights is defined and (secondary_lights | length > 0) %}
-      {%- set secondary_lights_states = expand(secondary_lights) | selectattr('state') | map(attribute='state') | join(',') %}
-      {%- if 'on' in secondary_lights_states %}
-        {%- set secondary_lights_state = 'on' %}
-      {%- endif %}
-    {%- endif %}
-    {{ secondary_lights_state }}
   secondary_lights_adaptive_lighting_switches: !input secondary_adaptive_lighting_switches
   secondary_lights_switch_led_color: Cyan
   secondary_lights_switch_led_effect_on: Medium Rising
@@ -489,21 +481,21 @@ variables:
   secondary_lights_switch_led_level: 12
   phase_helper: !input phase_helper
   color_phases: !input color_phases
-  current_phase: >
-    {%- set current_phase = '' %}
-    {%- if phase_helper is defined and (phase_helper | length > 0) %}
-      {%- set current_phase = states(phase_helper) | lower %}
-    {%- endif %}
-    {{ current_phase }}
-  enable_rgb_color: >
-    {%- set enable_color = false %}
-    {%- if color_phases is defined and (color_phases | length > 0) %}
-      {%- set color_phases = color_phases.split(",") | map('trim') | map('lower') | list %}
-      {%- if current_phase in color_phases %}
-        {%- set enable_color = true %}
-      {%- endif %}
-    {%- endif %}
-    {{ enable_color }}
+  # current_phase: >
+  #   {%- set current_phase = '' %}
+  #   {%- if phase_helper is defined and (phase_helper | length > 0) %}
+  #     {%- set current_phase = states(phase_helper) | lower %}
+  #   {%- endif %}
+  #   {{ current_phase }}
+  # enable_rgb_color: >
+  #   {%- set enable_color = false %}
+  #   {%- if color_phases is defined and (color_phases | length > 0) %}
+  #     {%- set color_phases = color_phases.split(",") | map('trim') | map('lower') | list %}
+  #     {%- if current_phase in color_phases %}
+  #       {%- set enable_color = true %}
+  #     {%- endif %}
+  #   {%- endif %}
+  #   {{ enable_color }}
   mode_helper: !input mode_helper
   sleep_modes: !input sleep_modes
   sleep_mode_additional_lights: !input sleep_mode_additional_lights
@@ -513,12 +505,12 @@ variables:
       {%- set data.switches = data.switches + ['switch.adaptive_lighting_sleep_mode_' + light.replace('light.','')] %}
     {%- endfor %}
     {{ data.switches }}
-  current_sleep_mode: >
-    {%- set current_mode = '' %}
-    {%- if mode_helper is defined and (mode_helper | length > 0) %}
-      {%- set current_mode = states(mode_helper) | lower %}
-    {%- endif %}
-    {{ current_mode }}
+  # current_sleep_mode: >
+  #   {%- set current_mode = '' %}
+  #   {%- if mode_helper is defined and (mode_helper | length > 0) %}
+  #     {%- set current_mode = states(mode_helper) | lower %}
+  #   {%- endif %}
+  #   {{ current_mode }}
   enable_sleep: >
     {%- set enable_sleep = false %}
     {%- if sleep_modes is defined and (sleep_modes | length > 0) %}
@@ -540,11 +532,11 @@ variables:
     {{ scene }}
 condition: []
 action:
-  - alias: "Debug: Log MQTT Payload"
-    action: logbook.log
-    data:
-      name: "MQTT Payload"
-      message: "{{ trigger.payload_json }}"
+  # - alias: "Debug: Log MQTT Payload"
+  #   action: logbook.log
+  #   data:
+  #     name: "MQTT Payload"
+  #     message: "{{ trigger.payload_json }}"
   - choose:
       - alias: action is in mqtt_on_actions or scene_helper updated
         conditions:

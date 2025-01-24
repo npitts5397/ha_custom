@@ -78,3 +78,13 @@ primary_lights_ha_control_enabled: >
     {%- set direct_control = true %}
   {%- endif %}
   {{ direct_control }}
+
+secondary_lights_state: >
+  {%- set secondary_lights_state = 'off' %}
+  {%- if secondary_lights is defined and (secondary_lights | length > 0) %}
+    {%- set secondary_lights_states = expand(secondary_lights) | selectattr('state') | map(attribute='state') | join(',') %}
+    {%- if 'on' in secondary_lights_states %}
+      {%- set secondary_lights_state = 'on' %}
+    {%- endif %}
+  {%- endif %}
+  {{ secondary_lights_state }}
