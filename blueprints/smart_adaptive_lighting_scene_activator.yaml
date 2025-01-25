@@ -502,8 +502,9 @@ variables:
   sleep_mode_additional_lights: !input sleep_mode_additional_lights
   # TODO: `sleep_mode_switches` should be updated to use the adaptive_lighting switch entities instead of lights to generate sleep switch list
   sleep_mode_switches: >
-    {%- set data = namespace(switches=[]) %}
-    {%- for light in (primary_lights.entity_id + sleep_mode_additional_lights) %} 
+    {%- set data = namespace(switches=) %}
+    {%- set lights_list = primary_lights.entity_id if primary_lights.entity_id is sequence else [primary_lights.entity_id] %}
+    {%- for light in lights_list + sleep_mode_additional_lights %} 
       {%- set data.switches = data.switches + ['switch.adaptive_lighting_sleep_mode_' + light.replace('light.','')] %}
     {%- endfor %}
     {{ data.switches }}
