@@ -238,22 +238,8 @@ blueprint:
           selector:
             text:
               multiline: true
-    inovelli:
-      name: Inovelli
-      icon: mdi:lamps
-      description: Optional. Specific 
-      collapsed: true
-      input:
-        inovelli_blue_led_script:
-          name: Inovelli Blue LED (Zigbee2MQTT) script
-          description: Optional. Script for setting notifications on Inovelli Blue Series LED bar. Script available here- `https://github.com/zanix/home-assistant-blueprints`
-          default: {}
-          selector:
-            entity:
-              filter:
-                domain: script
     adaptive_lighting:
-      name: Adaptive Lighting Options
+      name: Adaptive Lighting
       icon: mdi:lamps
       description: Options related to Adaptive Lighting lighting integration.
       collapsed: true
@@ -310,6 +296,20 @@ blueprint:
           selector:
             text:
               multiline: true
+    inovelli:
+      name: Inovelli
+      icon: mdi:lamps
+      description: Optional. Specific 
+      collapsed: true
+      input:
+        inovelli_blue_led_script:
+          name: Inovelli Blue LED (Zigbee2MQTT) script
+          description: Optional. Script for setting notifications on Inovelli Blue Series LED bar. Script available here- `https://github.com/zanix/home-assistant-blueprints`
+          default: {}
+          selector:
+            entity:
+              filter:
+                domain: script
     home_assistant:
       name: Home Assistant Configuration
       icon: mdi:home-assistant
