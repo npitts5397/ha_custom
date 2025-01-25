@@ -39,7 +39,7 @@ blueprint:
           selector:
             boolean:
         primary_lights_max_brightness:
-          name: Primary Lights Maximum Brightness
+          name: Primary Lights Maximum Brightness (HA Control)
           description: Optional. Set to maximum desired brightess level for primary lights when `mqtt_max_brightness_actions` is specified. Only applies when `primary_lights_ha_control` is `true`. Defaults to 100%.
           default: 100
           selector:
@@ -49,7 +49,7 @@ blueprint:
               step: 1
               unit_of_measurement: '%'
         primary_lights_min_brightness:
-          name: Primary Lights Minimum Brightness
+          name: Primary Lights Minimum Brightness (HA Control)
           description: Optional. Set to minimum desired brightess level for primary lights when `mqtt_min_brightness_actions` is specified. Only applies when `primary_lights_ha_control` is `true`. Defaults to 35%. 
           default: 35
           selector:
@@ -59,7 +59,7 @@ blueprint:
               step: 1
               unit_of_measurement: '%'
         primary_lights_dim_step_pct:
-          name: Primary Lights Dim Step Percentage
+          name: Primary Lights Dim Step Percentage (HA Control)
           description: Optional. Set to the percentage to dim the primary lights when `mqtt_dim_up_actions` or `mqtt_dim_down_actions` is specified. Only applies when `primary_lights_ha_control` is `true`. Defaults to 5%.
           default: 5
           selector:
@@ -330,7 +330,7 @@ blueprint:
                 domain: input_select
         mode_helper:
           name: Mode helper
-          description: Optional. Helper that holds values related to room mode. Valid helper values are `Awake`, `Nap`, and `Sleep` (case insensitive). Non-functional unless `sleep_modes` is set.
+          description: Optional. Helper that holds values related to room mode. Non-functional unless `sleep_modes` is set.
           default: {}
           selector:
             entity:
@@ -338,7 +338,7 @@ blueprint:
                 domain: input_select
         sleep_mode_additional_lights:
           name: Additional sleep mode lights
-          description: Optional. Lights in addition to primary lights for which sleep mode is activated. Lights must be Adaptive Lighting enabled.
+          description: Optional. Lights in addition to primary lights for which sleep mode is activated. Note- secondary lights are not included by default.
           default: []
           selector:
             entity:
@@ -417,6 +417,10 @@ trigger:
     id: phase_helper_updated
     trigger: state
     entity_id: !input phase_helper
+  - alias: automations_reloaded
+    id: automations_reloaded
+    platform: event
+    event_type: automation_reloaded
 variables:
   action: >
     {%- set action = '' -%}
@@ -481,42 +485,42 @@ variables:
   secondary_lights_switch_led_level: 12
   phase_helper: !input phase_helper
   color_phases: !input color_phases
-  # current_phase: >
-  #   {%- set current_phase = '' %}
-  #   {%- if phase_helper is defined and (phase_helper | length > 0) %}
-  #     {%- set current_phase = states(phase_helper) | lower %}
-  #   {%- endif %}
-  #   {{ current_phase }}
-  # enable_rgb_color: >
-  #   {%- set enable_color = false %}
-  #   {%- if color_phases is defined and (color_phases | length > 0) %}
-  #     {%- set color_phases = color_phases.split(",") | map('trim') | map('lower') | list %}
-  #     {%- if current_phase in color_phases %}
-  #       {%- set enable_color = true %}
-  #     {%- endif %}
-  #   {%- endif %}
-  #   {{ enable_color }}
+  color_phases_list: "{{ color_phases.strip().split('\n') }}"
+  current_phase: >
+    {%- set current_phase = '' %}
+    {%- if phase_helper is defined and (phase_helper | length > 0) %}
+      {%- set current_phase = states(phase_helper) | lower %}
+    {%- endif %}
+    {{ current_phase }}
+  enable_rgb_color: >
+    {%- set enable_color = false %}
+    {%- if color_phases is defined and (color_phases | length > 0) %}
+      {%- if current_phase in color_phases_list %}
+        {%- set enable_color = true %}
+      {%- endif %}
+    {%- endif %}
+    {{ enable_color }}
   mode_helper: !input mode_helper
   sleep_modes: !input sleep_modes
+  sleep_modes_list: "{{ (sleep_modes.strip() | lower).split('\n') }}"
   sleep_mode_additional_lights: !input sleep_mode_additional_lights
-  # BELOW: should secondary lights be added? I don't think so...but maybe? Concern over ceiling fan lights in middle of the night.
+  # TODO: `sleep_mode_switches` should be updated to use the adaptive_lighting switch entities instead of lights to generate sleep switch list
   sleep_mode_switches: >
     {%- set data = namespace(switches=[]) %}
     {%- for light in (primary_lights.entity_id + sleep_mode_additional_lights) %} 
       {%- set data.switches = data.switches + ['switch.adaptive_lighting_sleep_mode_' + light.replace('light.','')] %}
     {%- endfor %}
     {{ data.switches }}
-  # current_sleep_mode: >
-  #   {%- set current_mode = '' %}
-  #   {%- if mode_helper is defined and (mode_helper | length > 0) %}
-  #     {%- set current_mode = states(mode_helper) | lower %}
-  #   {%- endif %}
-  #   {{ current_mode }}
+  current_mode: >
+    {%- set current_mode = '' %}
+    {%- if mode_helper is defined and (mode_helper | length > 0) %}
+      {%- set current_mode = states(mode_helper) | lower %}
+    {%- endif %}
+    {{ current_mode }}
   enable_sleep: >
     {%- set enable_sleep = false %}
     {%- if sleep_modes is defined and (sleep_modes | length > 0) %}
-      {%- set sleep_modes = sleep_modes.split(",") | map('trim') | map('lower') | list %}
-      {%- if current_sleep_mode in sleep_modes %}
+      {%- if current_mode in sleep_modes_list %}
         {%- set enable_sleep = true %}
       {%- endif %}
     {%- endif %}
@@ -714,7 +718,8 @@ action:
                   - action: switch.turn_on
                     target:
                       "{{ secondary_lights_adaptive_lighting_switches }}"
-      - alias: helpers updated
+      # TODO: The following two should be combined. automations_reloaded needs to run for both.
+      - alias: mode_helper updated
         conditions: "{{ trigger.id == 'mode_helper_updated' }}"
         sequence:
           - choose:
@@ -729,18 +734,11 @@ action:
                 target:
                   entity_id:
                     "{{ sleep_mode_switches }}"
-      # UPDATE ADAPTIVE LIGHTING SWITCH CONFIGURATION 
-      #  "Passive switch updates"
-      #  * Also trigger on reload? Need to make sure correct conf is applied to !env_var 
-      #    Adaptive Lighting switch, but changes here are not persistent.
-      #  * Consider consolidating all switch updates here, include phase, room mode, and sleep helpers.
-      # - conditions: "{{ trigger.id == 'phase_helper_updated' }}"
-      #   sequence: 
-              # - repeat:
-              #     for_each: "{{ primary_lights_adaptive_lighting_switches }}"
-              #     sequence:
-              #       - action: adaptive_lighting.change_switch_settings
-              #         data:
-              #           use_defaults: configuration
-              #           entity_id: "{{ repeat.item }}"
-              #           prefer_rgb_color: "{{ enable_rgb_color }}"
+      - alias: phase_helper updated or automations reloaded
+        conditions: "{{ trigger.id == 'phase_helper_updated' or trigger.id == 'automations_reloaded' }}"
+        sequence:
+          - action: adaptive_lighting.change_switch_settings
+            data:
+              use_defaults: configuration
+              entity_id: "{{ primary_lights_adaptive_lighting_switches.entity_id }}"
+              prefer_rgb_color: "{{ enable_rgb_color }}"
