@@ -10,11 +10,7 @@ blueprint:
     bound to smart bulb groups.
     
     Version history:
-      * 4.0.0.beta-1 - HA-140
-          - Lots of refactoring
-          - Significantly reworked inputs
-          - Clean up old comments
-          - Clean up unnecessary code
+      * 4.0.0 - HA-140 - Lots of refactoring, rework inputs, and squash some outstanding bugs.
       * 3.0.0 - HA-95 - General refactoring, bugfixes, and feature enhancements
       * 2.0.0 - HA-82 - Subscribe to switch MQTT topics instead of relying on HA entity state changes.
       * 1.0.0 - HA-82 - Initial version.
@@ -485,7 +481,7 @@ variables:
   secondary_lights_switch_led_level: 12
   phase_helper: !input phase_helper
   color_phases: !input color_phases
-  color_phases_list: "{{ color_phases.strip().split('\n') }}"
+  color_phases_list: "{{ (color_phases.strip() | lower).split('\n') }}"
   current_phase: >
     {%- set current_phase = '' %}
     {%- if phase_helper is defined and (phase_helper | length > 0) %}
@@ -718,10 +714,14 @@ action:
                   - action: switch.turn_on
                     target:
                       "{{ secondary_lights_adaptive_lighting_switches }}"
-      # TODO: The following two should be combined. automations_reloaded needs to run for both.
-      - alias: mode_helper updated
-        conditions: "{{ trigger.id == 'mode_helper_updated' }}"
+      - alias: mode_helper_updated or phase_helper updated or automations reloaded
+        conditions: "{{ trigger.id in ['mode_helper_updated', 'phase_helper_updated', 'automations_reloaded'] }}"
         sequence:
+          - action: adaptive_lighting.change_switch_settings
+            data:
+              use_defaults: configuration
+              entity_id: "{{ primary_lights_adaptive_lighting_switches.entity_id }}"
+              prefer_rgb_color: "{{ enable_rgb_color }}"
           - choose:
               - conditions: "{{ enable_sleep == true }}"
                 sequence:
@@ -734,11 +734,3 @@ action:
                 target:
                   entity_id:
                     "{{ sleep_mode_switches }}"
-      - alias: phase_helper updated or automations reloaded
-        conditions: "{{ trigger.id == 'phase_helper_updated' or trigger.id == 'automations_reloaded' }}"
-        sequence:
-          - action: adaptive_lighting.change_switch_settings
-            data:
-              use_defaults: configuration
-              entity_id: "{{ primary_lights_adaptive_lighting_switches.entity_id }}"
-              prefer_rgb_color: "{{ enable_rgb_color }}"
