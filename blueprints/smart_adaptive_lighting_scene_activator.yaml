@@ -719,6 +719,9 @@ action:
         sequence:
           - action: adaptive_lighting.change_switch_settings
             data:
+              # only sets primary color. This is desired _except_ where secondary lighys are truly secondary (e.g., Guest Ceiling fan)
+              # I think an additional input will be necessary to make the distinction
+              # `secondary_switch_follows_primary_switch_settings`
               use_defaults: configuration
               entity_id: "{{ primary_lights_adaptive_lighting_switches.entity_id }}"
               prefer_rgb_color: "{{ enable_rgb_color }}"
