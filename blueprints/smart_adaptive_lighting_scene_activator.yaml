@@ -734,13 +734,17 @@ action:
               use_defaults: configuration
               entity_id: "{{ primary_lights_adaptive_lighting_switches.entity_id }}"
               prefer_rgb_color: "{{ enable_rgb_color }}"
-          - action: adaptive_lighting.change_switch_settings
-            data:
+          - if: 
+              - condition: template
+                value_template: "{{ secondary_lights.entity_id is defined and (secondary_lights | length > 0) }}"
+            then:
               # this will set color mode for secondary lights, but is redundant if secondary lights have
               # their own SALSA automation.
-              use_defaults: configuration
-              entity_id: "{{ secondary_lights_adaptive_lighting_switches.entity_id }}"
-              prefer_rgb_color: "{{ enable_rgb_color }}"
+              - action: adaptive_lighting.change_switch_settings
+                data:
+                  use_defaults: configuration
+                  entity_id: "{{ secondary_lights_adaptive_lighting_switches.entity_id }}"
+                  prefer_rgb_color: "{{ enable_rgb_color }}"
           - choose:
               - conditions: "{{ enable_sleep == true }}"
                 sequence:
