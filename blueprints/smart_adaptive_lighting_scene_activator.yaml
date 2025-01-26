@@ -577,6 +577,11 @@ action:
       - alias: action is in mqtt_off_actions
         conditions: "{{ action in mqtt_off_actions_list }}"
         sequence:
+          - action: adaptive_lighting.set_manual_control
+            data:
+              manual_control: true
+              lights:
+                "{{ primary_lights.entity_id }}"
           - action: switch.turn_off
             target:
               "{{ primary_lights_adaptive_lighting_switches }}"
