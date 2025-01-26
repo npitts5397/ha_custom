@@ -270,12 +270,10 @@ blueprint:
             Default:
 
             ```
-            Morning
             Bedtime
             Night
             ```
           default: |
-            Morning
             Bedtime
             Night
           selector:
