@@ -2,7 +2,7 @@ blueprint:
   name: Apply State via Label on Input Select Update
   domain: automation
   author: Nathaniel Pitts
-  source_url: 
+  source_url: https://github.com/npitts5397/ha_custom/blob/main/blueprints/apply_native_light_effects_on_scene_activation.yaml
   homeassistant:
     min_version: 2024.8.0
   description: |
@@ -14,346 +14,55 @@ blueprint:
       * 1.0.0 - HA-141 - Initial version.
   input:
     trigger_entities:
-      name: Primary Light Selection
-      icon: mdi:select
-      description: Options related to selecting primary lights.
+      name: Trigger Entities
+      icon: mdi:form-select
+      description: Entities with string data for triggering this automation.
       collapsed: false
       input:
         input_select_entity:
-          name: Primary Lights
-          description: Required. The primary lights to control.
-          selector:
-            target:
-              entity:
-                domain: light
-        primary_lights_ha_control:
-          name: Primary Lights HA Control
-          description: Optional. Set to `true` when Home Assistant should control the selected lights via `light_on` and `light_off` actions. This should be `false` when lights and switches are bound (Zigbee) or associated (ZWave) directly. Defaults to `false`.
-          default: false
-          selector:
-            boolean:
-        primary_lights_max_brightness:
-          name: Primary Lights Maximum Brightness (HA Control)
-          description: Optional. Set to maximum desired brightess level for primary lights when `mqtt_max_brightness_actions` is specified. Only applies when `primary_lights_ha_control` is `true`. Defaults to 100%.
-          default: 100
-          selector:
-            number:
-              min: 0
-              max: 100
-              step: 1
-              unit_of_measurement: '%'
-        primary_lights_min_brightness:
-          name: Primary Lights Minimum Brightness (HA Control)
-          description: Optional. Set to minimum desired brightess level for primary lights when `mqtt_min_brightness_actions` is specified. Only applies when `primary_lights_ha_control` is `true`. Defaults to 35%. 
-          default: 35
-          selector:
-            number:
-              min: 0
-              max: 100
-              step: 1
-              unit_of_measurement: '%'
-        primary_lights_dim_step_pct:
-          name: Primary Lights Dim Step Percentage (HA Control)
-          description: Optional. Set to the percentage to dim the primary lights when `mqtt_dim_up_actions` or `mqtt_dim_down_actions` is specified. Only applies when `primary_lights_ha_control` is `true`. Defaults to 5%.
-          default: 5
-          selector:
-            number:
-              min: 1
-              max: 100
-              step: 1
-              unit_of_measurement: '%'
-    seconary_lights:
-      name: Secondary Light Selection
-      icon: mdi:lamps
-      description: Options related to selecting secondary lights.
-      collapsed: true
-      input:
-        secondary_lights:
-          name: Secondary lights
-          description: Optional. The secondary lights to toggle with interactions. HA control of secondary lights is assumed.
-          default: [] 
-          selector:
-            target:
-              entity:
-                domain: light
-    mqtt:
-      name: MQTT Configuration
-      icon: mdi:queue-first-in-last-out
-      description: Subscribed MQTT topics and supported action values which trigger the automation.
-      collapsed: true
-      input:
-        mqtt_topic_0:
-          name: Topic 0
-          description: Optional. MQTT topic to monitor for action messages. Typically, monitored topic is constructed as follows- `{base_topic}/{friendly device name}`, e.g., `zigbee2mqtt/Office switch`.
-          default: 'none'
-          selector:
-            text:
-        mqtt_topic_1:
-          name: Topic 1
-          description: Optional. MQTT topic to monitor for action messages. Typically, monitored topic is constructed as follows- `{base_topic}/{friendly device name}`, e.g., `zigbee2mqtt/Office switch`.
-          default: 'none'
-          selector:
-            text:
-        mqtt_topic_2:
-          name: Topic 2
-          description: Optional. MQTT topic to monitor for action messages. Typically, monitored topic is constructed as follows- `{base_topic}/{friendly device name}`, e.g., `zigbee2mqtt/Office switch`.
-          default: 'none'
-          selector:
-            text:
-        mqtt_topic_3:
-          name: Topic 3
-          description: Optional. MQTT topic to monitor for action messages. Typically, monitored topic is constructed as follows- `{base_topic}/{friendly device name}`, e.g., `zigbee2mqtt/Office switch`.
-          default: 'none'
-          selector:
-            text:
-        mqtt_topic_4:
-          name: Topic 4
-          description: Optional. MQTT topic to monitor for action messages. Typically, monitored topic is constructed as follows- `{base_topic}/{friendly device name}`, e.g., `zigbee2mqtt/Office switch`.
-          default: 'none'
-          selector:
-            text:
-        mqtt_on_actions:
-          name: MQTT 'on' Actions
-          description: |
-            Optional. List of supported action values from MQTT topics for turning on lights. Each supported action should be on its own line.
-
-            Default:
-
-            ```
-            up_single
-            on
-            ```
-          default: |
-            up_single
-            on
-          selector:
-            text:
-              multiline: true
-        mqtt_off_actions:
-          name: MQTT 'off' Actions
-          description: |
-            Optional. List of supported action values from MQTT topics for turning off lights. Each supported action should be on its own line.
-            
-            Default:
-
-            ```
-            down_single
-            off
-            ```
-          default: |
-            down_single
-            off
-          selector:
-            text:
-              multiline: true
-        mqtt_dim_up_actions:
-          name: MQTT 'dim up' Actions
-          description: |
-            Optional. List of supported action values from MQTT topics. Only used when `Primary Lights HA Control` is enabled. Each supported action should be on its own line.
-            
-            Default:
-
-            ```
-            up_hold
-            ```
-          default: |
-            up_hold
-          selector:
-            text:
-              multiline: true
-        mqtt_dim_down_actions:
-          name: MQTT 'dim down' Actions
-          description: |
-            Optional. List of supported action values from MQTT topics. Only used when `Primary Lights HA Control` is enabled. Each supported action should be on its own line.
-            
-            Default:
-
-            ```
-            down_hold
-            ```
-          default: |
-            down_hold
-          selector:
-            text:
-              multiline: true
-        mqtt_min_brightness_actions:
-          name: MQTT 'min brightness' Actions
-          description: |
-            Optional. List of supported action values from MQTT topics. Only used when `Primary Lights HA Control` is enabled. Each supported action should be on its own line.
-            
-            Default:
-
-            ```
-            down_double
-            ```
-          default: |
-            down_double
-          selector:
-            text:
-              multiline: true
-        mqtt_max_brightness_actions:
-          name: MQTT 'max brightness' Actions
-          description: |
-            Optional. List of supported action values from MQTT topics. Only used when `Primary Lights HA Control` is enabled. Each supported action should be on its own line.
-            
-            Default:
-
-            ```
-            up_double
-            ```
-          default: |
-            up_double
-          selector:
-            text:
-              multiline: true
-        mqtt_secondary_on_actions:
-          name: MQTT secondary 'on' Actions
-          description: |
-            Optional. List of supported action values from MQTT topics. Each supported action should be on its own line.
-            
-            Default:
-
-            ```
-            up_triple
-            ```
-          default: |
-            up_triple
-          selector:
-            text:
-              multiline: true
-        mqtt_secondary_off_actions:
-          name: MQTT secondary 'off' Actions
-          description: |
-            Optional. List of supported action values from MQTT topics. Each supported action should be on its own line.
-            
-            Default:
-
-            ```
-            down_triple
-            ```
-          default: |
-            down_triple
-          selector:
-            text:
-              multiline: true
-    adaptive_lighting:
-      name: Adaptive Lighting
-      icon: mdi:lamps
-      description: Options related to Adaptive Lighting lighting integration.
-      collapsed: true
-      input:
-        primary_adaptive_lighting_switches:
-          name: Primary Adaptive Lighting Switches
-          description: Optional. Adaptive Lighting switches for primary lights. Specifying switches here ensures Adaptive Lighting is reset appropriately. When choosing the primary Adaptive Lighting switch, not ones controlling brightness, color, or sleep.
-          default: 
-          selector:
-            target:
-              entity:
-                domain: switch
-                integration: adaptive_lighting
-        secondary_adaptive_lighting_switches:
-          name: Secondary Adaptive Lighting Switches
-          description: Optional. Adaptive Lighting switches for secondary lights. Specifying switches here ensures Adaptive Lighting is reset appropriately. When choosing the secondary Adaptive Lighting switch, not ones controlling brightness, color, or sleep.
-          default: 
-          selector:
-            target:
-              entity:
-                domain: switch
-                integration: adaptive_lighting
-        color_phases:
-          name: Color Phases
-          description: |
-            Optional. List of phases during which Adaptive Lighting's color mode is activated. Non-functional unless `phase_helper` is set.
-
-            Default:
-
-            ```
-            Bedtime
-            Night
-            ```
-          default: |
-            Bedtime
-            Night
-          selector:
-            text:
-              multiline: true
-        sleep_modes:
-          name: Sleep Modes
-          description: |
-            Optional. List of modes during which Adaptive Lighting's sleep mode is activated. Non-functional unless `mode_helper` is set.
-            
-            Default:
-
-            ```
-            Sleep
-            ```
-          default: |
-            Sleep
-          selector:
-            text:
-              multiline: true
-    inovelli:
-      name: Inovelli
-      icon: mdi:lamps
-      description: Optional. Specific 
-      collapsed: true
-      input:
-        inovelli_blue_led_script:
-          name: Inovelli Blue LED (Zigbee2MQTT) script
-          description: Optional. Script for setting notifications on Inovelli Blue Series LED bar. Script available here- `https://github.com/zanix/home-assistant-blueprints`
-          default: {}
+          name: Input Select Entity
+          description: (Required) The input select entity whose options related to desired state.
           selector:
             entity:
-              filter:
-                domain: script
-    home_assistant:
-      name: Home Assistant Configuration
-      icon: mdi:home-assistant
-      description: Helpers and configuration that maintain external values used to determine configuration.
-      collapsed: true
+              domain: input_select
+    option_to_label_config:
+      name: Options to Labels
+      icon: mdi:label-multiple
+      description: Inputs related to option to label mappings.
+      collapsed: false
       input:
-        phase_helper:
-          name: Phase helper
-          description: Optional. Helper that has current phase. Non-functional unless `color_phases` is set.
-          default: {}
+        option_label_map:
+          name: Option to Label Map
+          description: >
+            (Required) Define a mapping of input_select options to two labels.
+            Example:
+            {"Option A": {"on": "label_1", "label_2"], "Option B": ["label_3", "label_4"]}
           selector:
-            entity:
-              filter:
-                domain: input_select
-        mode_helper:
-          name: Mode helper
-          description: Optional. Helper that holds values related to room mode. Non-functional unless `sleep_modes` is set.
-          default: {}
-          selector:
-            entity:
-              filter:
-                domain: input_select
-        sleep_mode_additional_lights:
-          name: Additional sleep mode lights
-          description: Optional. Lights in addition to primary lights for which sleep mode is activated. Note- secondary lights are not included by default.
-          default: []
-          selector:
-            entity:
-              filter:
-                domain: light
-              multiple: true
-        scene_helper:
-          name: Scene Helper
-          description: Optional. Helper that holds a scene to set. When helper has no value, lights behave normally, but when helper has a value, that scene is applied instead. Scene helper updates apply immediately if light is on.
-          default: {}
-          selector:
-            entity:
-              filter:
-                domain: input_text
+            text:
+              multiline: true
+variables:
+  input_select_entity: !input input_select_entity
+  option_label_map: !input option_label_map
+  selected_option: "{{ states(input_select_entity) }}"
+  label_map: "{{ option_label_map }}"
+  labels: "{{ label_map[selected_option] }}"
 mode: restart
 trigger:
-  - alias: mqtt_trigger_0 action
-    id: mqtt_trigger_0
-    trigger: mqtt
-    topic: !input mqtt_topic_0
-    payload: action
-    value_template: |
-      {%- set action = value_json.get('action') -%}
-      {%- if action is not none and ((action | string) != '') -%}
-        {{ 'action' }}
-      {%- endif -%}
+  - alias: Input select updated
+    id: input_select_updated
+    platform: state
+    entity_id: !input input_select_entity
+action:
+  - choose:
+      - conditions:
+          - condition: template
+            value_template: "{{ selected_option in label_map }}"
+        sequence:
+          - action: notify.persistent_notification
+            data:
+              message: "{{ label_map[selected_option] }}"
+    default:
+      - action: notify.persistent_notification
+        data:
+          message: "No labels defined for {{ selected_option }}"
+
