@@ -36,16 +36,31 @@ blueprint:
           description: >
             (Required) Define a mapping of input_select options to two labels.
             Example:
-            {"Option A": {"on": "label_1", "label_2"], "Option B": ["label_3", "label_4"]}
+            {"Option A": {"on": "label_1", "off": "label_2"}, "Option B": {"on": "label_3", "off": "label_4"}}
           selector:
             text:
               multiline: true
+          default: >
+            {
+              "OptionA": {
+                "on": "optiona_on_label_name",
+                "off": "optiona_off_label_name"
+              },
+              "OptionB": {
+                "on": "optionb_on_label_name",
+                "off": "optionb_off_label_name"
+              },
+              "OptionC": {
+                "on": "optionc_on_label_name",
+                "off": "optionc_off_label_name"
+              }
+            }
 variables:
   input_select_entity: !input input_select_entity
   option_label_map: !input option_label_map
   selected_option: "{{ states(input_select_entity) }}"
-  label_map: "{{ option_label_map }}"
-  labels: "{{ label_map[selected_option] }}"
+  label_map: "{{ option_label_map | from_json(default={}) }}"
+  labels: "{{ label_map.get(selected_option) }}"
 mode: restart
 trigger:
   - alias: Input select updated
@@ -55,14 +70,19 @@ trigger:
 action:
   - choose:
       - conditions:
-          - condition: template
-            value_template: "{{ selected_option in label_map }}"
+          - "{{ labels is not none }}"
         sequence:
-          - action: notify.persistent_notification
-            data:
-              message: "{{ label_map[selected_option] }}"
+          - if: "{{ 'on' in labels }}"
+            then:
+              - service: homeassistant.turn_on
+                target:
+                  label_id: "{{ labels['on'] }}"
+          - if: "{{ 'off' in labels }}"
+            then:
+              - service: homeassistant.turn_off
+                target:
+                  label_id: "{{ labels['off'] }}"
     default:
-      - action: notify.persistent_notification
+      - service: persistent_notification.create
         data:
           message: "No labels defined for {{ selected_option }}"
-
