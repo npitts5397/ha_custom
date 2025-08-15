@@ -1,4 +1,10 @@
-# ha_custom
+# IMPORTANT NOTE
+
+This repository's content is being migrated to a better structured repository. For any missing blueprints,
+please see https://github.com/npitts5397/home-assistant-config.
+
+## ha_custom
+
 This repository holds various blueprints and scripts for Home Assistant written by N Pitts.
 
 ## Archived
