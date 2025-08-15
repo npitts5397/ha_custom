@@ -1,8 +1,8 @@
 blueprint:
-  name: Dynamic State Mode Selector
+  name: Apply State by Option Change
   domain: automation
   author: Nathaniel Pitts
-  source_url: https://github.com/npitts5397/ha_custom/blob/main/blueprints/dynamic_state_mode_selector.yaml
+  source_url: https://github.com/npitts5397/ha_custom/blob/main/blueprints/apply_state_by_option_change.yaml
   homeassistant:
     min_version: 2024.8.0
   description: |
