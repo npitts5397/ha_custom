@@ -219,24 +219,24 @@ variables:
   _notification_tag:    "{{ _appliance_name | lower | trim | replace(' ', '_') }}_notification"
   _done_message:        !input done_message
 
-  # ── State bucket lists ─────────────────────────────────────────────────
+  # ── State bucket lists (all lowercased for case-insensitive matching) ────
   warming_states: >
     {% set raw = _states_warming | default('') %}
-    {{ raw.split(',') | map('trim') | reject('eq','') | list if raw else [] }}
+    {{ raw.split(',') | map('trim') | map('lower') | reject('eq','') | list if raw else [] }}
   running_states: >
-    {{ (_states_running | default('Running')).split(',') | map('trim') | list }}
+    {{ (_states_running | default('Running')).split(',') | map('trim') | map('lower') | list }}
   cooling_states: >
     {% set raw = _states_cooling | default('') %}
-    {{ raw.split(',') | map('trim') | reject('eq','') | list if raw else [] }}
+    {{ raw.split(',') | map('trim') | map('lower') | reject('eq','') | list if raw else [] }}
   active_states: "{{ warming_states + running_states + cooling_states }}"
   interrupted_states: >
-    {{ (_states_interrupted | default('Paused, Stopped')).split(',') | map('trim') | list }}
+    {{ (_states_interrupted | default('Paused, Stopped')).split(',') | map('trim') | map('lower') | list }}
   complete_states: >
-    {{ (_states_complete | default('End, Finished, Complete')).split(',') | map('trim') | list }}
+    {{ (_states_complete | default('End, Finished, Complete')).split(',') | map('trim') | map('lower') | list }}
   off_states: >
-    {{ (_states_off | default('Off, Standby, Idle')).split(',') | map('trim') | list }}
+    {{ (_states_off | default('Off, Standby, Idle')).split(',') | map('trim') | map('lower') | list }}
 
-  current_status: "{{ states(_status_sensor) }}"
+  current_status: "{{ states(_status_sensor) | lower }}"
 
   # True only when the status sensor itself triggered; False for time-sensor updates
   status_changed: >
