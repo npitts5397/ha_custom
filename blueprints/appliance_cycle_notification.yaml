@@ -32,14 +32,6 @@ blueprint:
       selector:
         text:
 
-    notification_tag:
-      name: Notification Tag
-      description: >
-        Unique tag for this appliance's notification. Must be different per
-        instance. E.g. washer_notification, dryer_notification
-      selector:
-        text:
-
     # ── Sensors ────────────────────────────────────────────────────────────
     status_sensor:
       name: Status Sensor
@@ -109,7 +101,7 @@ blueprint:
         stable time estimate is available. Shows "Starting" in the notification.
         Leave blank if not applicable.
         E.g. initial, sensing, warmup
-      default: ""
+      default: "Warming"
       selector:
         text:
 
@@ -129,7 +121,7 @@ blueprint:
         Notification stays active but shows "Cooling" text.
         Leave blank if not applicable.
         E.g. cooling, cool_down
-      default: ""
+      default: "Cooling"
       selector:
         text:
 
@@ -233,7 +225,7 @@ variables:
   _notify_targets:      !input notify_targets
   _appliance_name:      !input appliance_name
   _appliance_icon:      !input appliance_icon
-  _notification_tag:    !input notification_tag
+  _notification_tag:    "{{ _appliance_name | lower | trim | replace(' ', '_') }}_notification"
   _done_message:        !input done_message
 
   # ── State bucket lists ─────────────────────────────────────────────────
