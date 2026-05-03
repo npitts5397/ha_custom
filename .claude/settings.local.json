@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(wsl bash *)",
+      "WebFetch(domain:companion.home-assistant.io)"
+    ]
+  }
+}
