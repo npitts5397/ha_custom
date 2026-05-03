@@ -186,7 +186,8 @@ blueprint:
         text:
 
 # ── Automation ─────────────────────────────────────────────────────────────
-mode: restart
+mode: queued
+max: 2
 max_exceeded: silent
 
 trigger:
