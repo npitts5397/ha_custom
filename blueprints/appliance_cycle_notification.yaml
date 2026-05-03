@@ -23,15 +23,6 @@ blueprint:
       selector:
         text:
 
-    appliance_icon:
-      name: Appliance Icon
-      description: >
-        MDI icon for the notification.
-        E.g. mdi:washing-machine, mdi:tumble-dryer, mdi:dishwasher
-      default: "mdi:washing-machine"
-      selector:
-        text:
-
     # ── Sensors ────────────────────────────────────────────────────────────
     status_sensor:
       name: Status Sensor
@@ -181,20 +172,6 @@ blueprint:
       selector:
         text:
 
-    # ── Startup delay ──────────────────────────────────────────────────────
-    startup_delay_seconds:
-      name: Startup Delay (seconds)
-      description: >
-        How long to wait after the appliance starts before sending the first
-        notification. Allows the appliance to sense load size and settle on
-        an accurate time estimate. Default: 120 (2 minutes).
-      default: 120
-      selector:
-        number:
-          min: 0
-          max: 300
-          unit_of_measurement: seconds
-
 # ── Automation ─────────────────────────────────────────────────────────────
 mode: restart
 max_exceeded: silent
@@ -224,7 +201,6 @@ variables:
   _states_off:          !input states_off
   _notify_targets:      !input notify_targets
   _appliance_name:      !input appliance_name
-  _appliance_icon:      !input appliance_icon
   _notification_tag:    "{{ _appliance_name | lower | trim | replace(' ', '_') }}_notification"
   _done_message:        !input done_message
 
@@ -365,7 +341,6 @@ action:
                   message: "{{ progress_label }}"
                   data:
                     tag: "{{ _notification_tag }}"
-                    notification_icon: "{{ _appliance_icon }}"
                     sticky: true
                     persistent: true
                     live_update: true
@@ -381,9 +356,6 @@ action:
             {{ status_changed
                and current_status in running_states }}
       sequence:
-        - delay:
-            seconds: !input startup_delay_seconds
-        # Abort if appliance stopped during the delay
         - condition: template
           value_template: "{{ states(_status_sensor) in running_states }}"
         - repeat:
@@ -395,7 +367,6 @@ action:
                   message: "{{ progress_label }}"
                   data:
                     tag: "{{ _notification_tag }}"
-                    notification_icon: "{{ _appliance_icon }}"
                     sticky: true
                     persistent: true
                     live_update: true
@@ -420,7 +391,6 @@ action:
                   message: "{{ progress_label }}"
                   data:
                     tag: "{{ _notification_tag }}"
-                    notification_icon: "{{ _appliance_icon }}"
                     sticky: true
                     persistent: true
                     live_update: true
@@ -446,7 +416,6 @@ action:
                   message: "{{ progress_label }}"
                   data:
                     tag: "{{ _notification_tag }}"
-                    notification_icon: "{{ _appliance_icon }}"
                     sticky: true
                     persistent: true
                     live_update: true
@@ -471,7 +440,6 @@ action:
                   message: "Cycle paused or interrupted."
                   data:
                     tag: "{{ _notification_tag }}"
-                    notification_icon: "{{ _appliance_icon }}"
                     sticky: true
                     persistent: true
                     live_update: true
@@ -492,7 +460,6 @@ action:
                   message: "{{ _done_message }}"
                   data:
                     tag: "{{ _notification_tag }}"
-                    notification_icon: "{{ _appliance_icon }}"
                     sticky: false
                     importance: high
 
