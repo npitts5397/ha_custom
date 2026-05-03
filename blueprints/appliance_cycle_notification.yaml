@@ -1,0 +1,521 @@
+blueprint:
+  name: "Appliance Cycle Live Notification"
+  description: >
+    Sends a persistent Android Live Update notification while a cycle-based
+    appliance is running (washer, dryer, dishwasher, smoker, etc.).
+    Uses a chronometer (local phone countdown) for the live time display.
+    Re-sends on state transitions and re-estimates (delta > 1 min) to keep
+    the progress bar current. Shows an interrupted state if the cycle is
+    paused. Fires a dismissable "done" notification on completion.
+    Silently dismisses on power off.
+
+    Sensor type reference:
+      LG Washer/Dryer — remaining_time: timestamp, total_time: minutes
+
+    All time values are normalized to minutes internally regardless of type.
+  domain: automation
+  input:
+
+    # ── Appliance identity ─────────────────────────────────────────────────
+    appliance_name:
+      name: Appliance Name
+      description: "Display name used in notifications. E.g. Washer, Dryer, Dishwasher"
+      selector:
+        text:
+
+    appliance_icon:
+      name: Appliance Icon
+      description: >
+        MDI icon for the notification.
+        E.g. mdi:washing-machine, mdi:tumble-dryer, mdi:dishwasher
+      default: "mdi:washing-machine"
+      selector:
+        text:
+
+    notification_tag:
+      name: Notification Tag
+      description: >
+        Unique tag for this appliance's notification. Must be different per
+        instance. E.g. washer_notification, dryer_notification
+      selector:
+        text:
+
+    # ── Sensors ────────────────────────────────────────────────────────────
+    status_sensor:
+      name: Status Sensor
+      description: "Sensor reporting the appliance's current cycle state."
+      selector:
+        entity:
+          domain: sensor
+
+    remaining_time_sensor:
+      name: Remaining Time Sensor (optional)
+      description: >
+        Sensor reporting time remaining in the cycle.
+        Leave blank if not available — progress bar will be omitted.
+      default: ""
+      selector:
+        entity:
+          domain: sensor
+
+    remaining_time_type:
+      name: Remaining Time Sensor Type
+      description: >
+        The data type reported by the remaining time sensor.
+          timestamp — ISO datetime of predicted cycle end (LG washer/dryer)
+          minutes   — integer minutes remaining
+          seconds   — integer seconds remaining (LG dishwasher)
+      default: "timestamp"
+      selector:
+        select:
+          options:
+            - label: "Timestamp (ISO datetime of cycle end)"
+              value: "timestamp"
+            - label: "Minutes (integer)"
+              value: "minutes"
+            - label: "Seconds (integer)"
+              value: "seconds"
+
+    total_time_sensor:
+      name: Total Time Sensor (optional)
+      description: >
+        Sensor reporting the total cycle duration.
+        Leave blank if not available — progress bar will be omitted.
+      default: ""
+      selector:
+        entity:
+          domain: sensor
+
+    total_time_type:
+      name: Total Time Sensor Type
+      description: >
+        The data type reported by the total time sensor.
+          minutes — integer minutes (LG washer/dryer, device_class: duration)
+          seconds — integer seconds (LG dishwasher)
+      default: "minutes"
+      selector:
+        select:
+          options:
+            - label: "Minutes (integer)"
+              value: "minutes"
+            - label: "Seconds (integer)"
+              value: "seconds"
+
+    # ── State buckets (comma-separated) ───────────────────────────────────
+    states_warming:
+      name: Warming / Startup States
+      description: >
+        Comma-separated status values for the initial startup phase before a
+        stable time estimate is available. Shows "Starting" in the notification.
+        Leave blank if not applicable.
+        E.g. initial, sensing, warmup
+      default: ""
+      selector:
+        text:
+
+    states_running:
+      name: Running States
+      description: >
+        Comma-separated status values meaning the appliance is actively running.
+        E.g. running, Running, Active, Washing, Drying
+      default: "Running"
+      selector:
+        text:
+
+    states_cooling:
+      name: Cooling / Wind-Down States
+      description: >
+        Comma-separated status values for any post-heat wind-down phase.
+        Notification stays active but shows "Cooling" text.
+        Leave blank if not applicable.
+        E.g. cooling, cool_down
+      default: ""
+      selector:
+        text:
+
+    states_interrupted:
+      name: Interrupted States
+      description: >
+        Comma-separated status values meaning the cycle is paused or
+        interrupted. Notification stays persistent.
+        E.g. Paused, Stopped, Door Open
+      default: "Paused, Stopped"
+      selector:
+        text:
+
+    states_complete:
+      name: Complete States
+      description: >
+        Comma-separated status values meaning the cycle has finished.
+        Triggers the done notification.
+        E.g. End, Finished, Complete, Done
+      default: "End, Finished, Complete"
+      selector:
+        text:
+
+    states_off:
+      name: Off States
+      description: >
+        Comma-separated status values meaning the appliance is off or idle.
+        Silently dismisses the notification.
+        E.g. Off, Standby, Idle
+      default: "Off, Standby, Idle"
+      selector:
+        text:
+
+    # ── Notification targets ───────────────────────────────────────────────
+    notify_targets:
+      name: Notify Targets
+      description: >
+        Comma-separated notify service names.
+        E.g. notify.mobile_app_pixel_fold, notify.mobile_app_pixel_8
+      selector:
+        text:
+
+    # ── Done notification ──────────────────────────────────────────────────
+    done_notification_enabled:
+      name: Enable Done Notification
+      description: >
+        Send a dismissable notification when the cycle completes.
+        Disable for appliances where a done alert isn't useful.
+      default: true
+      selector:
+        boolean:
+
+    done_message:
+      name: Done Notification Message
+      description: "Message body for the cycle complete notification."
+      default: "Cycle complete!"
+      selector:
+        text:
+
+    # ── Startup delay ──────────────────────────────────────────────────────
+    startup_delay_seconds:
+      name: Startup Delay (seconds)
+      description: >
+        How long to wait after the appliance starts before sending the first
+        notification. Allows the appliance to sense load size and settle on
+        an accurate time estimate. Default: 120 (2 minutes).
+      default: 120
+      selector:
+        number:
+          min: 0
+          max: 300
+          unit_of_measurement: seconds
+
+# ── Automation ─────────────────────────────────────────────────────────────
+mode: restart
+max_exceeded: silent
+
+trigger:
+  - platform: state
+    entity_id: !input status_sensor
+    id: status_changed
+
+  - platform: state
+    entity_id: !input remaining_time_sensor
+    id: time_updated
+
+variables:
+  # Capture blueprint inputs for use in templates
+  _remaining_sensor:    !input remaining_time_sensor
+  _remaining_type:      !input remaining_time_type
+  _total_sensor:        !input total_time_sensor
+  _total_type:          !input total_time_type
+  _done_enabled:        !input done_notification_enabled
+  _status_sensor:       !input status_sensor
+  _states_warming:      !input states_warming
+  _states_running:      !input states_running
+  _states_cooling:      !input states_cooling
+  _states_interrupted:  !input states_interrupted
+  _states_complete:     !input states_complete
+  _states_off:          !input states_off
+  _notify_targets:      !input notify_targets
+  _appliance_name:      !input appliance_name
+  _appliance_icon:      !input appliance_icon
+  _notification_tag:    !input notification_tag
+  _done_message:        !input done_message
+
+  # ── State bucket lists ─────────────────────────────────────────────────
+  warming_states: >
+    {% set raw = _states_warming | default('') %}
+    {{ raw.split(',') | map('trim') | reject('eq','') | list if raw else [] }}
+  running_states: >
+    {{ (_states_running | default('Running')).split(',') | map('trim') | list }}
+  cooling_states: >
+    {% set raw = _states_cooling | default('') %}
+    {{ raw.split(',') | map('trim') | reject('eq','') | list if raw else [] }}
+  active_states: "{{ warming_states + running_states + cooling_states }}"
+  interrupted_states: >
+    {{ (_states_interrupted | default('Paused, Stopped')).split(',') | map('trim') | list }}
+  complete_states: >
+    {{ (_states_complete | default('End, Finished, Complete')).split(',') | map('trim') | list }}
+  off_states: >
+    {{ (_states_off | default('Off, Standby, Idle')).split(',') | map('trim') | list }}
+
+  current_status: "{{ states(_status_sensor) }}"
+
+  # True only when the status sensor itself triggered; False for time-sensor updates
+  status_changed: >
+    {{ 'to_state' in trigger
+       and trigger.to_state is not none
+       and trigger.to_state.entity_id == _status_sensor }}
+
+  # ── Normalize remaining time → minutes ────────────────────────────────
+  # timestamp: derive minutes from (end_ts - now)
+  # minutes:   use directly
+  # seconds:   divide by 60
+  remaining_min: >
+    {% if _remaining_sensor == '' %}
+      {{ -1 }}
+    {% else %}
+      {% set s = states(_remaining_sensor) %}
+      {% if s in ['unknown', 'unavailable', ''] %}
+        {{ -1 }}
+      {% elif _remaining_type == 'timestamp' %}
+        {{ [((as_timestamp(s) - as_timestamp(now())) / 60) | int, 0] | max }}
+      {% elif _remaining_type == 'seconds' %}
+        {{ [(s | int / 60) | int, 0] | max }}
+      {% else %}
+        {{ s | int(-1) }}
+      {% endif %}
+    {% endif %}
+
+  # ── Normalize total time → minutes ────────────────────────────────────
+  total_min: >
+    {% if _total_sensor == '' %}
+      {{ 0 }}
+    {% else %}
+      {% set s = states(_total_sensor) %}
+      {% if s in ['unknown', 'unavailable', ''] %}
+        {{ 0 }}
+      {% elif _total_type == 'seconds' %}
+        {{ [(s | int / 60) | int, 0] | max }}
+      {% else %}
+        {{ s | int(0) }}
+      {% endif %}
+    {% endif %}
+
+  has_time_data: "{{ remaining_min >= 0 and total_min > 0 }}"
+
+  # ── Human-readable label for the current active phase ─────────────────
+  status_label: >
+    {% if current_status in warming_states %}Starting
+    {% elif current_status in cooling_states %}Cooling
+    {% else %}Running
+    {% endif %}
+
+  # ── Progress percentage ────────────────────────────────────────────────
+  progress_pct: >
+    {% if has_time_data %}
+      {{ [[(((total_min - remaining_min) / total_min) * 100) | int, 0] | max, 100] | min }}
+    {% else %}
+      0
+    {% endif %}
+
+  # ── Re-estimate delta → minutes ───────────────────────────────────────
+  # Compare old vs new sensor value, normalised to minutes, for > 1 min check
+  time_delta: >
+    {% if not status_changed and 'from_state' in trigger and trigger.from_state is not none %}
+      {% set from_s = trigger.from_state.state %}
+      {% set to_s   = trigger.to_state.state %}
+      {% if from_s in ['unknown','unavailable'] or to_s in ['unknown','unavailable'] %}
+        {{ 0 }}
+      {% elif _remaining_type == 'timestamp' %}
+        {{ ((as_timestamp(to_s) - as_timestamp(from_s)) / 60) | abs | int }}
+      {% elif _remaining_type == 'seconds' %}
+        {{ ((to_s | int - from_s | int) / 60) | abs | int }}
+      {% else %}
+        {{ (to_s | int(0) - from_s | int(0)) | abs }}
+      {% endif %}
+    {% else %}
+      0
+    {% endif %}
+
+  # ── Notification content ───────────────────────────────────────────────
+  notify_list: "{{ _notify_targets.split(',') | map('trim') | list }}"
+
+  progress_label: >
+    {% if has_time_data %}
+      {{ remaining_min }} min remaining · {{ progress_pct }}%
+    {% else %}
+      Cycle in progress…
+    {% endif %}
+
+  # ── Chronometer end epoch (absolute Unix seconds) ─────────────────────────
+  # timestamp type: use the sensor value directly (already an end epoch)
+  # minutes/seconds: compute end epoch from remaining_min + now
+  chrono_when: >
+    {% if not has_time_data %}
+      {{ 0 }}
+    {% elif _remaining_type == 'timestamp' %}
+      {{ as_timestamp(states(_remaining_sensor)) | int }}
+    {% else %}
+      {{ (as_timestamp(now()) + remaining_min * 60) | int }}
+    {% endif %}
+
+action:
+  - choose:
+
+    # ── CASE 1: Entered warming / startup state ────────────────────────────
+    - conditions:
+        - condition: template
+          value_template: >
+            {{ status_changed
+               and current_status in warming_states }}
+      sequence:
+        - repeat:
+            for_each: "{{ notify_list }}"
+            sequence:
+              - action: "{{ repeat.item }}"
+                data:
+                  title: "{{ _appliance_name }} Starting"
+                  message: "{{ progress_label }}"
+                  data:
+                    tag: "{{ _notification_tag }}"
+                    notification_icon: "{{ _appliance_icon }}"
+                    sticky: true
+                    persistent: true
+                    live_update: true
+                    progress: "{{ progress_pct | int }}"
+                    progress_max: 100
+                    chronometer: "{{ has_time_data }}"
+                    when: "{{ chrono_when }}"
+
+    # ── CASE 2: Appliance just entered a running state ─────────────────────
+    - conditions:
+        - condition: template
+          value_template: >
+            {{ status_changed
+               and current_status in running_states }}
+      sequence:
+        - delay:
+            seconds: !input startup_delay_seconds
+        # Abort if appliance stopped during the delay
+        - condition: template
+          value_template: "{{ states(_status_sensor) in running_states }}"
+        - repeat:
+            for_each: "{{ notify_list }}"
+            sequence:
+              - action: "{{ repeat.item }}"
+                data:
+                  title: "{{ _appliance_name }} Running"
+                  message: "{{ progress_label }}"
+                  data:
+                    tag: "{{ _notification_tag }}"
+                    notification_icon: "{{ _appliance_icon }}"
+                    sticky: true
+                    persistent: true
+                    live_update: true
+                    progress: "{{ progress_pct | int }}"
+                    progress_max: 100
+                    chronometer: "{{ has_time_data }}"
+                    when: "{{ chrono_when }}"
+
+    # ── CASE 3: Entered cooling / wind-down state ──────────────────────────
+    - conditions:
+        - condition: template
+          value_template: >
+            {{ status_changed
+               and current_status in cooling_states }}
+      sequence:
+        - repeat:
+            for_each: "{{ notify_list }}"
+            sequence:
+              - action: "{{ repeat.item }}"
+                data:
+                  title: "{{ _appliance_name }} Cooling"
+                  message: "{{ progress_label }}"
+                  data:
+                    tag: "{{ _notification_tag }}"
+                    notification_icon: "{{ _appliance_icon }}"
+                    sticky: true
+                    persistent: true
+                    live_update: true
+                    progress: "{{ progress_pct | int }}"
+                    progress_max: 100
+                    chronometer: "{{ has_time_data }}"
+                    when: "{{ chrono_when }}"
+
+    # ── CASE 4: Re-estimate detected (delta > 1 min) ───────────────────────
+    - conditions:
+        - condition: template
+          value_template: >
+            {{ not status_changed
+               and current_status in active_states
+               and time_delta > 1 }}
+      sequence:
+        - repeat:
+            for_each: "{{ notify_list }}"
+            sequence:
+              - action: "{{ repeat.item }}"
+                data:
+                  title: "{{ _appliance_name }} {{ status_label }}"
+                  message: "{{ progress_label }}"
+                  data:
+                    tag: "{{ _notification_tag }}"
+                    notification_icon: "{{ _appliance_icon }}"
+                    sticky: true
+                    persistent: true
+                    live_update: true
+                    progress: "{{ progress_pct | int }}"
+                    progress_max: 100
+                    chronometer: "{{ has_time_data }}"
+                    when: "{{ chrono_when }}"
+
+    # ── CASE 5: Cycle interrupted / paused ────────────────────────────────
+    - conditions:
+        - condition: template
+          value_template: >
+            {{ status_changed
+               and current_status in interrupted_states }}
+      sequence:
+        - repeat:
+            for_each: "{{ notify_list }}"
+            sequence:
+              - action: "{{ repeat.item }}"
+                data:
+                  title: "{{ _appliance_name }} Interrupted"
+                  message: "Cycle paused or interrupted."
+                  data:
+                    tag: "{{ _notification_tag }}"
+                    notification_icon: "{{ _appliance_icon }}"
+                    sticky: true
+                    persistent: true
+                    live_update: true
+
+    # ── CASE 6: Cycle complete ─────────────────────────────────────────────
+    - conditions:
+        - condition: template
+          value_template: >
+            {{ status_changed
+               and current_status in complete_states and _done_enabled }}
+      sequence:
+        - repeat:
+            for_each: "{{ notify_list }}"
+            sequence:
+              - action: "{{ repeat.item }}"
+                data:
+                  title: "✅ {{ _appliance_name }} Done!"
+                  message: "{{ _done_message }}"
+                  data:
+                    tag: "{{ _notification_tag }}"
+                    notification_icon: "{{ _appliance_icon }}"
+                    sticky: false
+                    importance: high
+
+    # ── CASE 7: Power off — silent dismiss ────────────────────────────────
+    - conditions:
+        - condition: template
+          value_template: >
+            {{ status_changed
+               and current_status in off_states }}
+      sequence:
+        - repeat:
+            for_each: "{{ notify_list }}"
+            sequence:
+              - action: "{{ repeat.item }}"
+                data:
+                  message: clear_notification
+                  data:
+                    tag: "{{ _notification_tag }}"
