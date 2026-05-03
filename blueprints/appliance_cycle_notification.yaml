@@ -152,8 +152,21 @@ blueprint:
       description: >
         Comma-separated notify service names.
         E.g. notify.mobile_app_pixel_fold, notify.mobile_app_pixel_8
+      default: ""
       selector:
         text:
+
+    notify_targets_helper:
+      name: Notify Targets Helper (optional)
+      description: >
+        An input_text helper whose value is a comma-separated list of notify
+        service names. When set, overrides Notify Targets above — update the
+        helper once and all automations using it pick up the change.
+        E.g. input_text.family_notify_targets
+      default: ""
+      selector:
+        entity:
+          domain: input_text
 
     # ── Done notification ──────────────────────────────────────────────────
     done_notification_enabled:
@@ -200,6 +213,7 @@ variables:
   _states_complete:     !input states_complete
   _states_off:          !input states_off
   _notify_targets:      !input notify_targets
+  _notify_helper:       !input notify_targets_helper
   _appliance_name:      !input appliance_name
   _notification_tag:    "{{ _appliance_name | lower | trim | replace(' ', '_') }}_notification"
   _done_message:        !input done_message
@@ -301,7 +315,9 @@ variables:
     {% endif %}
 
   # ── Notification content ───────────────────────────────────────────────
-  notify_list: "{{ _notify_targets.split(',') | map('trim') | list }}"
+  notify_list: >
+    {% set raw = states(_notify_helper) if _notify_helper != '' else _notify_targets %}
+    {{ raw.split(',') | map('trim') | reject('eq', '') | list }}
 
   progress_label: >
     {% if has_time_data %}
