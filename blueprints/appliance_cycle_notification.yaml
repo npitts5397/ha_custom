@@ -289,7 +289,34 @@ variables:
       {% endif %}
     {% endif %}
 
-  has_time_data: "{{ remaining_min >= 0 and total_min > 0 }}"
+  has_remaining_data: "{{ remaining_min >= 0 }}"
+
+  # ── Chronometer end epoch (absolute Unix seconds) ─────────────────────────
+  # Moved before progress vars so derived-total calculation can reference it.
+  # timestamp type: use the sensor value directly (already an end epoch)
+  # minutes/seconds: compute end epoch from remaining_min + now
+  chrono_when: >
+    {% if not has_remaining_data %}
+      {{ 0 }}
+    {% elif _remaining_type == 'timestamp' %}
+      {{ as_timestamp(states(_remaining_sensor)) | int }}
+    {% else %}
+      {{ (as_timestamp(now()) + remaining_min * 60) | int }}
+    {% endif %}
+
+  # ── Derive total duration from cycle start when total_time_sensor absent ──
+  # status sensor's last_changed = moment the current state was entered (cycle start)
+  cycle_start_ts: "{{ as_timestamp(states[_status_sensor].last_changed) | int }}"
+  total_min_effective: >
+    {% if total_min > 0 %}
+      {{ total_min }}
+    {% elif has_remaining_data and chrono_when > 0 and cycle_start_ts > 0 %}
+      {{ ((chrono_when - cycle_start_ts) / 60) | int }}
+    {% else %}
+      0
+    {% endif %}
+
+  has_time_data: "{{ remaining_min >= 0 and total_min_effective > 0 }}"
 
   # ── Human-readable label for the current active phase ─────────────────
   status_label: >
@@ -301,7 +328,7 @@ variables:
   # ── Progress percentage ────────────────────────────────────────────────
   progress_pct: >
     {% if has_time_data %}
-      {{ [[(((total_min - remaining_min) / total_min) * 100) | int, 0] | max, 100] | min }}
+      {{ [[(((total_min_effective - remaining_min) / total_min_effective) * 100) | int, 0] | max, 100] | min }}
     {% else %}
       0
     {% endif %}
@@ -325,26 +352,14 @@ variables:
       0
     {% endif %}
 
-  # ── Chronometer end epoch (absolute Unix seconds) ─────────────────────────
-  # timestamp type: use the sensor value directly (already an end epoch)
-  # minutes/seconds: compute end epoch from remaining_min + now
-  chrono_when: >
-    {% if not has_time_data %}
-      {{ 0 }}
-    {% elif _remaining_type == 'timestamp' %}
-      {{ as_timestamp(states(_remaining_sensor)) | int }}
-    {% else %}
-      {{ (as_timestamp(now()) + remaining_min * 60) | int }}
-    {% endif %}
-
   # ── Notification content ───────────────────────────────────────────────
   notify_list: >
     {% set raw = states(_notify_helper) if _notify_helper != '' else _notify_targets %}
     {{ raw.split(',') | map('trim') | reject('eq', '') | list }}
 
   progress_label: >
-    {% if has_time_data %}
-      Done around {{ chrono_when | timestamp_custom('%I:%M %p') }} · {{ progress_pct }}%
+    {% if has_remaining_data %}
+      Done around {{ chrono_when | timestamp_custom('%I:%M %p') }}{% if has_time_data %} · {{ progress_pct }}%{% endif %}
     {% else %}
       Cycle in progress…
     {% endif %}
@@ -373,7 +388,7 @@ action:
                     live_update: true
                     progress: "{{ progress_pct | int }}"
                     progress_max: 100
-                    chronometer: "{{ has_time_data }}"
+                    chronometer: "{{ has_remaining_data }}"
                     when: "{{ chrono_when }}"
                     notification_icon: "{{ _notification_icon }}"
 
@@ -400,7 +415,7 @@ action:
                     live_update: true
                     progress: "{{ progress_pct | int }}"
                     progress_max: 100
-                    chronometer: "{{ has_time_data }}"
+                    chronometer: "{{ has_remaining_data }}"
                     when: "{{ chrono_when }}"
                     notification_icon: "{{ _notification_icon }}"
 
@@ -425,7 +440,7 @@ action:
                     live_update: true
                     progress: "{{ progress_pct | int }}"
                     progress_max: 100
-                    chronometer: "{{ has_time_data }}"
+                    chronometer: "{{ has_remaining_data }}"
                     when: "{{ chrono_when }}"
                     notification_icon: "{{ _notification_icon }}"
 
@@ -450,7 +465,7 @@ action:
                     live_update: true
                     progress: "{{ progress_pct | int }}"
                     progress_max: 100
-                    chronometer: "{{ has_time_data }}"
+                    chronometer: "{{ has_remaining_data }}"
                     when: "{{ chrono_when }}"
                     notification_icon: "{{ _notification_icon }}"
 
