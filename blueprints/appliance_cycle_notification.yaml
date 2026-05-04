@@ -185,6 +185,15 @@ blueprint:
       selector:
         text:
 
+    notification_icon:
+      name: Notification Icon (optional)
+      description: >
+        MDI icon shown on the notification. E.g. mdi:tumble-dryer, mdi:washing-machine
+        Leave blank to use the default Home Assistant icon.
+      default: ""
+      selector:
+        text:
+
 # ── Automation ─────────────────────────────────────────────────────────────
 mode: queued
 max: 2
@@ -218,6 +227,7 @@ variables:
   _appliance_name:      !input appliance_name
   _notification_tag:    "{{ _appliance_name | lower | trim | replace(' ', '_') }}_notification"
   _done_message:        !input done_message
+  _notification_icon:   !input notification_icon
 
   # ── State bucket lists (all lowercased for case-insensitive matching) ────
   warming_states: >
@@ -315,18 +325,6 @@ variables:
       0
     {% endif %}
 
-  # ── Notification content ───────────────────────────────────────────────
-  notify_list: >
-    {% set raw = states(_notify_helper) if _notify_helper != '' else _notify_targets %}
-    {{ raw.split(',') | map('trim') | reject('eq', '') | list }}
-
-  progress_label: >
-    {% if has_time_data %}
-      {{ remaining_min }} min remaining · {{ progress_pct }}%
-    {% else %}
-      Cycle in progress…
-    {% endif %}
-
   # ── Chronometer end epoch (absolute Unix seconds) ─────────────────────────
   # timestamp type: use the sensor value directly (already an end epoch)
   # minutes/seconds: compute end epoch from remaining_min + now
@@ -337,6 +335,18 @@ variables:
       {{ as_timestamp(states(_remaining_sensor)) | int }}
     {% else %}
       {{ (as_timestamp(now()) + remaining_min * 60) | int }}
+    {% endif %}
+
+  # ── Notification content ───────────────────────────────────────────────
+  notify_list: >
+    {% set raw = states(_notify_helper) if _notify_helper != '' else _notify_targets %}
+    {{ raw.split(',') | map('trim') | reject('eq', '') | list }}
+
+  progress_label: >
+    {% if has_time_data %}
+      Done around {{ chrono_when | timestamp_custom('%I:%M %p') }} · {{ progress_pct }}%
+    {% else %}
+      Cycle in progress…
     {% endif %}
 
 action:
@@ -365,6 +375,7 @@ action:
                     progress_max: 100
                     chronometer: "{{ has_time_data }}"
                     when: "{{ chrono_when }}"
+                    notification_icon: "{{ _notification_icon }}"
 
     # ── CASE 2: Appliance just entered a running state ─────────────────────
     - conditions:
@@ -391,6 +402,7 @@ action:
                     progress_max: 100
                     chronometer: "{{ has_time_data }}"
                     when: "{{ chrono_when }}"
+                    notification_icon: "{{ _notification_icon }}"
 
     # ── CASE 3: Entered cooling / wind-down state ──────────────────────────
     - conditions:
@@ -415,14 +427,14 @@ action:
                     progress_max: 100
                     chronometer: "{{ has_time_data }}"
                     when: "{{ chrono_when }}"
+                    notification_icon: "{{ _notification_icon }}"
 
-    # ── CASE 4: Re-estimate detected (delta > 1 min) ───────────────────────
+    # ── CASE 4: Time sensor updated while active (keep body current) ─────────
     - conditions:
         - condition: template
           value_template: >
             {{ not status_changed
-               and current_status in active_states
-               and time_delta > 1 }}
+               and current_status in active_states }}
       sequence:
         - repeat:
             for_each: "{{ notify_list }}"
@@ -440,6 +452,7 @@ action:
                     progress_max: 100
                     chronometer: "{{ has_time_data }}"
                     when: "{{ chrono_when }}"
+                    notification_icon: "{{ _notification_icon }}"
 
     # ── CASE 5: Cycle interrupted / paused ────────────────────────────────
     - conditions:
@@ -460,6 +473,7 @@ action:
                     sticky: true
                     persistent: true
                     live_update: true
+                    notification_icon: "{{ _notification_icon }}"
 
     # ── CASE 6: Cycle complete ─────────────────────────────────────────────
     - conditions:
@@ -479,6 +493,7 @@ action:
                     tag: "{{ _notification_tag }}"
                     sticky: false
                     importance: high
+                    notification_icon: "{{ _notification_icon }}"
 
     # ── CASE 7: Power off — silent dismiss ────────────────────────────────
     - conditions:
