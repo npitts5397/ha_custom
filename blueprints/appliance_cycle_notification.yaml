@@ -194,6 +194,16 @@ blueprint:
       selector:
         text:
 
+    notification_url:
+      name: Notification Navigation URL (optional)
+      description: >
+        URL or Lovelace path to navigate to when the notification is tapped.
+        E.g. /lovelace/laundry or https://example.com
+        Leave blank for default app-open behavior.
+      default: ""
+      selector:
+        text:
+
 # ── Automation ─────────────────────────────────────────────────────────────
 mode: queued
 max: 2
@@ -228,6 +238,7 @@ variables:
   _notification_tag:    "{{ _appliance_name | lower | trim | replace(' ', '_') }}_notification"
   _done_message:        !input done_message
   _notification_icon:   !input notification_icon
+  _notification_url:    !input notification_url
 
   # ── State bucket lists (all lowercased for case-insensitive matching) ────
   warming_states: >
@@ -386,11 +397,13 @@ action:
                     sticky: true
                     persistent: true
                     live_update: true
+                    importance: low
                     progress: "{{ progress_pct | int }}"
                     progress_max: 100
                     chronometer: "{{ has_remaining_data }}"
                     when: "{{ chrono_when }}"
                     notification_icon: "{{ _notification_icon }}"
+                    clickAction: "{{ _notification_url }}"
 
     # ── CASE 2: Appliance just entered a running state ─────────────────────
     - conditions:
@@ -413,11 +426,13 @@ action:
                     sticky: true
                     persistent: true
                     live_update: true
+                    importance: low
                     progress: "{{ progress_pct | int }}"
                     progress_max: 100
                     chronometer: "{{ has_remaining_data }}"
                     when: "{{ chrono_when }}"
                     notification_icon: "{{ _notification_icon }}"
+                    clickAction: "{{ _notification_url }}"
 
     # ── CASE 3: Entered cooling / wind-down state ──────────────────────────
     - conditions:
@@ -438,11 +453,13 @@ action:
                     sticky: true
                     persistent: true
                     live_update: true
+                    importance: low
                     progress: "{{ progress_pct | int }}"
                     progress_max: 100
                     chronometer: "{{ has_remaining_data }}"
                     when: "{{ chrono_when }}"
                     notification_icon: "{{ _notification_icon }}"
+                    clickAction: "{{ _notification_url }}"
 
     # ── CASE 4: Time sensor updated while active (keep body current) ─────────
     - conditions:
@@ -463,11 +480,13 @@ action:
                     sticky: true
                     persistent: true
                     live_update: true
+                    importance: low
                     progress: "{{ progress_pct | int }}"
                     progress_max: 100
                     chronometer: "{{ has_remaining_data }}"
                     when: "{{ chrono_when }}"
                     notification_icon: "{{ _notification_icon }}"
+                    clickAction: "{{ _notification_url }}"
 
     # ── CASE 5: Cycle interrupted / paused ────────────────────────────────
     - conditions:
@@ -488,7 +507,9 @@ action:
                     sticky: true
                     persistent: true
                     live_update: true
+                    importance: low
                     notification_icon: "{{ _notification_icon }}"
+                    clickAction: "{{ _notification_url }}"
 
     # ── CASE 6: Cycle complete ─────────────────────────────────────────────
     - conditions:
@@ -503,12 +524,13 @@ action:
               - action: "{{ repeat.item }}"
                 data:
                   title: "✅ {{ _appliance_name }} Done!"
-                  message: "{{ _done_message }}"
+                  message: !input done_message
                   data:
                     tag: "{{ _notification_tag }}"
                     sticky: false
-                    importance: high
+                    importance: low
                     notification_icon: "{{ _notification_icon }}"
+                    clickAction: "{{ _notification_url }}"
 
     # ── CASE 7: Power off — silent dismiss ────────────────────────────────
     - conditions:
