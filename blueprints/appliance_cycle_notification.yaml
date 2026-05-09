@@ -201,6 +201,26 @@ blueprint:
       selector:
         text:
 
+    progress_sensor:
+      name: Progress Sensor (optional)
+      description: >
+        Sensor whose value tracks cycle progress (e.g. battery level for EV
+        charging). Used to fill the progress bar when no remaining time sensor
+        is available. E.g. sensor.ymir_battery_level
+      default: ""
+      selector:
+        entity:
+
+    progress_max_sensor:
+      name: Progress Target Sensor (optional)
+      description: >
+        Sensor or number entity for the target/maximum value of the progress
+        sensor (e.g. charge limit). Leave blank to use 100.
+        E.g. number.ymir_charge_limit
+      default: ""
+      selector:
+        entity:
+
     status_debounce:
       name: Status Debounce
       description: >
@@ -251,6 +271,8 @@ variables:
   _done_message:        !input done_message
   _notification_icon:   !input notification_icon
   _notification_url:    !input notification_url
+  _progress_sensor:     !input progress_sensor
+  _progress_max_sensor: !input progress_max_sensor
 
   # ── State bucket lists (all lowercased for case-insensitive matching) ────
   warming_states: >
@@ -341,6 +363,19 @@ variables:
 
   has_time_data: "{{ remaining_min >= 0 and total_min_effective > 0 }}"
 
+  # ── Value-based progress (e.g. battery SoC vs charge limit) ───────────
+  has_ext_progress: >
+    {{ _progress_sensor != ''
+       and states(_progress_sensor) not in ('unknown', 'unavailable', '') }}
+  ext_progress_val: "{{ states(_progress_sensor) | float(0) if has_ext_progress else 0 }}"
+  ext_progress_max: >
+    {% if _progress_max_sensor != ''
+          and states(_progress_max_sensor) not in ('unknown', 'unavailable', '') %}
+      {{ states(_progress_max_sensor) | float(100) }}
+    {% else %}
+      100
+    {% endif %}
+
   # ── Human-readable label for the current active phase ─────────────────
   status_label: >
     {% if current_status in warming_states %}Starting
@@ -352,6 +387,8 @@ variables:
   progress_pct: >
     {% if has_time_data %}
       {{ [[(((total_min_effective - remaining_min) / total_min_effective) * 100) | int, 0] | max, 100] | min }}
+    {% elif has_ext_progress and ext_progress_max > 0 %}
+      {{ [(ext_progress_val / ext_progress_max * 100) | int, 100] | min }}
     {% else %}
       0
     {% endif %}
@@ -383,6 +420,8 @@ variables:
   progress_label: >
     {% if has_remaining_data %}
       Done around {{ chrono_when | timestamp_custom('%I:%M %p') }}{% if has_time_data %} · {{ progress_pct }}%{% endif %}
+    {% elif has_ext_progress %}
+      {{ ext_progress_val | int }}% → {{ ext_progress_max | int }}%
     {% else %}
       {{ _done_message.split()[0] }} in progress…
     {% endif %}
@@ -479,7 +518,7 @@ action:
           value_template: >
             {{ not status_changed
                and current_status in active_states
-               and _remaining_sensor != '' }}
+               and (_remaining_sensor != '' or _progress_sensor != '') }}
       sequence:
         - repeat:
             for_each: "{{ notify_list }}"
