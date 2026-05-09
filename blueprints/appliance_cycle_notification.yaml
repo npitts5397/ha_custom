@@ -39,7 +39,6 @@ blueprint:
       default: ""
       selector:
         entity:
-          domain: sensor
 
     remaining_time_type:
       name: Remaining Time Sensor Type
@@ -67,7 +66,6 @@ blueprint:
       default: ""
       selector:
         entity:
-          domain: sensor
 
     total_time_type:
       name: Total Time Sensor Type
@@ -166,7 +164,6 @@ blueprint:
       default: ""
       selector:
         entity:
-          domain: input_text
 
     # ── Done notification ──────────────────────────────────────────────────
     done_notification_enabled:
