@@ -204,6 +204,17 @@ blueprint:
       selector:
         text:
 
+    status_debounce:
+      name: Status Debounce
+      description: >
+        How long the status sensor must remain stable before the automation
+        fires. Increase to 5–10 seconds if your appliance briefly flickers
+        through intermediate states (e.g. Offline → Finished) after a cycle
+        completes. Set to 0 to disable debouncing (default).
+      default: "00:00:00"
+      selector:
+        duration:
+
 # ── Automation ─────────────────────────────────────────────────────────────
 mode: queued
 max: 2
@@ -213,6 +224,7 @@ trigger:
   - platform: state
     entity_id: !input status_sensor
     id: status_changed
+    for: !input status_debounce
 
   - platform: state
     entity_id: !input remaining_time_sensor
