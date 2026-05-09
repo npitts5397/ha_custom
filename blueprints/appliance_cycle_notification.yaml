@@ -448,7 +448,7 @@ action:
                     sticky: true
                     persistent: true
                     live_update: true
-                    importance: low
+                    importance: default
                     progress: "{{ progress_pct | int }}"
                     progress_max: 100
                     chronometer: "{{ has_remaining_data }}"
@@ -477,7 +477,7 @@ action:
                     sticky: true
                     persistent: true
                     live_update: true
-                    importance: low
+                    importance: default
                     progress: "{{ progress_pct | int }}"
                     progress_max: 100
                     chronometer: "{{ has_remaining_data }}"
@@ -505,6 +505,7 @@ action:
                     persistent: true
                     live_update: true
                     importance: low
+                    alert_once: true
                     progress: "{{ progress_pct | int }}"
                     progress_max: 100
                     chronometer: "{{ has_remaining_data }}"
@@ -533,6 +534,7 @@ action:
                     persistent: true
                     live_update: true
                     importance: low
+                    alert_once: true
                     progress: "{{ progress_pct | int }}"
                     progress_max: 100
                     chronometer: "{{ has_remaining_data }}"
@@ -559,7 +561,7 @@ action:
                     sticky: true
                     persistent: true
                     live_update: true
-                    importance: low
+                    importance: default
                     notification_icon: "{{ _notification_icon }}"
                     clickAction: "{{ _notification_url }}"
 
@@ -580,7 +582,7 @@ action:
                   data:
                     tag: "{{ _notification_tag }}"
                     sticky: false
-                    importance: low
+                    importance: default
                     notification_icon: "{{ _notification_icon }}"
                     clickAction: "{{ _notification_url }}"
 
