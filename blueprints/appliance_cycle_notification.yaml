@@ -384,7 +384,7 @@ variables:
     {% if has_remaining_data %}
       Done around {{ chrono_when | timestamp_custom('%I:%M %p') }}{% if has_time_data %} · {{ progress_pct }}%{% endif %}
     {% else %}
-      Cycle in progress…
+      {{ _done_message.split()[0] }} in progress…
     {% endif %}
 
 action:
@@ -402,7 +402,7 @@ action:
             sequence:
               - action: "{{ repeat.item }}"
                 data:
-                  title: "{{ _appliance_name }} Starting"
+                  title: "{{ _appliance_name }} {{ states(_status_sensor) | title }}"
                   message: "{{ progress_label }}"
                   data:
                     tag: "{{ _notification_tag }}"
@@ -431,7 +431,7 @@ action:
             sequence:
               - action: "{{ repeat.item }}"
                 data:
-                  title: "{{ _appliance_name }} Running"
+                  title: "{{ _appliance_name }} {{ states(_status_sensor) | title }}"
                   message: "{{ progress_label }}"
                   data:
                     tag: "{{ _notification_tag }}"
@@ -458,7 +458,7 @@ action:
             sequence:
               - action: "{{ repeat.item }}"
                 data:
-                  title: "{{ _appliance_name }} Cooling"
+                  title: "{{ _appliance_name }} {{ states(_status_sensor) | title }}"
                   message: "{{ progress_label }}"
                   data:
                     tag: "{{ _notification_tag }}"
@@ -486,7 +486,7 @@ action:
             sequence:
               - action: "{{ repeat.item }}"
                 data:
-                  title: "{{ _appliance_name }} {{ status_label }}"
+                  title: "{{ _appliance_name }} {{ states(_status_sensor) | title }}"
                   message: "{{ progress_label }}"
                   data:
                     tag: "{{ _notification_tag }}"
