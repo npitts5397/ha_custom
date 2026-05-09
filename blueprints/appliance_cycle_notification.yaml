@@ -220,17 +220,14 @@ mode: queued
 max: 2
 max_exceeded: silent
 
-trigger_variables:
-  _tv_remaining_sensor: !input remaining_time_sensor
-
 trigger:
   - platform: state
     entity_id: !input status_sensor
     id: status_changed
     for: !input status_debounce
 
-  - platform: state
-    entity_id: "{{ _tv_remaining_sensor if _tv_remaining_sensor else 'sensor.blueprint_time_sensor_disabled' }}"
+  - platform: time_pattern
+    minutes: "/1"
     id: time_updated
 
 variables:
@@ -481,7 +478,8 @@ action:
         - condition: template
           value_template: >
             {{ not status_changed
-               and current_status in active_states }}
+               and current_status in active_states
+               and _remaining_sensor != '' }}
       sequence:
         - repeat:
             for_each: "{{ notify_list }}"
