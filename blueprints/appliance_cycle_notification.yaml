@@ -220,6 +220,9 @@ mode: queued
 max: 2
 max_exceeded: silent
 
+trigger_variables:
+  _tv_remaining_sensor: !input remaining_time_sensor
+
 trigger:
   - platform: state
     entity_id: !input status_sensor
@@ -227,7 +230,7 @@ trigger:
     for: !input status_debounce
 
   - platform: state
-    entity_id: !input remaining_time_sensor
+    entity_id: "{{ _tv_remaining_sensor if _tv_remaining_sensor else 'sensor.blueprint_time_sensor_disabled' }}"
     id: time_updated
 
 variables:
