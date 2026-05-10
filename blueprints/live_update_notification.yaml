@@ -1,5 +1,5 @@
 blueprint:
-  name: "Appliance Cycle Live Notification"
+  name: "Live Update Notification"
   description: >
     Sends a persistent Android Live Update notification while a cycle-based
     appliance is running (washer, dryer, dishwasher, smoker, etc.).
