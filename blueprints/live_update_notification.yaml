@@ -201,6 +201,17 @@ blueprint:
       selector:
         text:
 
+    notification_image:
+      name: Notification Image (optional)
+      description: >
+        Image to attach to notifications. Accepts a camera entity
+        (camera.my_cam), an image entity (image.my_preview), or a direct URL.
+        Live update images are shown when first posted and may not refresh on
+        every update (Android limitation).
+      default: ""
+      selector:
+        text:
+
     progress_sensor:
       name: Progress Sensor (optional)
       description: >
@@ -271,8 +282,21 @@ variables:
   _done_message:        !input done_message
   _notification_icon:   !input notification_icon
   _notification_url:    !input notification_url
+  _notification_image:  !input notification_image
   _progress_sensor:     !input progress_sensor
   _progress_max_sensor: !input progress_max_sensor
+  _image_url: >
+    {% if _notification_image == '' %}
+      {{ '' }}
+    {% elif _notification_image.startswith('camera.') %}
+      {{ '/api/camera_proxy/' + _notification_image }}
+    {% elif _notification_image.startswith('image.') %}
+      {{ '/api/image_proxy/' + _notification_image }}
+    {% elif _notification_image.startswith('http') or _notification_image.startswith('/') %}
+      {{ _notification_image }}
+    {% else %}
+      {{ states(_notification_image) }}
+    {% endif %}
 
   # ── State bucket lists (all lowercased for case-insensitive matching) ────
   warming_states: >
@@ -455,6 +479,7 @@ action:
                     when: "{{ chrono_when }}"
                     notification_icon: "{{ _notification_icon }}"
                     clickAction: "{{ _notification_url }}"
+                    image: "{{ _image_url }}"
 
     # ── CASE 2: Appliance just entered a running state ─────────────────────
     - conditions:
@@ -484,6 +509,7 @@ action:
                     when: "{{ chrono_when }}"
                     notification_icon: "{{ _notification_icon }}"
                     clickAction: "{{ _notification_url }}"
+                    image: "{{ _image_url }}"
 
     # ── CASE 3: Entered cooling / wind-down state ──────────────────────────
     - conditions:
@@ -512,6 +538,7 @@ action:
                     when: "{{ chrono_when }}"
                     notification_icon: "{{ _notification_icon }}"
                     clickAction: "{{ _notification_url }}"
+                    image: "{{ _image_url }}"
 
     # ── CASE 4: Time sensor updated while active (keep body current) ─────────
     - conditions:
@@ -541,6 +568,7 @@ action:
                     when: "{{ chrono_when }}"
                     notification_icon: "{{ _notification_icon }}"
                     clickAction: "{{ _notification_url }}"
+                    image: "{{ _image_url }}"
 
     # ── CASE 5: Cycle interrupted / paused ────────────────────────────────
     - conditions:
@@ -564,6 +592,7 @@ action:
                     importance: default
                     notification_icon: "{{ _notification_icon }}"
                     clickAction: "{{ _notification_url }}"
+                    image: "{{ _image_url }}"
 
     # ── CASE 6: Cycle complete ─────────────────────────────────────────────
     - conditions:
@@ -585,6 +614,7 @@ action:
                     importance: default
                     notification_icon: "{{ _notification_icon }}"
                     clickAction: "{{ _notification_url }}"
+                    image: "{{ _image_url }}"
 
     # ── CASE 7: Power off — silent dismiss ────────────────────────────────
     - conditions:
