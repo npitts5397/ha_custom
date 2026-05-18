@@ -1,0 +1,45 @@
+apply_hue_effect_z2m_group:
+  alias: Apply Hue Native Effect to Z2M Group
+  description: >-
+    Applies a Hue native light effect to all individual member entities of a
+    Zigbee2MQTT group. Works around the Z2M limitation where Hue native effects
+    are silently ignored when targeted at a group entity — instead reads
+    group_entities and dispatches directly to each member.
+  sequence:
+    - action: light.turn_on
+      target:
+        entity_id: "{{ state_attr(group_entity, 'group_entities') }}"
+      data:
+        effect: "{{ effect }}"
+  mode: parallel
+  fields:
+    group_entity:
+      description: The Zigbee2MQTT group light entity whose members will have the effect applied.
+      required: true
+      selector:
+        entity:
+          domain: light
+    effect:
+      description: The Hue native effect to apply to each group member. Select None to clear a running effect.
+      required: true
+      selector:
+        select:
+          options:
+            - label: Candle
+              value: candle
+            - label: Fire
+              value: fire
+            - label: Glisten
+              value: glisten
+            - label: Opal
+              value: opal
+            - label: Prism
+              value: prism
+            - label: Sparkle
+              value: sparkle
+            - label: Sunrise
+              value: sunrise
+            - label: None (clear effect)
+              value: none
+  max: 10
+  icon: mdi:lightbulb-on

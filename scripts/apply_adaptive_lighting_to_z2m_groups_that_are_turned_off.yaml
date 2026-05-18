@@ -1,0 +1,123 @@
+apply_adaptive_lighting_to_z2m_groups_that_are_turned_off:
+  alias: Apply Adaptive Lighting to Z2M groups that are turned off
+  description: ''
+  mode: queued
+  fields:
+    group_name:
+      description: >-
+        Optional: Friendly name of Z2M group to apply Adaptive Lighting to. Can
+        be a single group name or a list of group names. If not provided, all
+        groups will be processed.
+      required: false
+  sequence:
+    - variables:
+        z2m_groups: '{{ state_attr(''sensor.z2m_adaptive_lighting_groups'', ''groups'') or {} }}'
+        z2m_devices: '{{ state_attr(''sensor.z2m_adaptive_lighting_devices'', ''devices'') or {} }}'
+        group_list: >-
+          {% set groups = [] %}
+          {% if group_name is defined %}
+            {% if group_name is number %}
+              {% set group_name = group_name | string %}
+            {% endif %}
+            {% if group_name is string and group_name in z2m_groups %}
+              {% set groups = [group_name] %}
+            {% elif group_name is sequence and group_name is not string %}
+              {% set groups = group_name | map('string') | select('in', z2m_groups.keys()) | list %}
+            {% endif %}
+          {% else %}
+            {% set groups = z2m_groups.keys() | list %}
+          {% endif %}
+          {{ groups }}
+    - repeat:
+        for_each: '{{ group_list }}'
+        sequence:
+          - variables:
+              group_name: '{{ repeat.item | string }}'
+              group_entity_id: light.{{ group_name | string | slugify }}
+          - if:
+              - condition: template
+                value_template: '{{ is_state(group_entity_id, ''off'') }}'
+            then:
+              - variables:
+                  group_members: '{{ z2m_groups[group_name].group_members }}'
+                  al_attributes: >-
+                    {%- set ns = namespace(sw=None) -%}
+                    {%- for sw in expand(integration_entities('adaptive_lighting')) -%}
+                      {% set config = sw.attributes.get('configuration', {}) %}
+                      {% if config.get('lights') and group_entity_id in config.get('lights', []) %}
+                        {% set ns.sw = sw %}
+                        {% break %}
+                      {% endif %}
+                    {%- endfor -%}
+                    {% if ns.sw %}
+                      {{
+                        {
+                          "switch_id": ns.sw.entity_id,
+                          "color_temp_mired": ns.sw.attributes.get('color_temp_mired'),
+                          "brightness_pct": ns.sw.attributes.get('brightness_pct'),
+                          "manual_control": group_entity_id in ns.sw.attributes.get('manual_control', []),
+                          "switch_active": states(ns.sw.entity_id)|bool,
+                          "adapt_brightness": states('switch.adaptive_lighting_adapt_brightness_' ~ ns.sw.entity_id.replace('switch.adaptive_lighting_', ''))|bool,
+                          "adapt_color": states('switch.adaptive_lighting_adapt_color_' ~ ns.sw.entity_id.replace('switch.adaptive_lighting_', ''))|bool,
+                          "sleep_mode": states('switch.adaptive_lighting_sleep_mode_' ~ ns.sw.entity_id.replace('switch.adaptive_lighting_', ''))|bool
+                        }
+                      }}
+                    {% else %}
+                      {{ None }}
+                    {% endif %}
+              - if:
+                  - condition: template
+                    value_template: >-
+                      {{ al_attributes is mapping and al_attributes.switch_active
+                      and not al_attributes.manual_control }}
+                then:
+                  - variables:
+                      adaptive_brightness_255: >-
+                        {{ (al_attributes.brightness_pct | int(100) * 2.55) | round(0) | int }}
+                      color_temp_mired: '{{ al_attributes.color_temp_mired | int(250) }}'
+                  - variables:
+                      dimmer_friendly_names: >-
+                        {% set ns = namespace(dimmers=[]) %}
+                        {% for member in group_members %}
+                          {% for name, device in z2m_devices.items() %}
+                            {% if device.ieee_address == member and device.manufacturer == 'Inovelli' %}
+                              {% set ns.dimmers = ns.dimmers + [name] %}
+                            {% endif %}
+                          {% endfor %}
+                        {% endfor %}
+                        {{ ns.dimmers }}
+                  - alias: Prime the group dimmers with brightness
+                    repeat:
+                      for_each: '{{ dimmer_friendly_names }}'
+                      sequence:
+                        - if:
+                            - condition: template
+                              value_template: '{{ al_attributes.adapt_brightness }}'
+                          then:
+                            - action: mqtt.publish
+                              data:
+                                topic: zigbee2mqtt/{{ repeat.item }}/set
+                                payload: '{{ {"defaultLevelLocal": adaptive_brightness_255} | tojson }}'
+                  - alias: Prime the group lights with color temperature and brightness
+                    action: mqtt.publish
+                    data:
+                      topic: zigbee2mqtt/{{ group_name }}/set
+                      payload: >-
+                        {% set pl = {} %}
+                        {% if al_attributes.adapt_brightness %}
+                          {% set pl = dict(pl, **{
+                            'level_config': { 'execute_if_off': true, 'on_level': adaptive_brightness_255 }
+                          }) %}
+                        {% endif %}
+                        {% if al_attributes.adapt_color %}
+                          {% set pl = dict(pl, **{
+                            "color_options": { "execute_if_off": true },
+                            "color_temp": color_temp_mired
+                          }) %}
+                        {% endif %}
+                        {{ pl | tojson }}
+          - delay:
+              hours: 0
+              minutes: 0
+              seconds: 2
+              milliseconds: 0

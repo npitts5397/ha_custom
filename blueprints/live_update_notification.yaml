@@ -144,6 +144,20 @@ blueprint:
       selector:
         text:
 
+    states_transient:
+      name: Transient / Noise States
+      description: >
+        Comma-separated status values that represent brief, transitional
+        states which should be ignored for notification purposes.
+        Transitions *from* a transient state will not re-fire the done
+        notification (e.g. "Offline" between two "Finished" states on a 3D
+        printer). Transitions *to* a transient state will not dismiss the
+        notification. Leave blank if not applicable.
+        E.g. Offline, Connecting
+      default: ""
+      selector:
+        text:
+
     # ── Notification targets ───────────────────────────────────────────────
     notify_targets:
       name: Notify Targets
@@ -275,6 +289,7 @@ variables:
   _states_interrupted:  !input states_interrupted
   _states_complete:     !input states_complete
   _states_off:          !input states_off
+  _states_transient:    !input states_transient
   _notify_targets:      !input notify_targets
   _notify_helper:       !input notify_targets_helper
   _appliance_name:      !input appliance_name
@@ -314,6 +329,9 @@ variables:
     {{ (_states_complete | default('End, Finished, Complete')).split(',') | map('trim') | map('lower') | list }}
   off_states: >
     {{ (_states_off | default('Off, Standby, Idle')).split(',') | map('trim') | map('lower') | list }}
+  transient_states: >
+    {% set raw = _states_transient | default('') %}
+    {{ raw.split(',') | map('trim') | map('lower') | reject('eq','') | list if raw else [] }}
 
   current_status: "{{ states(_status_sensor) | lower }}"
 
@@ -322,6 +340,12 @@ variables:
     {{ 'to_state' in trigger
        and trigger.to_state is not none
        and trigger.to_state.entity_id == _status_sensor }}
+
+  # The previous state value, lowercased; empty string when not a status-change trigger
+  from_status: >
+    {{ trigger.from_state.state | lower
+       if status_changed and 'from_state' in trigger and trigger.from_state is not none
+       else '' }}
 
   # ── Normalize remaining time → minutes ────────────────────────────────
   # timestamp: derive minutes from (end_ts - now)
@@ -575,7 +599,8 @@ action:
         - condition: template
           value_template: >
             {{ status_changed
-               and current_status in interrupted_states }}
+               and current_status in interrupted_states
+               and from_status in (active_states + interrupted_states) }}
       sequence:
         - repeat:
             for_each: "{{ notify_list }}"
@@ -599,7 +624,9 @@ action:
         - condition: template
           value_template: >
             {{ status_changed
-               and current_status in complete_states and _done_enabled }}
+               and current_status in complete_states
+               and _done_enabled
+               and from_status not in transient_states }}
       sequence:
         - repeat:
             for_each: "{{ notify_list }}"
@@ -621,7 +648,8 @@ action:
         - condition: template
           value_template: >
             {{ status_changed
-               and current_status in off_states }}
+               and current_status in off_states
+               and current_status not in transient_states }}
       sequence:
         - repeat:
             for_each: "{{ notify_list }}"
