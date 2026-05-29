@@ -266,6 +266,10 @@ max: 2
 max_exceeded: silent
 
 trigger:
+  - platform: homeassistant
+    event: start
+    id: ha_restarted
+
   - platform: state
     entity_id: !input status_sensor
     id: status_changed
@@ -476,6 +480,66 @@ variables:
 
 action:
   - choose:
+
+    # ── CASE 0: HA restarted — refresh or clear stale notifications ─────────
+    - conditions:
+        - condition: template
+          value_template: "{{ trigger.id == 'ha_restarted' }}"
+      sequence:
+        - choose:
+            # Active or interrupted: silently re-post the live notification
+            - conditions:
+                - condition: template
+                  value_template: >
+                    {{ current_status in active_states
+                       or current_status in interrupted_states }}
+              sequence:
+                - repeat:
+                    for_each: "{{ notify_list }}"
+                    sequence:
+                      - action: "{{ repeat.item }}"
+                        data:
+                          title: >
+                            {% if current_status in interrupted_states %}
+                              {{ _appliance_name }} Interrupted
+                            {% else %}
+                              {{ _appliance_name }} {{ states(_status_sensor) | title }}
+                            {% endif %}
+                          message: >
+                            {% if current_status in interrupted_states %}
+                              Cycle paused or interrupted.
+                            {% else %}
+                              {{ progress_label }}
+                            {% endif %}
+                          data:
+                            tag: "{{ _notification_tag }}"
+                            sticky: true
+                            persistent: true
+                            live_update: true
+                            importance: low
+                            alert_once: true
+                            progress: "{{ progress_pct | int }}"
+                            progress_max: 100
+                            chronometer: "{{ has_remaining_data }}"
+                            when: "{{ chrono_when }}"
+                            notification_icon: "{{ _notification_icon }}"
+                            clickAction: "{{ _notification_url }}"
+                            image: "{{ _image_url }}"
+            # Off or complete: clear any stale notification left from before restart
+            - conditions:
+                - condition: template
+                  value_template: >
+                    {{ current_status in off_states
+                       or current_status in complete_states }}
+              sequence:
+                - repeat:
+                    for_each: "{{ notify_list }}"
+                    sequence:
+                      - action: "{{ repeat.item }}"
+                        data:
+                          message: clear_notification
+                          data:
+                            tag: "{{ _notification_tag }}"
 
     # ── CASE 1: Entered warming / startup state ────────────────────────────
     - conditions:
