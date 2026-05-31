@@ -98,7 +98,12 @@ blueprint:
       name: Running States
       description: >
         Comma-separated status values meaning the appliance is actively running.
-        E.g. running, Running, Active, Washing, Drying
+        Supports three modes:
+          Inclusion  — list values to match. E.g. Running, Active, Washing
+          Exclusion  — prefix values with '-' to match anything except those.
+                       E.g. -unknown, -unavailable
+          Match-all  — leave blank to match any state (except unknown/unavailable).
+                       Useful for sensors with many unpredictable values (e.g. nav).
       default: "Running"
       selector:
         text:
@@ -317,25 +322,72 @@ variables:
       {{ states(_notification_image) }}
     {% endif %}
 
-  # ── State bucket lists (all lowercased for case-insensitive matching) ────
+  # ── State bucket lists ──────────────────────────────────────────────────
+  # Entries prefixed with '-' are exclusions. Positive entries → inclusion
+  # mode (status must be in the list). Only negative entries → exclusion mode
+  # (status must NOT be in the list, and must not be unknown/unavailable).
+  # Boolean helpers (in_X_state) below apply the correct mode per bucket.
   warming_states: >
-    {% set raw = _states_warming | default('') %}
-    {{ raw.split(',') | map('trim') | map('lower') | reject('eq','') | list if raw else [] }}
+    {{ (_states_warming | default('Warming')).split(',') | map('trim') | map('lower') | reject('match','^-') | reject('eq','') | list }}
+  warming_states_neg: >
+    {% set ns = namespace(r=[]) %}
+    {% for s in (_states_warming | default('Warming')).split(',') | map('trim') | map('lower') | select('match','^-') %}
+      {% set ns.r = ns.r + [s | regex_replace('^-','')] %}
+    {% endfor %}
+    {{ ns.r }}
   running_states: >
-    {{ (_states_running | default('Running')).split(',') | map('trim') | map('lower') | list }}
+    {% if _states_running == '' %}{{ [] }}
+    {% else %}{{ _states_running.split(',') | map('trim') | map('lower') | reject('match','^-') | reject('eq','') | list }}
+    {% endif %}
+  running_states_neg: >
+    {% if _states_running == '' %}{{ [] }}
+    {% else %}
+      {% set ns = namespace(r=[]) %}
+      {% for s in _states_running.split(',') | map('trim') | map('lower') | select('match','^-') %}
+        {% set ns.r = ns.r + [s | regex_replace('^-','')] %}
+      {% endfor %}
+      {{ ns.r }}
+    {% endif %}
   cooling_states: >
-    {% set raw = _states_cooling | default('') %}
-    {{ raw.split(',') | map('trim') | map('lower') | reject('eq','') | list if raw else [] }}
-  active_states: "{{ warming_states + running_states + cooling_states }}"
+    {{ (_states_cooling | default('')).split(',') | map('trim') | map('lower') | reject('match','^-') | reject('eq','') | list }}
+  cooling_states_neg: >
+    {% set ns = namespace(r=[]) %}
+    {% for s in (_states_cooling | default('')).split(',') | map('trim') | map('lower') | select('match','^-') %}
+      {% set ns.r = ns.r + [s | regex_replace('^-','')] %}
+    {% endfor %}
+    {{ ns.r }}
   interrupted_states: >
-    {{ (_states_interrupted | default('Paused, Stopped')).split(',') | map('trim') | map('lower') | list }}
+    {{ (_states_interrupted | default('Paused, Stopped')).split(',') | map('trim') | map('lower') | reject('match','^-') | reject('eq','') | list }}
+  interrupted_states_neg: >
+    {% set ns = namespace(r=[]) %}
+    {% for s in (_states_interrupted | default('Paused, Stopped')).split(',') | map('trim') | map('lower') | select('match','^-') %}
+      {% set ns.r = ns.r + [s | regex_replace('^-','')] %}
+    {% endfor %}
+    {{ ns.r }}
   complete_states: >
-    {{ (_states_complete | default('End, Finished, Complete')).split(',') | map('trim') | map('lower') | list }}
+    {{ (_states_complete | default('End, Finished, Complete')).split(',') | map('trim') | map('lower') | reject('match','^-') | reject('eq','') | list }}
+  complete_states_neg: >
+    {% set ns = namespace(r=[]) %}
+    {% for s in (_states_complete | default('End, Finished, Complete')).split(',') | map('trim') | map('lower') | select('match','^-') %}
+      {% set ns.r = ns.r + [s | regex_replace('^-','')] %}
+    {% endfor %}
+    {{ ns.r }}
   off_states: >
-    {{ (_states_off | default('Off, Standby, Idle')).split(',') | map('trim') | map('lower') | list }}
+    {{ (_states_off | default('Off, Standby, Idle')).split(',') | map('trim') | map('lower') | reject('match','^-') | reject('eq','') | list }}
+  off_states_neg: >
+    {% set ns = namespace(r=[]) %}
+    {% for s in (_states_off | default('Off, Standby, Idle')).split(',') | map('trim') | map('lower') | select('match','^-') %}
+      {% set ns.r = ns.r + [s | regex_replace('^-','')] %}
+    {% endfor %}
+    {{ ns.r }}
   transient_states: >
-    {% set raw = _states_transient | default('') %}
-    {{ raw.split(',') | map('trim') | map('lower') | reject('eq','') | list if raw else [] }}
+    {{ (_states_transient | default('')).split(',') | map('trim') | map('lower') | reject('match','^-') | reject('eq','') | list }}
+  transient_states_neg: >
+    {% set ns = namespace(r=[]) %}
+    {% for s in (_states_transient | default('')).split(',') | map('trim') | map('lower') | select('match','^-') %}
+      {% set ns.r = ns.r + [s | regex_replace('^-','')] %}
+    {% endfor %}
+    {{ ns.r }}
 
   current_status: "{{ states(_status_sensor) | lower }}"
 
@@ -350,6 +402,71 @@ variables:
     {{ trigger.from_state.state | lower
        if status_changed and 'from_state' in trigger and trigger.from_state is not none
        else '' }}
+
+  # ── Bucket membership helpers ──────────────────────────────────────────
+  # Positive entries present  → inclusion mode (must be in list)
+  # Only negative entries     → exclusion mode (must NOT be in list;
+  #                             unknown/unavailable/empty never match)
+  in_warming_state: >
+    {{ (warming_states | length > 0 and current_status in warming_states)
+       or (warming_states | length == 0 and warming_states_neg | length > 0
+           and current_status not in warming_states_neg
+           and current_status not in ['unknown','unavailable','']) }}
+  in_running_state: >
+    {{ (_states_running == ''
+        and current_status not in ['unknown','unavailable',''])
+       or (running_states | length > 0 and current_status in running_states)
+       or (running_states | length == 0 and _states_running != ''
+           and running_states_neg | length > 0
+           and current_status not in running_states_neg
+           and current_status not in ['unknown','unavailable','']) }}
+  in_cooling_state: >
+    {{ (cooling_states | length > 0 and current_status in cooling_states)
+       or (cooling_states | length == 0 and cooling_states_neg | length > 0
+           and current_status not in cooling_states_neg
+           and current_status not in ['unknown','unavailable','']) }}
+  in_active_state: "{{ in_warming_state or in_running_state or in_cooling_state }}"
+  in_interrupted_state: >
+    {{ (interrupted_states | length > 0 and current_status in interrupted_states)
+       or (interrupted_states | length == 0 and interrupted_states_neg | length > 0
+           and current_status not in interrupted_states_neg
+           and current_status not in ['unknown','unavailable','']) }}
+  in_complete_state: >
+    {{ (complete_states | length > 0 and current_status in complete_states)
+       or (complete_states | length == 0 and complete_states_neg | length > 0
+           and current_status not in complete_states_neg
+           and current_status not in ['unknown','unavailable','']) }}
+  in_off_state: >
+    {{ (off_states | length > 0 and current_status in off_states)
+       or (off_states | length == 0 and off_states_neg | length > 0
+           and current_status not in off_states_neg
+           and current_status not in ['unknown','unavailable','']) }}
+  in_transient_state: >
+    {{ (transient_states | length > 0 and current_status in transient_states)
+       or (transient_states | length == 0 and transient_states_neg | length > 0
+           and current_status not in transient_states_neg
+           and current_status not in ['unknown','unavailable','']) }}
+  from_in_active: >
+    {% set fs = from_status %}
+    {{ (warming_states | length > 0 and fs in warming_states)
+          or (warming_states | length == 0 and warming_states_neg | length > 0 and fs not in warming_states_neg and fs not in ['unknown','unavailable',''])
+       or (_states_running == '' and fs not in ['unknown','unavailable',''])
+       or (running_states | length > 0 and fs in running_states)
+          or (running_states | length == 0 and _states_running != '' and running_states_neg | length > 0 and fs not in running_states_neg and fs not in ['unknown','unavailable',''])
+       or (cooling_states | length > 0 and fs in cooling_states)
+          or (cooling_states | length == 0 and cooling_states_neg | length > 0 and fs not in cooling_states_neg and fs not in ['unknown','unavailable','']) }}
+  from_in_interrupted: >
+    {% set fs = from_status %}
+    {{ (interrupted_states | length > 0 and fs in interrupted_states)
+       or (interrupted_states | length == 0 and interrupted_states_neg | length > 0
+           and fs not in interrupted_states_neg
+           and fs not in ['unknown','unavailable','']) }}
+  from_in_transient: >
+    {% set fs = from_status %}
+    {{ (transient_states | length > 0 and fs in transient_states)
+       or (transient_states | length == 0 and transient_states_neg | length > 0
+           and fs not in transient_states_neg
+           and fs not in ['unknown','unavailable','']) }}
 
   # ── Normalize remaining time → minutes ────────────────────────────────
   # timestamp: derive minutes from (end_ts - now)
@@ -430,8 +547,8 @@ variables:
 
   # ── Human-readable label for the current active phase ─────────────────
   status_label: >
-    {% if current_status in warming_states %}Starting
-    {% elif current_status in cooling_states %}Cooling
+    {% if in_warming_state %}Starting
+    {% elif in_cooling_state %}Cooling
     {% else %}Running
     {% endif %}
 
@@ -491,8 +608,7 @@ action:
             - conditions:
                 - condition: template
                   value_template: >
-                    {{ current_status in active_states
-                       or current_status in interrupted_states }}
+                    {{ in_active_state or in_interrupted_state }}
               sequence:
                 - repeat:
                     for_each: "{{ notify_list }}"
@@ -500,13 +616,13 @@ action:
                       - action: "{{ repeat.item }}"
                         data:
                           title: >
-                            {% if current_status in interrupted_states %}
+                            {% if in_interrupted_state %}
                               {{ _appliance_name }} Interrupted
                             {% else %}
                               {{ _appliance_name }} {{ states(_status_sensor) | title }}
                             {% endif %}
                           message: >
-                            {% if current_status in interrupted_states %}
+                            {% if in_interrupted_state %}
                               Cycle paused or interrupted.
                             {% else %}
                               {{ progress_label }}
@@ -529,8 +645,7 @@ action:
             - conditions:
                 - condition: template
                   value_template: >
-                    {{ current_status in off_states
-                       or current_status in complete_states }}
+                    {{ in_off_state or in_complete_state }}
               sequence:
                 - repeat:
                     for_each: "{{ notify_list }}"
@@ -545,8 +660,7 @@ action:
     - conditions:
         - condition: template
           value_template: >
-            {{ status_changed
-               and current_status in warming_states }}
+            {{ status_changed and in_warming_state }}
       sequence:
         - repeat:
             for_each: "{{ notify_list }}"
@@ -573,11 +687,10 @@ action:
     - conditions:
         - condition: template
           value_template: >
-            {{ status_changed
-               and current_status in running_states }}
+            {{ status_changed and in_running_state }}
       sequence:
         - condition: template
-          value_template: "{{ states(_status_sensor) in running_states }}"
+          value_template: "{{ in_running_state }}"
         - repeat:
             for_each: "{{ notify_list }}"
             sequence:
@@ -603,8 +716,7 @@ action:
     - conditions:
         - condition: template
           value_template: >
-            {{ status_changed
-               and current_status in cooling_states }}
+            {{ status_changed and in_cooling_state }}
       sequence:
         - repeat:
             for_each: "{{ notify_list }}"
@@ -633,7 +745,7 @@ action:
         - condition: template
           value_template: >
             {{ not status_changed
-               and current_status in active_states
+               and in_active_state
                and (_remaining_sensor != '' or _progress_sensor != '') }}
       sequence:
         - repeat:
@@ -663,8 +775,8 @@ action:
         - condition: template
           value_template: >
             {{ status_changed
-               and current_status in interrupted_states
-               and from_status in (active_states + interrupted_states) }}
+               and in_interrupted_state
+               and (from_in_active or from_in_interrupted) }}
       sequence:
         - repeat:
             for_each: "{{ notify_list }}"
@@ -688,9 +800,9 @@ action:
         - condition: template
           value_template: >
             {{ status_changed
-               and current_status in complete_states
+               and in_complete_state
                and _done_enabled
-               and from_status not in transient_states }}
+               and not from_in_transient }}
       sequence:
         - repeat:
             for_each: "{{ notify_list }}"
@@ -712,8 +824,8 @@ action:
         - condition: template
           value_template: >
             {{ status_changed
-               and current_status in off_states
-               and current_status not in transient_states }}
+               and in_off_state
+               and not in_transient_state }}
       sequence:
         - repeat:
             for_each: "{{ notify_list }}"
