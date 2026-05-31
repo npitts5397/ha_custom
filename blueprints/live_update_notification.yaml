@@ -1,13 +1,14 @@
 blueprint:
   name: "Live Update Notification"
   description: >
-    Sends a persistent Android Live Update notification while a cycle-based
-    appliance is running (washer, dryer, dishwasher, smoker, etc.).
+    Sends a persistent Android Live Update notification while a status-based
+    entity is active (appliances, EV charging, navigation, etc.).
     Uses a chronometer (local phone countdown) for the live time display.
-    Re-sends on state transitions and re-estimates (delta > 1 min) to keep
-    the progress bar current. Shows an interrupted state if the cycle is
-    paused. Fires a dismissable "done" notification on completion.
-    Silently dismisses on power off.
+    Running States is a catch-all residual — any state not in Interrupted,
+    Complete, Off, or Transient is treated as active. Supports inclusion,
+    exclusion (-prefix), and match-all (blank) modes for Running States.
+    Fires a dismissable done notification on completion.
+    Silently dismisses on power off / idle.
 
     Sensor type reference:
       LG Washer/Dryer — remaining_time: timestamp, total_time: minutes
@@ -83,39 +84,18 @@ blueprint:
               value: "seconds"
 
     # ── State buckets (comma-separated) ───────────────────────────────────
-    states_warming:
-      name: Warming / Startup States
-      description: >
-        Comma-separated status values for the initial startup phase before a
-        stable time estimate is available. Shows "Starting" in the notification.
-        Leave blank if not applicable.
-        E.g. initial, sensing, warmup
-      default: "Warming"
-      selector:
-        text:
-
     states_running:
       name: Running States
       description: >
-        Comma-separated status values meaning the appliance is actively running.
-        Supports three modes:
+        Catch-all for active states. Any state not in Interrupted, Complete,
+        Off, or Transient is treated as active regardless of this setting.
+        Three modes:
           Inclusion  — list values to match. E.g. Running, Active, Washing
-          Exclusion  — prefix values with '-' to match anything except those.
+          Exclusion  — prefix values with '-' to exclude specific states.
                        E.g. -unknown, -unavailable
-          Match-all  — leave blank to match any state (except unknown/unavailable).
+          Match-all  — leave blank to match any remaining state.
                        Useful for sensors with many unpredictable values (e.g. nav).
       default: "Running"
-      selector:
-        text:
-
-    states_cooling:
-      name: Cooling / Wind-Down States
-      description: >
-        Comma-separated status values for any post-heat wind-down phase.
-        Notification stays active but shows "Cooling" text.
-        Leave blank if not applicable.
-        E.g. cooling, cool_down
-      default: "Cooling"
       selector:
         text:
 
@@ -292,9 +272,7 @@ variables:
   _total_type:          !input total_time_type
   _done_enabled:        !input done_notification_enabled
   _status_sensor:       !input status_sensor
-  _states_warming:      !input states_warming
   _states_running:      !input states_running
-  _states_cooling:      !input states_cooling
   _states_interrupted:  !input states_interrupted
   _states_complete:     !input states_complete
   _states_off:          !input states_off
@@ -323,18 +301,10 @@ variables:
     {% endif %}
 
   # ── State bucket lists ──────────────────────────────────────────────────
-  # Entries prefixed with '-' are exclusions. Positive entries → inclusion
-  # mode (status must be in the list). Only negative entries → exclusion mode
-  # (status must NOT be in the list, and must not be unknown/unavailable).
-  # Boolean helpers (in_X_state) below apply the correct mode per bucket.
-  warming_states: >
-    {{ (_states_warming | default('Warming')).split(',') | map('trim') | map('lower') | reject('match','^-') | reject('eq','') | list }}
-  warming_states_neg: >
-    {% set ns = namespace(r=[]) %}
-    {% for s in (_states_warming | default('Warming')).split(',') | map('trim') | map('lower') | select('match','^-') %}
-      {% set ns.r = ns.r + [s | regex_replace('^-','')] %}
-    {% endfor %}
-    {{ ns.r }}
+  # Entries prefixed with '-' switch a bucket to exclusion mode.
+  # Boolean helpers (in_X_state) apply the correct mode per bucket.
+  # Running is the residual catch-all — defined last so specific buckets
+  # are evaluated first and can exclude themselves from running.
   running_states: >
     {% if _states_running == '' %}{{ [] }}
     {% else %}{{ _states_running.split(',') | map('trim') | map('lower') | reject('match','^-') | reject('eq','') | list }}
@@ -348,14 +318,6 @@ variables:
       {% endfor %}
       {{ ns.r }}
     {% endif %}
-  cooling_states: >
-    {{ (_states_cooling | default('')).split(',') | map('trim') | map('lower') | reject('match','^-') | reject('eq','') | list }}
-  cooling_states_neg: >
-    {% set ns = namespace(r=[]) %}
-    {% for s in (_states_cooling | default('')).split(',') | map('trim') | map('lower') | select('match','^-') %}
-      {% set ns.r = ns.r + [s | regex_replace('^-','')] %}
-    {% endfor %}
-    {{ ns.r }}
   interrupted_states: >
     {{ (_states_interrupted | default('Paused, Stopped')).split(',') | map('trim') | map('lower') | reject('match','^-') | reject('eq','') | list }}
   interrupted_states_neg: >
@@ -404,28 +366,8 @@ variables:
        else '' }}
 
   # ── Bucket membership helpers ──────────────────────────────────────────
-  # Positive entries present  → inclusion mode (must be in list)
-  # Only negative entries     → exclusion mode (must NOT be in list;
-  #                             unknown/unavailable/empty never match)
-  in_warming_state: >
-    {{ (warming_states | length > 0 and current_status in warming_states)
-       or (warming_states | length == 0 and warming_states_neg | length > 0
-           and current_status not in warming_states_neg
-           and current_status not in ['unknown','unavailable','']) }}
-  in_running_state: >
-    {{ (_states_running == ''
-        and current_status not in ['unknown','unavailable',''])
-       or (running_states | length > 0 and current_status in running_states)
-       or (running_states | length == 0 and _states_running != ''
-           and running_states_neg | length > 0
-           and current_status not in running_states_neg
-           and current_status not in ['unknown','unavailable','']) }}
-  in_cooling_state: >
-    {{ (cooling_states | length > 0 and current_status in cooling_states)
-       or (cooling_states | length == 0 and cooling_states_neg | length > 0
-           and current_status not in cooling_states_neg
-           and current_status not in ['unknown','unavailable','']) }}
-  in_active_state: "{{ in_warming_state or in_running_state or in_cooling_state }}"
+  # Specific buckets are evaluated first; in_running_state excludes them so
+  # running is always the true residual catch-all.
   in_interrupted_state: >
     {{ (interrupted_states | length > 0 and current_status in interrupted_states)
        or (interrupted_states | length == 0 and interrupted_states_neg | length > 0
@@ -446,21 +388,36 @@ variables:
        or (transient_states | length == 0 and transient_states_neg | length > 0
            and current_status not in transient_states_neg
            and current_status not in ['unknown','unavailable','']) }}
-  from_in_active: >
-    {% set fs = from_status %}
-    {{ (warming_states | length > 0 and fs in warming_states)
-          or (warming_states | length == 0 and warming_states_neg | length > 0 and fs not in warming_states_neg and fs not in ['unknown','unavailable',''])
-       or (_states_running == '' and fs not in ['unknown','unavailable',''])
-       or (running_states | length > 0 and fs in running_states)
-          or (running_states | length == 0 and _states_running != '' and running_states_neg | length > 0 and fs not in running_states_neg and fs not in ['unknown','unavailable',''])
-       or (cooling_states | length > 0 and fs in cooling_states)
-          or (cooling_states | length == 0 and cooling_states_neg | length > 0 and fs not in cooling_states_neg and fs not in ['unknown','unavailable','']) }}
+  in_running_state: >
+    {{ ((_states_running == '' and current_status not in ['unknown','unavailable',''])
+        or (running_states | length > 0 and current_status in running_states)
+        or (running_states | length == 0 and _states_running != ''
+            and running_states_neg | length > 0
+            and current_status not in running_states_neg
+            and current_status not in ['unknown','unavailable',''']))
+       and not in_interrupted_state
+       and not in_complete_state
+       and not in_off_state
+       and not in_transient_state }}
+  in_active_state: "{{ in_running_state }}"
   from_in_interrupted: >
     {% set fs = from_status %}
     {{ (interrupted_states | length > 0 and fs in interrupted_states)
        or (interrupted_states | length == 0 and interrupted_states_neg | length > 0
            and fs not in interrupted_states_neg
            and fs not in ['unknown','unavailable','']) }}
+  from_in_active: >
+    {% set fs = from_status %}
+    {{ ((_states_running == '' and fs not in ['unknown','unavailable',''])
+        or (running_states | length > 0 and fs in running_states)
+        or (running_states | length == 0 and _states_running != ''
+            and running_states_neg | length > 0
+            and fs not in running_states_neg
+            and fs not in ['unknown','unavailable',''']))
+       and fs not in interrupted_states
+       and fs not in complete_states
+       and fs not in off_states
+       and fs not in transient_states }}
   from_in_transient: >
     {% set fs = from_status %}
     {{ (transient_states | length > 0 and fs in transient_states)
@@ -543,13 +500,6 @@ variables:
       {{ states(_progress_max_sensor) | float(100) }}
     {% else %}
       100
-    {% endif %}
-
-  # ── Human-readable label for the current active phase ─────────────────
-  status_label: >
-    {% if in_warming_state %}Starting
-    {% elif in_cooling_state %}Cooling
-    {% else %}Running
     {% endif %}
 
   # ── Progress percentage ────────────────────────────────────────────────
@@ -656,41 +606,12 @@ action:
                           data:
                             tag: "{{ _notification_tag }}"
 
-    # ── CASE 1: Entered warming / startup state ────────────────────────────
-    - conditions:
-        - condition: template
-          value_template: >
-            {{ status_changed and in_warming_state }}
-      sequence:
-        - repeat:
-            for_each: "{{ notify_list }}"
-            sequence:
-              - action: "{{ repeat.item }}"
-                data:
-                  title: "{{ _appliance_name }} {{ states(_status_sensor) | title }}"
-                  message: "{{ progress_label }}"
-                  data:
-                    tag: "{{ _notification_tag }}"
-                    sticky: true
-                    persistent: true
-                    live_update: true
-                    importance: default
-                    progress: "{{ progress_pct | int }}"
-                    progress_max: 100
-                    chronometer: "{{ has_remaining_data }}"
-                    when: "{{ chrono_when }}"
-                    notification_icon: "{{ _notification_icon }}"
-                    clickAction: "{{ _notification_url }}"
-                    image: "{{ _image_url }}"
-
-    # ── CASE 2: Appliance just entered a running state ─────────────────────
+    # ── CASE 1: Status changed to an active (running) state ──────────────
     - conditions:
         - condition: template
           value_template: >
             {{ status_changed and in_running_state }}
       sequence:
-        - condition: template
-          value_template: "{{ in_running_state }}"
         - repeat:
             for_each: "{{ notify_list }}"
             sequence:
@@ -704,33 +625,6 @@ action:
                     persistent: true
                     live_update: true
                     importance: default
-                    progress: "{{ progress_pct | int }}"
-                    progress_max: 100
-                    chronometer: "{{ has_remaining_data }}"
-                    when: "{{ chrono_when }}"
-                    notification_icon: "{{ _notification_icon }}"
-                    clickAction: "{{ _notification_url }}"
-                    image: "{{ _image_url }}"
-
-    # ── CASE 3: Entered cooling / wind-down state ──────────────────────────
-    - conditions:
-        - condition: template
-          value_template: >
-            {{ status_changed and in_cooling_state }}
-      sequence:
-        - repeat:
-            for_each: "{{ notify_list }}"
-            sequence:
-              - action: "{{ repeat.item }}"
-                data:
-                  title: "{{ _appliance_name }} {{ states(_status_sensor) | title }}"
-                  message: "{{ progress_label }}"
-                  data:
-                    tag: "{{ _notification_tag }}"
-                    sticky: true
-                    persistent: true
-                    live_update: true
-                    importance: low
                     alert_once: true
                     progress: "{{ progress_pct | int }}"
                     progress_max: 100
@@ -740,7 +634,7 @@ action:
                     clickAction: "{{ _notification_url }}"
                     image: "{{ _image_url }}"
 
-    # ── CASE 4: Time sensor updated while active (keep body current) ─────────
+    # ── CASE 2: Time sensor updated while active (keep body current) ──────
     - conditions:
         - condition: template
           value_template: >
@@ -770,7 +664,7 @@ action:
                     clickAction: "{{ _notification_url }}"
                     image: "{{ _image_url }}"
 
-    # ── CASE 5: Cycle interrupted / paused ────────────────────────────────
+    # ── CASE 3: Cycle interrupted / paused ────────────────────────────────
     - conditions:
         - condition: template
           value_template: >
@@ -795,7 +689,7 @@ action:
                     clickAction: "{{ _notification_url }}"
                     image: "{{ _image_url }}"
 
-    # ── CASE 6: Cycle complete ─────────────────────────────────────────────
+    # ── CASE 4: Cycle complete ─────────────────────────────────────────────
     - conditions:
         - condition: template
           value_template: >
@@ -819,7 +713,7 @@ action:
                     clickAction: "{{ _notification_url }}"
                     image: "{{ _image_url }}"
 
-    # ── CASE 7: Power off — silent dismiss ────────────────────────────────
+    # ── CASE 5: Power off — silent dismiss ────────────────────────────────
     - conditions:
         - condition: template
           value_template: >
