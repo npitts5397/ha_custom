@@ -1,5 +1,5 @@
 blueprint:
-  name: Smart Adaptive Lighting and Scene Activator (SALSA) - DEV
+  name: Smart Adaptive Lighting and Scene Activator (SALSA)
   domain: automation
   author: Nathaniel Pitts
   source_url: https://github.com/npitts5397/ha_custom/blob/main/blueprints/smart_adaptive_lighting_scene_activator.yaml
@@ -24,7 +24,7 @@ blueprint:
     equivalent guidance.
 
     Version history:
-      * 5.0.0 - HA-XXX - Migrate to event-based triggers; remove MQTT triggers. General refactoring and optimization.
+      * 5.0.0 - #109 - Migrate to event-based triggers; remove MQTT triggers. General refactoring and optimization.
       * 4.0.0 - HA-140 - Lots of refactoring, rework inputs, and squash some outstanding bugs.
       * 3.0.0 - HA-95 - General refactoring, bugfixes, and feature enhancements
       * 2.0.0 - HA-82 - Subscribe to switch MQTT topics instead of relying on HA entity state changes.
