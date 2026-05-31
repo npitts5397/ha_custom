@@ -165,6 +165,18 @@ blueprint:
         entity:
 
     # ── Done notification ──────────────────────────────────────────────────
+    alert_on_state_change:
+      name: Alert on Every Active State Change
+      description: >
+        When enabled, the notification alerts (sound/vibration) each time the
+        status changes within the active state. When disabled (default), only
+        the initial notification creation alerts — mid-cycle state changes
+        update silently. Disable for entities with frequent unpredictable state
+        changes (e.g. navigation sensors).
+      default: false
+      selector:
+        boolean:
+
     done_notification_enabled:
       name: Enable Done Notification
       description: >
@@ -270,7 +282,8 @@ variables:
   _remaining_type:      !input remaining_time_type
   _total_sensor:        !input total_time_sensor
   _total_type:          !input total_time_type
-  _done_enabled:        !input done_notification_enabled
+  _alert_on_state_change: !input alert_on_state_change
+  _done_enabled:          !input done_notification_enabled
   _status_sensor:       !input status_sensor
   _states_running:      !input states_running
   _states_interrupted:  !input states_interrupted
@@ -625,7 +638,7 @@ action:
                     persistent: true
                     live_update: true
                     importance: default
-                    alert_once: true
+                    alert_once: "{{ not _alert_on_state_change }}"
                     progress: "{{ progress_pct | int }}"
                     progress_max: 100
                     chronometer: "{{ has_remaining_data }}"
