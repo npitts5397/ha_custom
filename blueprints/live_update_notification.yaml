@@ -5,10 +5,10 @@ blueprint:
     entity is active (appliances, EV charging, navigation, etc.).
     Uses a chronometer (local phone countdown) for the live time display.
     Running States is a catch-all residual — any state not in Interrupted,
-    Complete, Off, or Transient is treated as active. Supports inclusion,
+    Terminal, or Transient is treated as active. Supports inclusion,
     exclusion (-prefix), and match-all (blank) modes for Running States.
-    Fires a dismissable done notification on completion.
-    Silently dismisses on power off / idle.
+    Fires a dismissable done notification on completion (or silently clears
+    if the done notification is disabled).
 
     Sensor type reference:
       LG Washer/Dryer — remaining_time: timestamp, total_time: minutes
@@ -17,245 +17,249 @@ blueprint:
   domain: automation
   input:
 
-    # ── Appliance identity ─────────────────────────────────────────────────
-    appliance_name:
-      name: Appliance Name
-      description: "Display name used in notifications. E.g. Washer, Dryer, Dishwasher"
-      selector:
-        text:
+    # ── Section: Appliance ─────────────────────────────────────────────────
+    appliance:
+      name: Appliance
+      icon: mdi:home-assistant
+      input:
+        appliance_name:
+          name: Appliance Name
+          description: "Display name used in notifications. E.g. Washer, Dryer, Dishwasher"
+          selector:
+            text:
 
-    # ── Sensors ────────────────────────────────────────────────────────────
-    status_sensor:
-      name: Status Sensor
-      description: "Sensor reporting the appliance's current cycle state."
-      selector:
-        entity:
-          domain: sensor
+        status_sensor:
+          name: Status Sensor
+          description: "Sensor reporting the appliance's current cycle state."
+          selector:
+            entity:
+              domain: sensor
 
-    remaining_time_sensor:
-      name: Remaining Time Sensor (optional)
-      description: >
-        Sensor reporting time remaining in the cycle.
-        Leave blank if not available — progress bar will be omitted.
-      default: ""
-      selector:
-        entity:
+    # ── Section: Time & Progress ───────────────────────────────────────────
+    time_and_progress:
+      name: Time & Progress
+      icon: mdi:timer-outline
+      collapsed: true
+      input:
+        remaining_time_sensor:
+          name: Remaining Time Sensor (optional)
+          description: >
+            Sensor reporting time remaining in the cycle.
+            Leave blank if not available — progress bar will be omitted.
+          default: ""
+          selector:
+            entity:
 
-    remaining_time_type:
-      name: Remaining Time Sensor Type
-      description: >
-        The data type reported by the remaining time sensor.
-          timestamp — ISO datetime of predicted cycle end (LG washer/dryer)
-          minutes   — integer minutes remaining
-          seconds   — integer seconds remaining (LG dishwasher)
-      default: "timestamp"
-      selector:
-        select:
-          options:
-            - label: "Timestamp (ISO datetime of cycle end)"
-              value: "timestamp"
-            - label: "Minutes (integer)"
-              value: "minutes"
-            - label: "Seconds (integer)"
-              value: "seconds"
+        remaining_time_type:
+          name: Remaining Time Sensor Type
+          description: >
+            The data type reported by the remaining time sensor.
+              timestamp — ISO datetime of predicted cycle end (LG washer/dryer)
+              minutes   — integer minutes remaining
+              seconds   — integer seconds remaining (LG dishwasher)
+          default: "timestamp"
+          selector:
+            select:
+              options:
+                - label: "Timestamp (ISO datetime of cycle end)"
+                  value: "timestamp"
+                - label: "Minutes (integer)"
+                  value: "minutes"
+                - label: "Seconds (integer)"
+                  value: "seconds"
 
-    total_time_sensor:
-      name: Total Time Sensor (optional)
-      description: >
-        Sensor reporting the total cycle duration.
-        Leave blank if not available — progress bar will be omitted.
-      default: ""
-      selector:
-        entity:
+        total_time_sensor:
+          name: Total Time Sensor (optional)
+          description: >
+            Sensor reporting the total cycle duration.
+            Leave blank if not available — progress bar will be omitted.
+          default: ""
+          selector:
+            entity:
 
-    total_time_type:
-      name: Total Time Sensor Type
-      description: >
-        The data type reported by the total time sensor.
-          minutes — integer minutes (LG washer/dryer, device_class: duration)
-          seconds — integer seconds (LG dishwasher)
-      default: "minutes"
-      selector:
-        select:
-          options:
-            - label: "Minutes (integer)"
-              value: "minutes"
-            - label: "Seconds (integer)"
-              value: "seconds"
+        total_time_type:
+          name: Total Time Sensor Type
+          description: >
+            The data type reported by the total time sensor.
+              minutes — integer minutes (LG washer/dryer, device_class: duration)
+              seconds — integer seconds (LG dishwasher)
+          default: "minutes"
+          selector:
+            select:
+              options:
+                - label: "Minutes (integer)"
+                  value: "minutes"
+                - label: "Seconds (integer)"
+                  value: "seconds"
 
-    # ── State buckets (comma-separated) ───────────────────────────────────
-    states_running:
-      name: Running States
-      description: >
-        Catch-all for active states. Any state not in Interrupted, Complete,
-        Off, or Transient is treated as active regardless of this setting.
-        Three modes:
-          Inclusion  — list values to match. E.g. Running, Active, Washing
-          Exclusion  — prefix values with '-' to exclude specific states.
-                       E.g. -unknown, -unavailable
-          Match-all  — leave blank to match any remaining state.
-                       Useful for sensors with many unpredictable values (e.g. nav).
-      default: "Running"
-      selector:
-        text:
+        progress_sensor:
+          name: Progress Sensor (optional)
+          description: >
+            Sensor whose value tracks cycle progress (e.g. battery level for EV
+            charging). Used to fill the progress bar when no remaining time sensor
+            is available. E.g. sensor.ymir_battery_level
+          default: ""
+          selector:
+            entity:
 
-    states_interrupted:
-      name: Interrupted States
-      description: >
-        Comma-separated status values meaning the cycle is paused or
-        interrupted. Notification stays persistent.
-        E.g. Paused, Stopped, Door Open
-      default: "Paused, Stopped"
-      selector:
-        text:
+        progress_max_sensor:
+          name: Progress Target Sensor (optional)
+          description: >
+            Sensor or number entity for the target/maximum value of the progress
+            sensor (e.g. charge limit). Leave blank to use 100.
+            E.g. number.ymir_charge_limit
+          default: ""
+          selector:
+            entity:
 
-    states_complete:
-      name: Complete States
-      description: >
-        Comma-separated status values meaning the cycle has finished.
-        Triggers the done notification.
-        E.g. End, Finished, Complete, Done
-      default: "End, Finished, Complete"
-      selector:
-        text:
+    # ── Section: State Buckets ─────────────────────────────────────────────
+    state_buckets:
+      name: State Buckets
+      icon: mdi:state-machine
+      input:
+        states_running:
+          name: Running States
+          description: >
+            Catch-all for active states. Any state not in Interrupted, Terminal,
+            or Transient is treated as active regardless of this setting.
+            Three modes:
+              Inclusion  — list values to match. E.g. Running, Active, Washing
+              Exclusion  — prefix values with '-' to exclude specific states.
+                           E.g. -unknown, -unavailable
+              Match-all  — leave blank to match any remaining state.
+                           Useful for sensors with many unpredictable values (e.g. nav).
+          default: "Running"
+          selector:
+            text:
 
-    states_off:
-      name: Off States
-      description: >
-        Comma-separated status values meaning the appliance is off or idle.
-        Silently dismisses the notification.
-        E.g. Off, Standby, Idle
-      default: "Off, Standby, Idle"
-      selector:
-        text:
+        states_interrupted:
+          name: Interrupted States
+          description: >
+            Comma-separated status values meaning the cycle is paused or
+            interrupted. Notification stays persistent.
+            E.g. Paused, Stopped, Door Open
+          default: "Paused, Stopped"
+          selector:
+            text:
 
-    states_transient:
-      name: Transient / Noise States
-      description: >
-        Comma-separated status values that represent brief, transitional
-        states which should be ignored for notification purposes.
-        Transitions *from* a transient state will not re-fire the done
-        notification (e.g. "Offline" between two "Finished" states on a 3D
-        printer). Transitions *to* a transient state will not dismiss the
-        notification. Leave blank if not applicable.
-        E.g. Offline, Connecting
-      default: ""
-      selector:
-        text:
+        states_terminal:
+          name: Terminal States
+          description: >
+            Comma-separated status values meaning the cycle is done or the
+            appliance is off/idle. Triggers the done notification (if enabled)
+            or silently clears it.
+            E.g. End, Finished, Complete, Off, Standby, Idle
+          default: "End, Finished, Complete, Off, Standby, Idle"
+          selector:
+            text:
 
-    # ── Notification targets ───────────────────────────────────────────────
-    notify_targets:
-      name: Notify Targets
-      description: >
-        Comma-separated notify service names.
-        E.g. notify.mobile_app_pixel_fold, notify.mobile_app_pixel_8
-      default: ""
-      selector:
-        text:
+        states_transient:
+          name: Transient / Noise States
+          description: >
+            Comma-separated status values that represent brief, transitional
+            states which should be ignored for notification purposes.
+            Transitions *from* a transient state will not re-fire the done
+            notification (e.g. "Offline" between two "Finished" states on a 3D
+            printer). Transitions *to* a transient state will not dismiss the
+            notification. Leave blank if not applicable.
+            E.g. Offline, Connecting
+          default: ""
+          selector:
+            text:
 
-    notify_targets_helper:
-      name: Notify Targets Helper (optional)
-      description: >
-        An input_text helper whose value is a comma-separated list of notify
-        service names. When set, overrides Notify Targets above — update the
-        helper once and all automations using it pick up the change.
-        E.g. input_text.family_notify_targets
-      default: ""
-      selector:
-        entity:
+    # ── Section: Notification Targets ─────────────────────────────────────
+    notification_targets:
+      name: Notification Targets
+      icon: mdi:cellphone
+      input:
+        notify_targets:
+          name: Notify Targets
+          description: >
+            Comma-separated notify service names.
+            E.g. notify.mobile_app_pixel_fold, notify.mobile_app_pixel_8
+          default: ""
+          selector:
+            text:
 
-    # ── Done notification ──────────────────────────────────────────────────
-    alert_on_state_change:
-      name: Alert on Every Active State Change
-      description: >
-        When enabled, the notification alerts (sound/vibration) each time the
-        status changes within the active state. When disabled (default), only
-        the initial notification creation alerts — mid-cycle state changes
-        update silently. Disable for entities with frequent unpredictable state
-        changes (e.g. navigation sensors).
-      default: false
-      selector:
-        boolean:
+        notify_targets_helper:
+          name: Notify Targets Helper (optional)
+          description: >
+            An input_text helper whose value is a comma-separated list of notify
+            service names. When set, overrides Notify Targets above — update the
+            helper once and all automations using it pick up the change.
+            E.g. input_text.family_notify_targets
+          default: ""
+          selector:
+            entity:
 
-    done_notification_enabled:
-      name: Enable Done Notification
-      description: >
-        Send a dismissable notification when the cycle completes.
-        Disable for appliances where a done alert isn't useful.
-      default: true
-      selector:
-        boolean:
+    # ── Section: Notification Behavior ────────────────────────────────────
+    notification_behavior:
+      name: Notification Behavior
+      icon: mdi:bell-outline
+      input:
+        alert_on_state_change:
+          name: Alert on Every Active State Change
+          description: >
+            When enabled, the notification alerts (sound/vibration) each time the
+            status changes within the active state. When disabled (default), only
+            the initial notification creation alerts — mid-cycle state changes
+            update silently. Disable for entities with frequent unpredictable state
+            changes (e.g. navigation sensors).
+          default: false
+          selector:
+            boolean:
 
-    done_message:
-      name: Done Notification Message
-      description: "Message body for the cycle complete notification."
-      default: "Cycle complete!"
-      selector:
-        text:
+        done_notification_enabled:
+          name: Enable Done Notification
+          description: >
+            Send a dismissable notification when a terminal state is reached.
+            When disabled the notification clears silently instead.
+          default: true
+          selector:
+            boolean:
 
-    notification_icon:
-      name: Notification Icon (optional)
-      description: >
-        MDI icon shown on the notification. E.g. mdi:tumble-dryer, mdi:washing-machine
-        Leave blank to use the default Home Assistant icon.
-      default: ""
-      selector:
-        text:
+        done_message:
+          name: Done Notification Message
+          description: "Message body for the cycle complete notification."
+          default: "Cycle complete!"
+          selector:
+            text:
 
-    notification_url:
-      name: Notification Navigation URL (optional)
-      description: >
-        URL or Lovelace path to navigate to when the notification is tapped.
-        E.g. /lovelace/laundry or https://example.com
-        Leave blank for default app-open behavior.
-      default: ""
-      selector:
-        text:
+    # ── Section: Appearance ────────────────────────────────────────────────
+    appearance:
+      name: Appearance
+      icon: mdi:palette-outline
+      collapsed: true
+      input:
+        notification_icon:
+          name: Notification Icon (optional)
+          description: >
+            MDI icon shown on the notification. E.g. mdi:tumble-dryer, mdi:washing-machine
+            Leave blank to use the default Home Assistant icon.
+          default: ""
+          selector:
+            text:
 
-    notification_image:
-      name: Notification Image (optional)
-      description: >
-        Image to attach to notifications. Accepts a camera entity
-        (camera.my_cam), an image entity (image.my_preview), or a direct URL.
-        Live update images are shown when first posted and may not refresh on
-        every update (Android limitation).
-      default: ""
-      selector:
-        text:
+        notification_url:
+          name: Notification Navigation URL (optional)
+          description: >
+            URL or Lovelace path to navigate to when the notification is tapped.
+            E.g. /lovelace/laundry or https://example.com
+            Leave blank for default app-open behavior.
+          default: ""
+          selector:
+            text:
 
-    progress_sensor:
-      name: Progress Sensor (optional)
-      description: >
-        Sensor whose value tracks cycle progress (e.g. battery level for EV
-        charging). Used to fill the progress bar when no remaining time sensor
-        is available. E.g. sensor.ymir_battery_level
-      default: ""
-      selector:
-        entity:
-
-    progress_max_sensor:
-      name: Progress Target Sensor (optional)
-      description: >
-        Sensor or number entity for the target/maximum value of the progress
-        sensor (e.g. charge limit). Leave blank to use 100.
-        E.g. number.ymir_charge_limit
-      default: ""
-      selector:
-        entity:
-
-    status_debounce:
-      name: Status Debounce
-      description: >
-        How long the status sensor must remain stable before the automation
-        fires. Increase to 5–10 seconds if your appliance briefly flickers
-        through intermediate states (e.g. Offline → Finished) after a cycle
-        completes. Set to 0 to disable debouncing (default).
-      default:
-        hours: 0
-        minutes: 0
-        seconds: 0
-      selector:
-        duration:
+        notification_image:
+          name: Notification Image (optional)
+          description: >
+            Image to attach to notifications. Accepts a camera entity
+            (camera.my_cam), an image entity (image.my_preview), or a direct URL.
+            Live update images are shown when first posted and may not refresh on
+            every update (Android limitation).
+          default: ""
+          selector:
+            text:
 
 # ── Automation ─────────────────────────────────────────────────────────────
 mode: queued
@@ -270,7 +274,6 @@ trigger:
   - platform: state
     entity_id: !input status_sensor
     id: status_changed
-    for: !input status_debounce
 
   - platform: time_pattern
     minutes: "/1"
@@ -287,8 +290,7 @@ variables:
   _status_sensor:       !input status_sensor
   _states_running:      !input states_running
   _states_interrupted:  !input states_interrupted
-  _states_complete:     !input states_complete
-  _states_off:          !input states_off
+  _states_terminal:     !input states_terminal
   _states_transient:    !input states_transient
   _notify_targets:      !input notify_targets
   _notify_helper:       !input notify_targets_helper
@@ -319,11 +321,11 @@ variables:
   # Running is the residual catch-all — defined last so specific buckets
   # are evaluated first and can exclude themselves from running.
   running_states: >
-    {% if _states_running == '' %}{{ [] }}
+    {% if _states_running | length == 0 %}{{ [] }}
     {% else %}{{ _states_running.split(',') | map('trim') | map('lower') | reject('match','^-') | reject('eq','') | list }}
     {% endif %}
   running_states_neg: >
-    {% if _states_running == '' %}{{ [] }}
+    {% if _states_running | length == 0 %}{{ [] }}
     {% else %}
       {% set ns = namespace(r=[]) %}
       {% for s in _states_running.split(',') | map('trim') | map('lower') | select('match','^-') %}
@@ -339,19 +341,11 @@ variables:
       {% set ns.r = ns.r + [s | regex_replace('^-','')] %}
     {% endfor %}
     {{ ns.r }}
-  complete_states: >
-    {{ (_states_complete | default('End, Finished, Complete')).split(',') | map('trim') | map('lower') | reject('match','^-') | reject('eq','') | list }}
-  complete_states_neg: >
+  terminal_states: >
+    {{ (_states_terminal | default('End, Finished, Complete, Off, Standby, Idle')).split(',') | map('trim') | map('lower') | reject('match','^-') | reject('eq','') | list }}
+  terminal_states_neg: >
     {% set ns = namespace(r=[]) %}
-    {% for s in (_states_complete | default('End, Finished, Complete')).split(',') | map('trim') | map('lower') | select('match','^-') %}
-      {% set ns.r = ns.r + [s | regex_replace('^-','')] %}
-    {% endfor %}
-    {{ ns.r }}
-  off_states: >
-    {{ (_states_off | default('Off, Standby, Idle')).split(',') | map('trim') | map('lower') | reject('match','^-') | reject('eq','') | list }}
-  off_states_neg: >
-    {% set ns = namespace(r=[]) %}
-    {% for s in (_states_off | default('Off, Standby, Idle')).split(',') | map('trim') | map('lower') | select('match','^-') %}
+    {% for s in (_states_terminal | default('End, Finished, Complete, Off, Standby, Idle')).split(',') | map('trim') | map('lower') | select('match','^-') %}
       {% set ns.r = ns.r + [s | regex_replace('^-','')] %}
     {% endfor %}
     {{ ns.r }}
@@ -385,32 +379,26 @@ variables:
     {{ (interrupted_states | length > 0 and current_status in interrupted_states)
        or (interrupted_states | length == 0 and interrupted_states_neg | length > 0
            and current_status not in interrupted_states_neg
-           and current_status not in ['unknown','unavailable','']) }}
-  in_complete_state: >
-    {{ (complete_states | length > 0 and current_status in complete_states)
-       or (complete_states | length == 0 and complete_states_neg | length > 0
-           and current_status not in complete_states_neg
-           and current_status not in ['unknown','unavailable','']) }}
-  in_off_state: >
-    {{ (off_states | length > 0 and current_status in off_states)
-       or (off_states | length == 0 and off_states_neg | length > 0
-           and current_status not in off_states_neg
-           and current_status not in ['unknown','unavailable','']) }}
+           and current_status not in ['unknown','unavailable']) }}
+  in_terminal_state: >
+    {{ (terminal_states | length > 0 and current_status in terminal_states)
+       or (terminal_states | length == 0 and terminal_states_neg | length > 0
+           and current_status not in terminal_states_neg
+           and current_status not in ['unknown','unavailable']) }}
   in_transient_state: >
     {{ (transient_states | length > 0 and current_status in transient_states)
        or (transient_states | length == 0 and transient_states_neg | length > 0
            and current_status not in transient_states_neg
-           and current_status not in ['unknown','unavailable','']) }}
+           and current_status not in ['unknown','unavailable']) }}
   in_running_state: >
-    {{ ((_states_running == '' and current_status not in ['unknown','unavailable',''])
+    {{ ((_states_running | length == 0 and current_status not in ['unknown','unavailable'])
         or (running_states | length > 0 and current_status in running_states)
-        or (running_states | length == 0 and _states_running != ''
+        or (running_states | length == 0 and _states_running | length > 0
             and running_states_neg | length > 0
             and current_status not in running_states_neg
-            and current_status not in ['unknown','unavailable',''']))
+            and current_status not in ['unknown','unavailable']))
        and not in_interrupted_state
-       and not in_complete_state
-       and not in_off_state
+       and not in_terminal_state
        and not in_transient_state }}
   in_active_state: "{{ in_running_state }}"
   from_in_interrupted: >
@@ -418,25 +406,24 @@ variables:
     {{ (interrupted_states | length > 0 and fs in interrupted_states)
        or (interrupted_states | length == 0 and interrupted_states_neg | length > 0
            and fs not in interrupted_states_neg
-           and fs not in ['unknown','unavailable','']) }}
+           and fs not in ['unknown','unavailable']) }}
   from_in_active: >
     {% set fs = from_status %}
-    {{ ((_states_running == '' and fs not in ['unknown','unavailable',''])
+    {{ ((_states_running | length == 0 and fs not in ['unknown','unavailable'])
         or (running_states | length > 0 and fs in running_states)
-        or (running_states | length == 0 and _states_running != ''
+        or (running_states | length == 0 and _states_running | length > 0
             and running_states_neg | length > 0
             and fs not in running_states_neg
-            and fs not in ['unknown','unavailable',''']))
+            and fs not in ['unknown','unavailable']))
        and fs not in interrupted_states
-       and fs not in complete_states
-       and fs not in off_states
+       and fs not in terminal_states
        and fs not in transient_states }}
   from_in_transient: >
     {% set fs = from_status %}
     {{ (transient_states | length > 0 and fs in transient_states)
        or (transient_states | length == 0 and transient_states_neg | length > 0
            and fs not in transient_states_neg
-           and fs not in ['unknown','unavailable','']) }}
+           and fs not in ['unknown','unavailable']) }}
 
   # ── Normalize remaining time → minutes ────────────────────────────────
   # timestamp: derive minutes from (end_ts - now)
@@ -604,11 +591,11 @@ action:
                             notification_icon: "{{ _notification_icon }}"
                             clickAction: "{{ _notification_url }}"
                             image: "{{ _image_url }}"
-            # Off or complete: clear any stale notification left from before restart
+            # Terminal: clear any stale notification left from before restart
             - conditions:
                 - condition: template
                   value_template: >
-                    {{ in_off_state or in_complete_state }}
+                    {{ in_terminal_state }}
               sequence:
                 - repeat:
                     for_each: "{{ notify_list }}"
@@ -702,43 +689,41 @@ action:
                     clickAction: "{{ _notification_url }}"
                     image: "{{ _image_url }}"
 
-    # ── CASE 4: Cycle complete ─────────────────────────────────────────────
+    # ── CASE 4: Terminal state (done / off / idle) ────────────────────────
     - conditions:
         - condition: template
           value_template: >
             {{ status_changed
-               and in_complete_state
-               and _done_enabled
-               and not from_in_transient }}
-      sequence:
-        - repeat:
-            for_each: "{{ notify_list }}"
-            sequence:
-              - action: "{{ repeat.item }}"
-                data:
-                  title: "✅ {{ _appliance_name }} Done!"
-                  message: !input done_message
-                  data:
-                    tag: "{{ _notification_tag }}"
-                    sticky: false
-                    importance: default
-                    notification_icon: "{{ _notification_icon }}"
-                    clickAction: "{{ _notification_url }}"
-                    image: "{{ _image_url }}"
-
-    # ── CASE 5: Power off — silent dismiss ────────────────────────────────
-    - conditions:
-        - condition: template
-          value_template: >
-            {{ status_changed
-               and in_off_state
+               and in_terminal_state
                and not in_transient_state }}
       sequence:
-        - repeat:
-            for_each: "{{ notify_list }}"
-            sequence:
-              - action: "{{ repeat.item }}"
-                data:
-                  message: clear_notification
-                  data:
-                    tag: "{{ _notification_tag }}"
+        - choose:
+            # Done notification when enabled and not arriving from a transient state
+            - conditions:
+                - condition: template
+                  value_template: "{{ _done_enabled and not from_in_transient }}"
+              sequence:
+                - repeat:
+                    for_each: "{{ notify_list }}"
+                    sequence:
+                      - action: "{{ repeat.item }}"
+                        data:
+                          title: "✅ {{ _appliance_name }} Done!"
+                          message: "{{ _done_message }}"
+                          data:
+                            tag: "{{ _notification_tag }}"
+                            sticky: false
+                            importance: default
+                            notification_icon: "{{ _notification_icon }}"
+                            clickAction: "{{ _notification_url }}"
+                            image: "{{ _image_url }}"
+          # Default: silently clear (done disabled, or arrived via transient)
+          default:
+            - repeat:
+                for_each: "{{ notify_list }}"
+                sequence:
+                  - action: "{{ repeat.item }}"
+                    data:
+                      message: clear_notification
+                      data:
+                        tag: "{{ _notification_tag }}"
