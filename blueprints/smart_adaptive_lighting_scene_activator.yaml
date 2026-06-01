@@ -498,6 +498,17 @@ action:
           - condition: template
             value_template: "{{ (action in on_actions_list) or ((primary_lights_state == 'on') and (trigger.id in ['scene_helper_updated'])) }}"
         sequence:
+          - if:
+              - condition: template
+                value_template: "{{ trigger.id == 'mqtt' or primary_lights_ha_control == true }}"
+            then:
+              - action: adaptive_lighting.apply
+                data:
+                  entity_id: "{{ primary_lights_adaptive_lighting_switches.entity_id }}"
+                  adapt_brightness: true
+                  adapt_color: true
+                  prefer_rgb_color: "{{ enable_rgb_color }}"
+                  turn_on_lights: true
           - action: switch.turn_off
             target:
               "{{ primary_lights_adaptive_lighting_switches }}"
