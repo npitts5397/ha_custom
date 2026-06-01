@@ -51,7 +51,7 @@ blueprint:
               multiple: true
         mqtt_topic:
           name: MQTT Control Topic
-          description: 'Optional. MQTT topic to subscribe to for control actions. Payload must be JSON with an "action" key matching configured action values (e.g., {"action": "on"}). Leave empty to disable.'
+          description: 'Optional. MQTT topic to subscribe to for control actions. Payload must be JSON with an "action" key matching configured action values (e.g., {"action": "on"}). Set to default value (mqtt_base/mqtt_topic) to disable.'
           default: "mqtt_base/mqtt_topic"
           selector:
             text:
