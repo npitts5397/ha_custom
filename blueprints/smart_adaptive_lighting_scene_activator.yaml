@@ -49,6 +49,12 @@ blueprint:
             entity:
               domain: event
               multiple: true
+        mqtt_topic:
+          name: MQTT Control Topic
+          description: 'Optional. MQTT topic to subscribe to for control actions. Payload must be JSON with an "action" key matching configured action values (e.g., {"action": "on"}). Leave empty to disable.'
+          default: "mqtt_base/mqtt_topic"
+          selector:
+            text:
         on_actions:
           name: "'on' Actions"
           description: |
@@ -181,12 +187,6 @@ blueprint:
             entity:
               filter:
                 domain: script
-        mqtt_topic:
-          name: MQTT Control Topic
-          description: 'Optional. MQTT topic to subscribe to for control actions. Payload must be JSON with an "action" key matching configured action values (e.g., {"action": "on"}). Leave empty to disable.'
-          default: "mqtt_base/mqtt_topic"
-          selector:
-            text:
     primary_lights:
       name: Primary Light Selection
       icon: mdi:lamps
