@@ -519,6 +519,9 @@ action:
               manual_control: false
               lights:
                 "{{ primary_lights.entity_id }}"
+          - action: switch.turn_on
+            target:
+              "{{ primary_lights_adaptive_lighting_switches }}"
       - alias: action is in dim_up_actions
         conditions: "{{ action in dim_up_actions_list }}"
         sequence:
@@ -644,6 +647,9 @@ action:
                       manual_control: false
                       lights:
                         "{{ secondary_lights.entity_id }}"
+                  - action: switch.turn_on
+                    target:
+                        "{{ secondary_lights_adaptive_lighting_switches }}"
         # TODO: I think mode and phase helpers could be removed. Maybe even automation reloaded? Could be a good opportunity to reset config...
       - alias: mode_helper_updated or phase_helper updated or automations reloaded
         conditions: "{{ trigger.id in ['mode_helper_updated', 'phase_helper_updated', 'automations_reloaded'] }}"
