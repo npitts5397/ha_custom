@@ -474,7 +474,6 @@ variables:
       {%- endif -%}
     {%- endif -%}
     {{ scene }}
-condition: []
 action:
   - choose:
       - alias: action is in on_actions or scene_helper updated
@@ -482,41 +481,32 @@ action:
           - condition: template
             value_template: "{{ (action in on_actions_list) or ((primary_lights_state == 'on') and (trigger.id in ['scene_helper_updated'])) }}"
         sequence:
+          - action: switch.turn_off
+            target:
+              "{{ primary_lights_adaptive_lighting_switches }}"
           - choose:
               - alias: scene_helper is specified
                 conditions:
                   - condition: template
                     value_template: "{{ scene_helper_value is not none }}"
                 sequence:
-                  - action: adaptive_lighting.set_manual_control
-                    data:
-                      manual_control: true
-                      lights:
-                        "{{ primary_lights.entity_id }}"
                   - action: scene.turn_on
                     target:
                       entity_id: "{{ scene_helper_value }}"
                     data:
                       transition: 1
             default:
-              - action: switch.turn_off
-                target:
-                  "{{ primary_lights_adaptive_lighting_switches }}"
               - action: switch.turn_on
                 target:
                   "{{ primary_lights_adaptive_lighting_switches }}"
       - alias: action is in off_actions
         conditions: "{{ action in off_actions_list }}"
         sequence:
-          # TODO: Revisit this flow to see if this could be better optimized
           - action: adaptive_lighting.set_manual_control
             data:
               manual_control: true
               lights:
                 "{{ primary_lights.entity_id }}"
-          - action: switch.turn_off
-            target:
-              "{{ primary_lights_adaptive_lighting_switches }}"
           - action: light.turn_off
             target:
               "{{ primary_lights }}"
@@ -524,18 +514,17 @@ action:
               {% set lights_off = primary_lights.entity_id | map('states') | select('equalto', 'off') | list %}
               {{ lights_off | length == primary_lights.entity_id | length }}
             timeout: '00:00:10'
-          - action: switch.turn_on
-            target:
-              "{{ primary_lights_adaptive_lighting_switches }}"
-        # TODO: Revisit this flow to see if this could be better optimized and iterated for non-native switches
+          - action: adaptive_lighting.set_manual_control
+            data:
+              manual_control: false
+              lights:
+                "{{ primary_lights.entity_id }}"
       - alias: action is in dim_up_actions
         conditions: "{{ action in dim_up_actions_list }}"
         sequence:
-          - action: adaptive_lighting.set_manual_control
-            data:
-              manual_control: true
-              lights:
-                "{{ primary_lights.entity_id }}"
+          - action: switch.turn_off
+            target:
+              "{{ primary_lights_adaptive_lighting_switches }}"
           - if:
               - condition: template
                 value_template: "{{ primary_lights_ha_control == true }}"
@@ -545,15 +534,12 @@ action:
                   "{{ primary_lights }}"
                 data:
                   brightness_step_pct: "{{ primary_lights_dim_step_pct }}"
-        # TODO: Revisit this flow to see if this could be better optimized and iterated for non-native switches
       - alias: action is in dim_down_actions
         conditions: "{{ action in dim_down_actions_list }}"
         sequence:
-          - action: adaptive_lighting.set_manual_control
-            data:
-              manual_control: true
-              lights:
-                "{{ primary_lights.entity_id }}"
+          - action: switch.turn_off
+            target:
+              "{{ primary_lights_adaptive_lighting_switches }}"
           - if:
               - condition: template
                 value_template: "{{ primary_lights_ha_control == true }}"
@@ -563,15 +549,12 @@ action:
                     "{{ primary_lights }}"
                 data:
                   brightness_step_pct: "-{{ primary_lights_dim_step_pct }}"
-        # TODO: Revisit this flow to see if this could be better optimized
       - alias: action is in max_brightness_actions
         conditions: "{{ action in max_brightness_actions_list }}"
         sequence:
-          - action: adaptive_lighting.set_manual_control
-            data:
-              manual_control: true
-              lights:
-                "{{ primary_lights.entity_id }}"
+          - action: switch.turn_off
+            target:
+              "{{ primary_lights_adaptive_lighting_switches }}"
           - if:
               - condition: template
                 value_template: "{{ primary_lights_ha_control == true }}"
@@ -581,15 +564,12 @@ action:
                   "{{ primary_lights }}"
                 data:
                   brightness_pct: "{{ primary_lights_max_brightness }}"
-        # TODO: Revisit this flow to see if this could be better optimized
       - alias: action is in min_brightness_actions
         conditions: "{{ action in min_brightness_actions_list }}"
         sequence:
-          - action: adaptive_lighting.set_manual_control
-            data:
-              manual_control: true
-              lights:
-                "{{ primary_lights.entity_id }}"
+          - action: switch.turn_off
+            target:
+              "{{ primary_lights_adaptive_lighting_switches }}"
           - if:
               - condition: template
                 value_template: "{{ primary_lights_ha_control == true }}"
@@ -599,7 +579,6 @@ action:
                   "{{ primary_lights }}"
                 data:
                   brightness_pct: "{{ primary_lights_min_brightness }}"
-        # TODO: Move all unnecessary actions to a separate automation
       - alias: action is in secondary_on_actions
         conditions: "{{ action in secondary_on_actions_list and ((secondary_lights.entity_id is defined) and (secondary_lights.entity_id | length > 0)) }}"
         sequence:
@@ -631,7 +610,6 @@ action:
                   - action: switch.turn_on
                     target:
                         "{{ secondary_lights_adaptive_lighting_switches }}"
-        # TODO: Move all unnecessary actions to a separate automation
       - alias: action is in secondary_off_actions
         conditions: "{{ action in secondary_off_actions_list and ((secondary_lights.entity_id is defined) and (secondary_lights.entity_id | length > 0)) }}"
         sequence:
@@ -649,9 +627,11 @@ action:
                         entity_id:
                           "{{ switch_light_entities }}"
               - sequence:
-                  - action: switch.turn_off
-                    target:
-                      "{{ secondary_lights_adaptive_lighting_switches }}"
+                  - action: adaptive_lighting.set_manual_control
+                    data:
+                      manual_control: true
+                      lights:
+                        "{{ secondary_lights.entity_id }}"
                   - action: light.turn_off
                     target:
                         "{{ secondary_lights }}"
@@ -659,9 +639,11 @@ action:
                       {% set lights_off = secondary_lights.entity_id | map('states') | select('equalto', 'off') | list %}
                       {{ lights_off | length == secondary_lights.entity_id | length }}
                     timeout: '00:00:10'
-                  - action: switch.turn_on
-                    target:
-                      "{{ secondary_lights_adaptive_lighting_switches }}"
+                  - action: adaptive_lighting.set_manual_control
+                    data:
+                      manual_control: false
+                      lights:
+                        "{{ secondary_lights.entity_id }}"
         # TODO: I think mode and phase helpers could be removed. Maybe even automation reloaded? Could be a good opportunity to reset config...
       - alias: mode_helper_updated or phase_helper updated or automations reloaded
         conditions: "{{ trigger.id in ['mode_helper_updated', 'phase_helper_updated', 'automations_reloaded'] }}"
