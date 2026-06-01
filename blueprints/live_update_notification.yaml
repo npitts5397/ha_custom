@@ -5,7 +5,7 @@ blueprint:
     entity is active (appliances, EV charging, navigation, etc.).
     Uses a chronometer (local phone countdown) for the live time display.
     Running States is a catch-all residual — any state not in Interrupted,
-    Terminal, or Transient is treated as active. Supports inclusion,
+    Terminal, or Ignore is treated as active. Supports inclusion,
     exclusion (-prefix), and match-all (blank) modes for Running States.
     Fires a dismissable done notification on completion (or silently clears
     if the done notification is disabled).
@@ -153,16 +153,15 @@ blueprint:
           selector:
             text:
 
-        states_transient:
-          name: Transient / Noise States
+        states_ignore:
+          name: Ignore States
           description: >
-            Comma-separated status values that represent brief, transitional
-            states which should be ignored for notification purposes.
-            Transitions *from* a transient state will not re-fire the done
-            notification (e.g. "Offline" between two "Finished" states on a 3D
-            printer). Transitions *to* a transient state will not dismiss the
-            notification. Leave blank if not applicable.
-            E.g. Offline, Connecting
+            Comma-separated status values that should be ignored for
+            notification purposes. Transitions *from* an ignore state will not
+            re-fire the done notification (e.g. "Offline" between two
+            "Finished" states on a 3D printer). Transitions *to* an ignore
+            state will not dismiss the notification. Leave blank if not
+            applicable. E.g. Offline, Connecting
           default: ""
           selector:
             text:
@@ -291,7 +290,7 @@ variables:
   _states_running:      !input states_running
   _states_interrupted:  !input states_interrupted
   _states_terminal:     !input states_terminal
-  _states_transient:    !input states_transient
+  _states_ignore:       !input states_ignore
   _notify_targets:      !input notify_targets
   _notify_helper:       !input notify_targets_helper
   _appliance_name:      !input appliance_name
@@ -349,11 +348,11 @@ variables:
       {% set ns.r = ns.r + [s | regex_replace('^-','')] %}
     {% endfor %}
     {{ ns.r }}
-  transient_states: >
-    {{ (_states_transient | default('')).split(',') | map('trim') | map('lower') | reject('match','^-') | reject('eq','') | list }}
-  transient_states_neg: >
+  ignore_states: >
+    {{ (_states_ignore | default('')).split(',') | map('trim') | map('lower') | reject('match','^-') | reject('eq','') | list }}
+  ignore_states_neg: >
     {% set ns = namespace(r=[]) %}
-    {% for s in (_states_transient | default('')).split(',') | map('trim') | map('lower') | select('match','^-') %}
+    {% for s in (_states_ignore | default('')).split(',') | map('trim') | map('lower') | select('match','^-') %}
       {% set ns.r = ns.r + [s | regex_replace('^-','')] %}
     {% endfor %}
     {{ ns.r }}
@@ -385,10 +384,10 @@ variables:
        or (terminal_states | length == 0 and terminal_states_neg | length > 0
            and current_status not in terminal_states_neg
            and current_status not in ['unknown','unavailable']) }}
-  in_transient_state: >
-    {{ (transient_states | length > 0 and current_status in transient_states)
-       or (transient_states | length == 0 and transient_states_neg | length > 0
-           and current_status not in transient_states_neg
+  in_ignore_state: >
+    {{ (ignore_states | length > 0 and current_status in ignore_states)
+       or (ignore_states | length == 0 and ignore_states_neg | length > 0
+           and current_status not in ignore_states_neg
            and current_status not in ['unknown','unavailable']) }}
   in_running_state: >
     {{ ((_states_running | length == 0 and current_status not in ['unknown','unavailable'])
@@ -399,7 +398,7 @@ variables:
             and current_status not in ['unknown','unavailable']))
        and not in_interrupted_state
        and not in_terminal_state
-       and not in_transient_state }}
+       and not in_ignore_state }}
   in_active_state: "{{ in_running_state }}"
   from_in_interrupted: >
     {% set fs = from_status %}
@@ -417,12 +416,12 @@ variables:
             and fs not in ['unknown','unavailable']))
        and fs not in interrupted_states
        and fs not in terminal_states
-       and fs not in transient_states }}
-  from_in_transient: >
+       and fs not in ignore_states }}
+  from_in_ignore: >
     {% set fs = from_status %}
-    {{ (transient_states | length > 0 and fs in transient_states)
-       or (transient_states | length == 0 and transient_states_neg | length > 0
-           and fs not in transient_states_neg
+    {{ (ignore_states | length > 0 and fs in ignore_states)
+       or (ignore_states | length == 0 and ignore_states_neg | length > 0
+           and fs not in ignore_states_neg
            and fs not in ['unknown','unavailable']) }}
 
   # ── Normalize remaining time → minutes ────────────────────────────────
@@ -695,13 +694,13 @@ action:
           value_template: >
             {{ status_changed
                and in_terminal_state
-               and not in_transient_state }}
+               and not in_ignore_state }}
       sequence:
         - choose:
-            # Done notification when enabled and not arriving from a transient state
+            # Done notification when enabled and not arriving from an ignore state
             - conditions:
                 - condition: template
-                  value_template: "{{ _done_enabled and not from_in_transient }}"
+                  value_template: "{{ _done_enabled and not from_in_ignore }}"
               sequence:
                 - repeat:
                     for_each: "{{ notify_list }}"
@@ -717,7 +716,7 @@ action:
                             notification_icon: "{{ _notification_icon }}"
                             clickAction: "{{ _notification_url }}"
                             image: "{{ _image_url }}"
-          # Default: silently clear (done disabled, or arrived via transient)
+          # Default: silently clear (done disabled, or arrived via ignore state)
           default:
             - repeat:
                 for_each: "{{ notify_list }}"
