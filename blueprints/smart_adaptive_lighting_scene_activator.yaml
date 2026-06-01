@@ -35,6 +35,11 @@ blueprint:
             exist, but it needs to be moved to a separate automation. I think the automation will be a
             consolidated version of the phase update automations. I think using a label for the switches
             that should be updated basedo on the phase will be the best way to do this.
+      - [ ] (low priority) On Inovelli switches (and possibly others), hold actions (up_held/down_held)
+            are followed by a release event (up_release/down_release) which re-triggers the automation.
+            Currently a no-op since release values don't match any action list, but if delays are ever
+            added to dim actions the mode:restart could cause the release event to cancel in-progress
+            work. Consider adding a condition to exclude _release events.
   input:
     events:
       name: Switch Event Configuration
