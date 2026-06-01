@@ -97,10 +97,10 @@ blueprint:
             Default:
 
             ```
-            up_hold
+            up_held
             ```
           default: |
-            up_hold
+            up_held
           selector:
             text:
               multiline: true
@@ -112,10 +112,10 @@ blueprint:
             Default:
 
             ```
-            down_hold
+            down_held
             ```
           default: |
-            down_hold
+            down_held
           selector:
             text:
               multiline: true
