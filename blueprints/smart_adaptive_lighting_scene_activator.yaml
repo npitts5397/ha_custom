@@ -207,7 +207,7 @@ blueprint:
                 domain: light
         primary_lights_ha_control:
           name: Primary Lights HA Control
-          description: Optional. Set to `true` when Home Assistant should control the selected lights via `light_on` and `light_off` actions. This should be `false` when lights and switches are bound (Zigbee) or associated (ZWave) directly. Defaults to `false`.
+          description: Optional. When `true`, Home Assistant directly controls light brightness during dim and brightness actions via `light.turn_on`. Enable when no direct hardware binding or association exists (e.g., MQTT-only control); leave `false` when the switch and lights are bound (Zigbee) or associated (Z-Wave) — the hardware handles brightness directly and enabling this causes double-dimming. Defaults to `false`.
           default: false
           selector:
             boolean:
@@ -498,17 +498,6 @@ action:
           - condition: template
             value_template: "{{ (action in on_actions_list) or ((primary_lights_state == 'on') and (trigger.id in ['scene_helper_updated'])) }}"
         sequence:
-          - if:
-              - condition: template
-                value_template: "{{ trigger.id == 'mqtt' or primary_lights_ha_control == true }}"
-            then:
-              - action: adaptive_lighting.apply
-                data:
-                  entity_id: "{{ primary_lights_adaptive_lighting_switches.entity_id }}"
-                  adapt_brightness: true
-                  adapt_color: true
-                  prefer_rgb_color: "{{ enable_rgb_color }}"
-                  turn_on_lights: true
           - action: switch.turn_off
             target:
               "{{ primary_lights_adaptive_lighting_switches }}"
@@ -527,6 +516,13 @@ action:
               - action: switch.turn_on
                 target:
                   "{{ primary_lights_adaptive_lighting_switches }}"
+              - action: adaptive_lighting.apply
+                data:
+                  entity_id: "{{ primary_lights_adaptive_lighting_switches.entity_id }}"
+                  adapt_brightness: true
+                  adapt_color: true
+                  prefer_rgb_color: "{{ enable_rgb_color }}"
+                  turn_on_lights: true
       - alias: action is in off_actions
         conditions: "{{ action in off_actions_list }}"
         sequence:
