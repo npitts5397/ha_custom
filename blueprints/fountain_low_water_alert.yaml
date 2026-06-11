@@ -1,0 +1,120 @@
+blueprint:
+  name: "Fountain Low Water Alert"
+  description: >
+    Sends a notification when any selected fountain falls below a configurable
+    water level threshold. Triggers immediately on level drop and on a daily
+    schedule — notification only fires if a fountain is actually low at the
+    time of the check. Device name is resolved automatically from each sensor.
+  domain: automation
+  author: npitts5397
+  input:
+
+    # ── Section: Fountains ─────────────────────────────────────────────────
+    fountains:
+      name: Fountains
+      icon: mdi:fountain
+      input:
+        fountain_sensors:
+          name: Water Level Sensors
+          description: >
+            Percentage sensors reporting each fountain's current water level.
+            The device name is resolved automatically for notification messages.
+          default:
+            - sensor.dockstream_smart_fountain_remaining_water_2
+            - sensor.dockstream_2_smart_cordless_fountain_remaining_water_2
+          selector:
+            entity:
+              domain: sensor
+              multiple: true
+
+    # ── Section: Alert Settings ─────────────────────────────────────────────
+    alert_settings:
+      name: Alert Settings
+      icon: mdi:water-alert
+      input:
+        low_threshold:
+          name: Low Water Threshold
+          description: Alert when water level falls below this percentage.
+          default: 40
+          selector:
+            number:
+              min: 5
+              max: 90
+              step: 5
+              unit_of_measurement: "%"
+              mode: slider
+
+        alert_time:
+          name: Daily Alert Time
+          description: Time to perform a daily water level check.
+          default: "06:00:00"
+          selector:
+            time:
+
+    # ── Section: Notification ───────────────────────────────────────────────
+    notification:
+      name: Notification
+      icon: mdi:bell-outline
+      collapsed: true
+      input:
+        notify_target:
+          name: Notification Service
+          description: >
+            Notification service to call.
+            E.g. notify.notify_phones, notify.mobile_app_nate_s_pixel_10_pro_fold
+          default: notify.notify_phones
+          selector:
+            text:
+
+        notification_tag:
+          name: Notification Tag
+          description: Unique tag — replaces an existing notification rather than stacking a new one.
+          default: fountain_low_water
+          selector:
+            text:
+
+trigger:
+  - platform: numeric_state
+    entity_id: !input fountain_sensors
+    below: !input low_threshold
+  - platform: time
+    at: !input alert_time
+
+action:
+  - variables:
+      _sensors: !input fountain_sensors
+      _threshold: !input low_threshold
+      _tag: !input notification_tag
+
+  # Gate: stop here if no fountain is actually low right now.
+  - condition: template
+    value_template: >-
+      {% set ns = namespace(found=false) %}
+      {% for entity in _sensors %}
+        {% if states(entity) | float(100) < _threshold | int %}{% set ns.found = true %}{% endif %}
+      {% endfor %}
+      {{ ns.found }}
+
+  - variables:
+      low_message: >-
+        {%- set ns = namespace(lines=[]) -%}
+        {%- for entity in _sensors -%}
+          {%- set pct = states(entity) | float(100) -%}
+          {%- if pct < _threshold | int -%}
+            {%- set name = device_attr(entity, 'name') or state_attr(entity, 'friendly_name') or entity -%}
+            {%- set ns.lines = ns.lines + [name ~ ': ' ~ (pct | round(0) | int) ~ '%'] -%}
+          {%- endif -%}
+        {%- endfor -%}
+        {{ ns.lines | join('\n') }}
+
+  - action: !input notify_target
+    data:
+      title: "Fountain Water Low"
+      message: "{{ low_message | trim }}"
+      data:
+        tag: "{{ _tag }}"
+        channel: General
+        notification_icon: mdi:water-alert
+
+mode: single
+max_exceeded: silent
