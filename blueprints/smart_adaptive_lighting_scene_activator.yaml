@@ -24,6 +24,9 @@ blueprint:
     equivalent guidance.
 
     Version history:
+      * 5.0.3 - Fix LED bar duration to integer for Inovelli Blue firmware compatibility.
+      * 5.0.2 - Fix Adaptive Lighting application on lights-on; clarify HA control input description.
+      * 5.0.1 - Fix: turn on primary lights when triggered via MQTT or HA control.
       * 5.0.0 - #109 - Migrate to event-based triggers; remove MQTT triggers. General refactoring and optimization.
       * 4.0.0 - HA-140 - Lots of refactoring, rework inputs, and squash some outstanding bugs.
       * 3.0.0 - HA-95 - General refactoring, bugfixes, and feature enhancements
@@ -97,7 +100,7 @@ blueprint:
         dim_up_actions:
           name: "'dim up' Actions"
           description: |
-            Optional. List of action values for dimming up. Only used when `Primary Lights HA Control` is enabled. Each supported action should be on its own line.
+            Optional. List of action values for dimming up. Always disables Adaptive Lighting when triggered; HA-controlled brightness dimming only applies when `Primary Lights HA Control` is enabled. Each supported action should be on its own line.
 
             Default:
 
@@ -112,7 +115,7 @@ blueprint:
         dim_down_actions:
           name: "'dim down' Actions"
           description: |
-            Optional. List of action values for dimming down. Only used when `Primary Lights HA Control` is enabled. Each supported action should be on its own line.
+            Optional. List of action values for dimming down. Always disables Adaptive Lighting when triggered; HA-controlled brightness dimming only applies when `Primary Lights HA Control` is enabled. Each supported action should be on its own line.
 
             Default:
 
@@ -127,7 +130,7 @@ blueprint:
         min_brightness_actions:
           name: "'min brightness' Actions"
           description: |
-            Optional. List of action values for setting minimum brightness. Only used when `Primary Lights HA Control` is enabled. Each supported action should be on its own line.
+            Optional. List of action values for setting minimum brightness. Always disables Adaptive Lighting when triggered; HA-controlled minimum brightness only applies when `Primary Lights HA Control` is enabled. Each supported action should be on its own line.
 
             Default:
 
@@ -142,7 +145,7 @@ blueprint:
         max_brightness_actions:
           name: "'max brightness' Actions"
           description: |
-            Optional. List of action values for setting maximum brightness. Only used when `Primary Lights HA Control` is enabled. Each supported action should be on its own line.
+            Optional. List of action values for setting maximum brightness. Always disables Adaptive Lighting when triggered; HA-controlled maximum brightness only applies when `Primary Lights HA Control` is enabled. Each supported action should be on its own line.
 
             Default:
 
@@ -186,7 +189,7 @@ blueprint:
               multiline: true
         led_notification_script:
           name: LED Notification Script
-          description: Optional. Script for setting LED notifications on switches. When specified, an LED effect is applied to the light entities automatically detected from the selected Action Entities when secondary lights are toggled.
+          description: Optional. Script for setting LED notifications on switches. When specified, an LED effect is applied to the switch LED indicator entities automatically detected from the configured Action Entities when secondary lights are toggled.
           default: {}
           selector:
             entity:
@@ -434,7 +437,7 @@ variables:
   secondary_lights_switch_led_color: Cyan
   secondary_lights_switch_led_effect_on: Medium Rising
   secondary_lights_switch_led_effect_off: Medium Falling
-  secondary_lights_switch_led_duration: 1 Second
+  secondary_lights_switch_led_duration: 3
   secondary_lights_switch_led_level: 12
   phase_helper: !input phase_helper
   color_phases: !input color_phases
