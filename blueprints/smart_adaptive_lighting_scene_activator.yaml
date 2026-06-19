@@ -460,7 +460,7 @@ variables:
   # TODO: `sleep_mode_switches` should be updated to use the adaptive_lighting switch entities instead of lights to generate sleep switch list
   sleep_mode_switches: >
     {%- set data = namespace(switches=[]) %}
-    {%- set lights_list = [primary_lights.entity_id] if primary_lights.entity_id is sequence else [primary_lights.entity_id] %}
+    {%- set lights_list = primary_lights.entity_id if primary_lights.entity_id is not string else [primary_lights.entity_id] %}
     {%- if  sleep_mode_additional_lights is defined %}
       {%- for light in lights_list + sleep_mode_additional_lights %}
         {%- set data.switches = data.switches + ['switch.adaptive_lighting_sleep_mode_' + light.replace('light.','')] %}
@@ -513,6 +513,9 @@ action:
                     data:
                       transition: 1
             default:
+              - action: light.turn_on
+                target:
+                  "{{ primary_lights }}"
               - action: switch.turn_on
                 target:
                   "{{ primary_lights_adaptive_lighting_switches }}"
@@ -534,6 +537,16 @@ action:
           - action: light.turn_off
             target:
               "{{ primary_lights }}"
+          - delay: "00:00:01"
+          - if:
+              - condition: template
+                value_template: >
+                  {% set lights_on = primary_lights.entity_id | map('states') | select('equalto', 'on') | list %}
+                  {{ lights_on | length > 0 }}
+            then:
+              - action: light.turn_off
+                target:
+                  "{{ primary_lights }}"
           - wait_template: >
               {% set lights_off = primary_lights.entity_id | map('states') | select('equalto', 'off') | list %}
               {{ lights_off | length == primary_lights.entity_id | length }}
@@ -623,20 +636,28 @@ action:
                         entity_id:
                           "{{ switch_light_entities }}"
               - sequence:
-                  - alias: Turn on lights
-                    action: adaptive_lighting.apply
-                    data:
-                      entity_id: "{{ secondary_lights_adaptive_lighting_switches.entity_id }}"
-                      adapt_brightness: true
-                      adapt_color: true
-                      prefer_rgb_color: "{{ enable_rgb_color }}"
-                      turn_on_lights: true
-                  - action: switch.turn_off
-                    target:
-                        "{{ secondary_lights_adaptive_lighting_switches }}"
-                  - action: switch.turn_on
-                    target:
-                        "{{ secondary_lights_adaptive_lighting_switches }}"
+                  - if:
+                      - condition: template
+                        value_template: "{{ secondary_lights_adaptive_lighting_switches is not none and (secondary_lights_adaptive_lighting_switches | length > 0) }}"
+                    then:
+                      - alias: Turn on lights
+                        action: adaptive_lighting.apply
+                        data:
+                          entity_id: "{{ secondary_lights_adaptive_lighting_switches.entity_id }}"
+                          adapt_brightness: true
+                          adapt_color: true
+                          prefer_rgb_color: "{{ enable_rgb_color }}"
+                          turn_on_lights: true
+                      - action: switch.turn_off
+                        target:
+                            "{{ secondary_lights_adaptive_lighting_switches }}"
+                      - action: switch.turn_on
+                        target:
+                            "{{ secondary_lights_adaptive_lighting_switches }}"
+                    else:
+                      - action: light.turn_on
+                        target:
+                            "{{ secondary_lights }}"
       - alias: action is in secondary_off_actions
         conditions: "{{ action in secondary_off_actions_list and ((secondary_lights.entity_id is defined) and (secondary_lights.entity_id | length > 0)) }}"
         sequence:
@@ -654,11 +675,15 @@ action:
                         entity_id:
                           "{{ switch_light_entities }}"
               - sequence:
-                  - action: adaptive_lighting.set_manual_control
-                    data:
-                      manual_control: true
-                      lights:
-                        "{{ secondary_lights.entity_id }}"
+                  - if:
+                      - condition: template
+                        value_template: "{{ secondary_lights_adaptive_lighting_switches is not none and (secondary_lights_adaptive_lighting_switches | length > 0) }}"
+                    then:
+                      - action: adaptive_lighting.set_manual_control
+                        data:
+                          manual_control: true
+                          lights:
+                            "{{ secondary_lights.entity_id }}"
                   - action: light.turn_off
                     target:
                         "{{ secondary_lights }}"
@@ -666,14 +691,18 @@ action:
                       {% set lights_off = secondary_lights.entity_id | map('states') | select('equalto', 'off') | list %}
                       {{ lights_off | length == secondary_lights.entity_id | length }}
                     timeout: '00:00:10'
-                  - action: adaptive_lighting.set_manual_control
-                    data:
-                      manual_control: false
-                      lights:
-                        "{{ secondary_lights.entity_id }}"
-                  - action: switch.turn_on
-                    target:
-                        "{{ secondary_lights_adaptive_lighting_switches }}"
+                  - if:
+                      - condition: template
+                        value_template: "{{ secondary_lights_adaptive_lighting_switches is not none and (secondary_lights_adaptive_lighting_switches | length > 0) }}"
+                    then:
+                      - action: adaptive_lighting.set_manual_control
+                        data:
+                          manual_control: false
+                          lights:
+                            "{{ secondary_lights.entity_id }}"
+                      - action: switch.turn_on
+                        target:
+                            "{{ secondary_lights_adaptive_lighting_switches }}"
         # TODO: I think mode and phase helpers could be removed. Maybe even automation reloaded? Could be a good opportunity to reset config...
       - alias: mode_helper_updated or phase_helper updated or automations reloaded
         conditions: "{{ trigger.id in ['mode_helper_updated', 'phase_helper_updated', 'automations_reloaded'] }}"
@@ -685,7 +714,7 @@ action:
               prefer_rgb_color: "{{ enable_rgb_color }}"
           - if:
               - condition: template
-                value_template: "{{ secondary_lights.entity_id is defined and (secondary_lights | length > 0) }}"
+                value_template: "{{ secondary_lights.entity_id is defined and (secondary_lights | length > 0) and secondary_lights_adaptive_lighting_switches is not none and (secondary_lights_adaptive_lighting_switches | length > 0) }}"
             then:
               # this will set color mode for secondary lights, but is redundant if secondary lights have
               # their own SALSA automation.
