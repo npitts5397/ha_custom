@@ -10,6 +10,10 @@ blueprint:
     Fires a dismissable done notification on completion (or silently clears
     if the done notification is disabled).
 
+    An optional Start Gate holds the notification back until a second entity
+    confirms the cycle really began (e.g. a car in Drive), for status sensors
+    that go active speculatively.
+
     Sensor type reference:
       LG Washer/Dryer — remaining_time: timestamp, total_time: minutes
 
@@ -166,6 +170,42 @@ blueprint:
           selector:
             text:
 
+    # ── Section: Start Gate ────────────────────────────────────────────────
+    start_gate:
+      name: Start Gate
+      icon: mdi:gate
+      collapsed: true
+      input:
+        start_gate_entity:
+          name: Start Gate Entity (optional)
+          description: >
+            Entity that must be satisfied before the live notification is first
+            posted. Use this when the status sensor can go active before the
+            cycle has really begun — e.g. a Tesla predicts a destination as soon
+            as a door is opened, even if the car never leaves the driveway.
+            Leave blank to post as soon as the status sensor becomes active.
+            E.g. sensor.ymir_shift_state
+          default: ""
+          selector:
+            entity:
+
+        start_gate_states:
+          name: Start Gate States
+          description: >
+            Comma-separated gate entity states meaning the cycle really started.
+            Same three modes as the state buckets:
+              Inclusion — list values to match. E.g. d, r, n
+              Exclusion — prefix values with '-'. E.g. -p
+              Match-all — leave blank to accept any state other than
+                          unknown/unavailable.
+            Once the gate has opened during a cycle it stays armed until the
+            status sensor leaves the active state, so a mid-trip stop does not
+            stall live updates. The done notification is also suppressed for
+            cycles where the gate never opened.
+          default: ""
+          selector:
+            text:
+
     # ── Section: Notification Targets ─────────────────────────────────────
     notification_targets:
       name: Notification Targets
@@ -265,6 +305,12 @@ mode: queued
 max: 2
 max_exceeded: silent
 
+# Trigger-scope copies of the gate inputs — automation `variables` are not
+# available inside triggers.
+trigger_variables:
+  _t_gate_entity: !input start_gate_entity
+  _t_gate_states: !input start_gate_states
+
 trigger:
   - platform: homeassistant
     event: start
@@ -277,6 +323,22 @@ trigger:
   - platform: time_pattern
     minutes: "/1"
     id: time_updated
+
+  # Fires on the false → true edge, i.e. the moment the gate opens.
+  # Always false when no gate entity is configured.
+  - platform: template
+    id: gate_opened
+    value_template: >
+      {% if _t_gate_entity == '' %}
+        {{ false }}
+      {% else %}
+        {% set st = states(_t_gate_entity) | lower %}
+        {% set parts = _t_gate_states.split(',') | map('trim') | map('lower') | reject('eq','') | list %}
+        {% set inc = parts | reject('match','^-') | list %}
+        {{ st not in ['unknown','unavailable','']
+           and ('-' ~ st) not in parts
+           and (inc | length == 0 or st in inc) }}
+      {% endif %}
 
 variables:
   # Capture blueprint inputs for use in templates
@@ -301,6 +363,8 @@ variables:
   _notification_image:  !input notification_image
   _progress_sensor:     !input progress_sensor
   _progress_max_sensor: !input progress_max_sensor
+  _gate_entity:         !input start_gate_entity
+  _gate_states:         !input start_gate_states
   _image_url: >
     {% if _notification_image == '' %}
       {{ '' }}
@@ -514,7 +578,9 @@ variables:
   # ── Re-estimate delta → minutes ───────────────────────────────────────
   # Compare old vs new sensor value, normalised to minutes, for > 1 min check
   time_delta: >
-    {% if not status_changed and 'from_state' in trigger and trigger.from_state is not none %}
+    {% if not status_changed and _remaining_sensor != ''
+          and 'from_state' in trigger and trigger.from_state is not none
+          and trigger.from_state.entity_id == _remaining_sensor %}
       {% set from_s = trigger.from_state.state %}
       {% set to_s   = trigger.to_state.state %}
       {% if from_s in ['unknown','unavailable'] or to_s in ['unknown','unavailable'] %}
@@ -529,6 +595,54 @@ variables:
     {% else %}
       0
     {% endif %}
+
+  # ── Start gate ─────────────────────────────────────────────────────────
+  # Optional arming condition: nothing is posted until the gate entity reports
+  # a "really started" state. Guards against status sensors that go active
+  # speculatively (a Tesla predicts a destination whenever a door is opened,
+  # even when the car stays parked).
+  gate_parts: >
+    {{ _gate_states.split(',') | map('trim') | map('lower') | reject('eq','') | list }}
+  gate_inc: "{{ gate_parts | reject('match','^-') | list }}"
+  gate_state_now: "{{ states(_gate_entity) | lower if _gate_entity != '' else '' }}"
+  gate_state_known: "{{ gate_state_now not in ['unknown','unavailable',''] }}"
+  gate_open: >
+    {% if _gate_entity == '' %}
+      {{ true }}
+    {% else %}
+      {{ gate_state_known
+         and ('-' ~ gate_state_now) not in gate_parts
+         and (gate_inc | length == 0 or gate_state_now in gate_inc) }}
+    {% endif %}
+  gate_changed_ts: >
+    {% if _gate_entity == '' or states[_gate_entity] is none %}
+      {{ 0 }}
+    {% else %}
+      {{ as_timestamp(states[_gate_entity].last_changed) | int }}
+    {% endif %}
+
+  # Start of the segment that just ended. On a terminal transition
+  # cycle_start_ts has already advanced to "now", so the gate has to be judged
+  # against the cycle that is being closed out.
+  prev_segment_start_ts: >
+    {% if status_changed and trigger.from_state is not none %}
+      {{ as_timestamp(trigger.from_state.last_changed) | int }}
+    {% else %}
+      {{ cycle_start_ts }}
+    {% endif %}
+
+  # Latched: a gate change after the cycle began means the gate has been open
+  # at some point during it, so a mid-cycle stop does not stall live updates.
+  # A change *into* unknown/unavailable does not latch — a device simply going
+  # offline mid-cycle is not evidence that the cycle ever started.
+  gate_armed: >
+    {{ _gate_entity == ''
+       or gate_open
+       or (gate_state_known and gate_changed_ts > cycle_start_ts) }}
+  gate_armed_prev: >
+    {{ _gate_entity == ''
+       or gate_open
+       or (gate_state_known and gate_changed_ts > prev_segment_start_ts) }}
 
   # ── Notification content ───────────────────────────────────────────────
   notify_list: >
@@ -557,7 +671,7 @@ action:
             - conditions:
                 - condition: template
                   value_template: >
-                    {{ in_active_state or in_interrupted_state }}
+                    {{ (in_active_state or in_interrupted_state) and gate_armed }}
               sequence:
                 - repeat:
                     for_each: "{{ notify_list }}"
@@ -606,10 +720,14 @@ action:
                             tag: "{{ _notification_tag }}"
 
     # ── CASE 1: Status changed to an active (running) state ──────────────
+    # Also entered when the start gate opens while the status is already
+    # active — that is the real cycle start for gated entities.
     - conditions:
         - condition: template
           value_template: >
-            {{ status_changed and in_running_state }}
+            {{ (status_changed or trigger.id == 'gate_opened')
+               and in_running_state
+               and gate_armed }}
       sequence:
         - repeat:
             for_each: "{{ notify_list }}"
@@ -639,6 +757,7 @@ action:
           value_template: >
             {{ not status_changed
                and in_active_state
+               and gate_armed
                and (_remaining_sensor != '' or _progress_sensor != '') }}
       sequence:
         - repeat:
@@ -669,6 +788,7 @@ action:
           value_template: >
             {{ status_changed
                and in_interrupted_state
+               and gate_armed
                and (from_in_active or from_in_interrupted) }}
       sequence:
         - repeat:
@@ -697,10 +817,12 @@ action:
                and not in_ignore_state }}
       sequence:
         - choose:
-            # Done notification when enabled and not arriving from an ignore state
+            # Done notification when enabled, not arriving from an ignore
+            # state, and the gate actually opened during the cycle
             - conditions:
                 - condition: template
-                  value_template: "{{ _done_enabled and not from_in_ignore }}"
+                  value_template: >
+                    {{ _done_enabled and not from_in_ignore and gate_armed_prev }}
               sequence:
                 - repeat:
                     for_each: "{{ notify_list }}"
@@ -716,7 +838,8 @@ action:
                             notification_icon: "{{ _notification_icon }}"
                             clickAction: "{{ _notification_url }}"
                             image: "{{ _image_url }}"
-          # Default: silently clear (done disabled, or arrived via ignore state)
+          # Default: silently clear (done disabled, arrived via ignore state,
+          # or the gate never opened so nothing was ever posted)
           default:
             - repeat:
                 for_each: "{{ notify_list }}"
