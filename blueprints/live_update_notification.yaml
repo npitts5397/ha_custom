@@ -185,9 +185,12 @@ blueprint:
             as a door is opened, even if the car never leaves the driveway.
             Leave blank to post as soon as the status sensor becomes active.
             E.g. sensor.ymir_shift_state
-          default: ""
+            If several entities are given the gate opens when any one of them
+            matches.
+          default: []
           selector:
             entity:
+              multiple: true
 
         start_gate_states:
           name: Start Gate States
@@ -305,12 +308,6 @@ mode: queued
 max: 2
 max_exceeded: silent
 
-# Trigger-scope copies of the gate inputs — automation `variables` are not
-# available inside triggers.
-trigger_variables:
-  _t_gate_entity: !input start_gate_entity
-  _t_gate_states: !input start_gate_states
-
 trigger:
   - platform: homeassistant
     event: start
@@ -324,21 +321,12 @@ trigger:
     minutes: "/1"
     id: time_updated
 
-  # Fires on the false → true edge, i.e. the moment the gate opens.
-  # Always false when no gate entity is configured.
-  - platform: template
-    id: gate_opened
-    value_template: >
-      {% if _t_gate_entity == '' %}
-        {{ false }}
-      {% else %}
-        {% set st = states(_t_gate_entity) | lower %}
-        {% set parts = _t_gate_states.split(',') | map('trim') | map('lower') | reject('eq','') | list %}
-        {% set inc = parts | reject('match','^-') | list %}
-        {{ st not in ['unknown','unavailable','']
-           and ('-' ~ st) not in parts
-           and (inc | length == 0 or st in inc) }}
-      {% endif %}
+  # Must be a real state trigger: a template trigger cannot track an entity
+  # whose id comes from a variable — it registers no listener and never fires.
+  # An empty entity list (no gate configured) simply never fires.
+  - platform: state
+    entity_id: !input start_gate_entity
+    id: gate_changed
 
 variables:
   # Capture blueprint inputs for use in templates
@@ -363,7 +351,7 @@ variables:
   _notification_image:  !input notification_image
   _progress_sensor:     !input progress_sensor
   _progress_max_sensor: !input progress_max_sensor
-  _gate_entity:         !input start_gate_entity
+  _gate_entity_raw:     !input start_gate_entity
   _gate_states:         !input start_gate_states
   _image_url: >
     {% if _notification_image == '' %}
@@ -601,24 +589,34 @@ variables:
   # a "really started" state. Guards against status sensors that go active
   # speculatively (a Tesla predicts a destination whenever a door is opened,
   # even when the car stays parked).
+  # Accepts a list (current selector), a bare string (configs written against
+  # the earlier single-entity selector), or nothing at all.
+  gate_entities: >
+    {% if _gate_entity_raw is none %}
+      {{ [] }}
+    {% elif _gate_entity_raw is string %}
+      {{ [_gate_entity_raw] if _gate_entity_raw | trim != '' else [] }}
+    {% else %}
+      {{ _gate_entity_raw | reject('eq','') | list }}
+    {% endif %}
+  has_gate: "{{ gate_entities | count > 0 }}"
   gate_parts: >
     {{ _gate_states.split(',') | map('trim') | map('lower') | reject('eq','') | list }}
   gate_inc: "{{ gate_parts | reject('match','^-') | list }}"
-  gate_state_now: "{{ states(_gate_entity) | lower if _gate_entity != '' else '' }}"
-  gate_state_known: "{{ gate_state_now not in ['unknown','unavailable',''] }}"
   gate_open: >
-    {% if _gate_entity == '' %}
+    {% if not has_gate %}
       {{ true }}
     {% else %}
-      {{ gate_state_known
-         and ('-' ~ gate_state_now) not in gate_parts
-         and (gate_inc | length == 0 or gate_state_now in gate_inc) }}
-    {% endif %}
-  gate_changed_ts: >
-    {% if _gate_entity == '' or states[_gate_entity] is none %}
-      {{ 0 }}
-    {% else %}
-      {{ as_timestamp(states[_gate_entity].last_changed) | int }}
+      {% set ns = namespace(v=false) %}
+      {% for e in gate_entities %}
+        {% set st = states(e) | lower %}
+        {% if st not in ['unknown','unavailable','']
+              and ('-' ~ st) not in gate_parts
+              and (gate_inc | count == 0 or st in gate_inc) %}
+          {% set ns.v = true %}
+        {% endif %}
+      {% endfor %}
+      {{ ns.v }}
     {% endif %}
 
   # Start of the segment that just ended. On a terminal transition
@@ -631,18 +629,36 @@ variables:
       {{ cycle_start_ts }}
     {% endif %}
 
-  # Latched: a gate change after the cycle began means the gate has been open
-  # at some point during it, so a mid-cycle stop does not stall live updates.
-  # A change *into* unknown/unavailable does not latch — a device simply going
-  # offline mid-cycle is not evidence that the cycle ever started.
+  # Latched: a gate entity that changed after the cycle began means the gate
+  # has been open at some point during it, so a mid-cycle stop does not stall
+  # live updates. A change *into* unknown/unavailable does not latch — a device
+  # simply going offline mid-cycle is not evidence that the cycle ever started.
+  gate_changed_after_start: >
+    {% set ns = namespace(v=false) %}
+    {% for e in gate_entities %}
+      {% set s = states[e] %}
+      {% if s is not none
+            and s.state | lower not in ['unknown','unavailable','']
+            and as_timestamp(s.last_changed) | int > cycle_start_ts %}
+        {% set ns.v = true %}
+      {% endif %}
+    {% endfor %}
+    {{ ns.v }}
+  gate_changed_after_prev: >
+    {% set ns = namespace(v=false) %}
+    {% for e in gate_entities %}
+      {% set s = states[e] %}
+      {% if s is not none
+            and s.state | lower not in ['unknown','unavailable','']
+            and as_timestamp(s.last_changed) | int > prev_segment_start_ts %}
+        {% set ns.v = true %}
+      {% endif %}
+    {% endfor %}
+    {{ ns.v }}
   gate_armed: >
-    {{ _gate_entity == ''
-       or gate_open
-       or (gate_state_known and gate_changed_ts > cycle_start_ts) }}
+    {{ not has_gate or gate_open or gate_changed_after_start }}
   gate_armed_prev: >
-    {{ _gate_entity == ''
-       or gate_open
-       or (gate_state_known and gate_changed_ts > prev_segment_start_ts) }}
+    {{ not has_gate or gate_open or gate_changed_after_prev }}
 
   # ── Notification content ───────────────────────────────────────────────
   notify_list: >
@@ -725,7 +741,7 @@ action:
     - conditions:
         - condition: template
           value_template: >
-            {{ (status_changed or trigger.id == 'gate_opened')
+            {{ (status_changed or (trigger.id == 'gate_changed' and gate_open))
                and in_running_state
                and gate_armed }}
       sequence:
