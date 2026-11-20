@@ -31,6 +31,15 @@ blueprint:
       #1.0.2 - SMRTH-4 - Add Return Volume applied on stream-end / pause auto-off.
       #1.0.3 - SMRTH-4 - On stream-end, skip end cleanup if playback input is no longer the Stream Input.
       #1.0.4 - SMRTH-4 - Rename to Stream/Idle scheme; single Stream Volume + Restore Volume on End toggle.
+      #1.1.0 - SMRTH-4 - Fix Music Assistant queue starts (idle -> paused -> playing) being
+                         ignored by not_from: paused. Start path now runs on a fresh start OR
+                         whenever the playback device isn't already on the Stream Input, so a
+                         plain resume / track-change blip is still a no-op. Verify the input
+                         switch and retry (Input Retries). Optional Power-Loss Recovery: turn
+                         the playback device back on and reselect the Stream Input if it powers
+                         off mid-stream (e.g. CEC power-off from a TV). Optional Hold Switch
+                         (input_boolean) that pauses the start/recovery paths while another
+                         source (e.g. a TV) owns the playback device.
 
     Source repository: https://github.com/npitts5397/ha_custom
   input:
@@ -61,6 +70,18 @@ blueprint:
             entity:
               domain: media_player
               multiple: false
+        hold_entity:
+          name: Hold Switch
+          description: >
+            Optional input_boolean. While it is on, the start path and
+            Power-Loss Recovery are skipped, so the playback device is left on
+            whatever input another source (e.g. a TV) put it on. End / pause
+            cleanup still runs under its own input guards.
+          default: {}
+          selector:
+            entity:
+              domain: input_boolean
+              multiple: false
 
     # ── Section: Playback Settings ─────────────────────────────────────────
     playback_settings:
@@ -77,6 +98,20 @@ blueprint:
           default: ""
           selector:
             text:
+        input_retries:
+          name: Input Retries
+          description: >
+            How many times to send the Stream Input selection (waiting up to 5s
+            each time for the device to report it) before giving up. Some
+            soundbars ignore or misroute the first input command while they are
+            still negotiating HDMI-CEC.
+          default: 3
+          selector:
+            number:
+              min: 1
+              max: 5
+              step: 1
+              mode: box
         stream_volume:
           name: Stream Volume
           description: >
@@ -166,18 +201,47 @@ blueprint:
             seconds: 0
           selector:
             duration:
+        recover_power_loss:
+          name: Power-Loss Recovery
+          description: >
+            If the playback device turns off while the streamer is still
+            playing (e.g. a TV powering it off over HDMI-CEC), turn it back on
+            and reselect the Stream Input. Only applies when a separate Playback
+            Device is set.
+          default: false
+          selector:
+            boolean:
+        recover_delay:
+          name: Power-Loss Recovery Delay
+          description: >
+            How long the playback device must stay off (while the streamer keeps
+            playing) before recovery kicks in. Gives CEC power-off sequences
+            time to settle.
+          default:
+            hours: 0
+            minutes: 0
+            seconds: 5
+          selector:
+            duration:
 
 mode: restart
 max_exceeded: silent
 
+trigger_variables:
+  tv_streaming_device: !input streaming_device
+  tv_playback_override: !input playback_device
+  tv_hold: !input hold_entity
+
 variables:
   streaming_device: !input streaming_device
   playback_override: !input playback_device
+  hold_entity: !input hold_entity
   # Fall back to the streaming device when no separate playback device is set.
   playback_device: >-
     {% set o = playback_override %}
     {{ o if o is string and o | length > 0 else streaming_device }}
   stream_input: !input stream_input
+  input_retries: !input input_retries
   stream_volume: !input stream_volume
   idle_input: !input idle_input
   restore_volume_on_end: !input restore_volume_on_end
@@ -188,13 +252,11 @@ variables:
   command_spacing: "00:00:01"
 
 trigger:
-  # Streaming started. `not_from: paused` so resuming from a pause does NOT
-  # re-run the on-path (power/volume/input) — only genuine fresh starts do.
+  # Streaming started (fresh start, MA queue start via a paused blip, or a
+  # resume). The action decides which of those it is.
   - id: stream_start
     platform: state
     entity_id: !input streaming_device
-    not_from:
-      - "paused"
     to: "playing"
     for: "00:00:03"
   # Streaming ended (stopped, not paused).
@@ -212,6 +274,19 @@ trigger:
     entity_id: !input streaming_device
     to: "paused"
     for: "00:00:03"
+  # Playback device lost power mid-stream (e.g. CEC power-off from a TV).
+  - id: playback_lost
+    platform: template
+    enabled: !input recover_power_loss
+    value_template: >-
+      {% set o = tv_playback_override %}
+      {% set pd = o if o is string and o | length > 0 else tv_streaming_device %}
+      {% set h = tv_hold %}
+      {{ pd != tv_streaming_device
+         and not (h is string and h | length > 0 and is_state(h, 'on'))
+         and is_state(pd, 'off')
+         and is_state(tv_streaming_device, 'playing') }}
+    for: !input recover_delay
 
 condition: []
 
@@ -225,6 +300,24 @@ action:
           # Re-verify the streamer is still playing after the delay.
           - condition: template
             value_template: "{{ is_state(streaming_device, 'playing') }}"
+          # Run the on-path for a genuine fresh start, or whenever the playback
+          # device isn't already powered and on the Stream Input. That covers
+          # Music Assistant queue starts (idle -> paused -> playing in ~1s) and
+          # resuming after the device was switched away / powered off, while a
+          # plain resume or a track-change blip stays a no-op (volume untouched).
+          - variables:
+              already_set: >-
+                {{ states(playback_device) not in ['off', 'standby', 'unavailable', 'unknown']
+                   and (stream_input | length == 0
+                        or state_attr(playback_device, 'source') == stream_input) }}
+          - condition: template
+            value_template: >-
+              {{ trigger.from_state.state != 'paused' or not already_set }}
+          # Hold Switch: another source owns the playback device right now.
+          - condition: template
+            value_template: >-
+              {% set h = hold_entity %}
+              {{ not (h is string and h | length > 0 and is_state(h, 'on')) }}
           - if: "{{ power_on_control }}"
             then:
               - service: media_player.turn_on
@@ -233,11 +326,21 @@ action:
               - delay: "{{ command_spacing }}"
           - if: "{{ stream_input | length > 0 }}"
             then:
-              - service: media_player.select_source
-                target:
-                  entity_id: "{{ playback_device }}"
-                data:
-                  source: "{{ stream_input }}"
+              - repeat:
+                  sequence:
+                    - service: media_player.select_source
+                      target:
+                        entity_id: "{{ playback_device }}"
+                      data:
+                        source: "{{ stream_input }}"
+                    - wait_template: "{{ state_attr(playback_device, 'source') == stream_input }}"
+                      timeout: "00:00:05"
+                      continue_on_timeout: true
+                  until:
+                    - condition: template
+                      value_template: >-
+                        {{ state_attr(playback_device, 'source') == stream_input
+                           or repeat.index >= input_retries | int(3) }}
               - delay: "{{ command_spacing }}"
           - if: "{{ stream_volume | int(-1) >= 0 }}"
             then:
@@ -318,3 +421,35 @@ action:
           - service: media_player.turn_off
             target:
               entity_id: "{{ playback_device }}"
+
+      # ── Playback device lost power mid-stream (recovery) ─────────────────
+      - conditions: "{{ trigger.id == 'playback_lost' }}"
+        sequence:
+          - condition: template
+            value_template: >-
+              {% set h = hold_entity %}
+              {{ not (h is string and h | length > 0 and is_state(h, 'on')) }}
+          - service: media_player.turn_on
+            target:
+              entity_id: "{{ playback_device }}"
+          - wait_template: "{{ not is_state(playback_device, 'off') }}"
+            timeout: "00:00:15"
+            continue_on_timeout: true
+          - delay: "{{ command_spacing }}"
+          - if: "{{ stream_input | length > 0 }}"
+            then:
+              - repeat:
+                  sequence:
+                    - service: media_player.select_source
+                      target:
+                        entity_id: "{{ playback_device }}"
+                      data:
+                        source: "{{ stream_input }}"
+                    - wait_template: "{{ state_attr(playback_device, 'source') == stream_input }}"
+                      timeout: "00:00:05"
+                      continue_on_timeout: true
+                  until:
+                    - condition: template
+                      value_template: >-
+                        {{ state_attr(playback_device, 'source') == stream_input
+                           or repeat.index >= input_retries | int(3) }}
