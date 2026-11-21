@@ -4,9 +4,9 @@ set_effects_source:
   description: >-
     Shared backend for the per-light FX Source selects (template selects named '<light> FX Source'). Native = the
     light's default: FX off, native effect stopped, Adaptive Lighting switch on. LedFx / HyperHDR = that engine
-    drives the light and the AL switch is turned off, so the card's AL button shows the truth. A pick made by a
-    person (not an automation) sets the light's manual flag, if it has one, to pause its room controller. To add
-    a source: add a field and a branch here, and the option to the light's select.
+    drives the light and the AL switch is turned off (unless keep_adaptive_during_fx), so the card's AL button shows
+    the truth. A pick made by a person (not an automation) sets the light's manual flag, if it has one, to pause
+    its room controller. To add a source: add a field and a branch here, and the option to the light's select.
   icon: mdi:auto-fix
   mode: parallel
   max: 10
@@ -61,6 +61,14 @@ set_effects_source:
       selector:
         entity:
           domain: select
+    keep_adaptive_during_fx:
+      name: Keep Adaptive Lighting during FX
+      description: >-
+        Leave the AL switch on while LedFx/HyperHDR drive the light (AL keeps setting the base light brightness,
+        e.g. a WLED strip that uses main segment brightness for realtime).
+      default: false
+      selector:
+        boolean: {}
   sequence:
   - variables:
       by_person: '{{ context.user_id is not none }}'
@@ -73,6 +81,7 @@ set_effects_source:
       has_ledfx: '{{ ledfx_light is defined and ledfx_light is string and ledfx_light | length > 0 and ledfx_light
         != ''none'' }}'
       hdr_effect: '{{ hyperhdr_default_effect | default(''Flatbuffers Server'') }}'
+      keep_al: '{{ keep_adaptive_during_fx | default(false) | bool }}'
   - alias: 'A person picked this: pause the room controller (if the light has one)'
     if:
     - condition: template
@@ -144,7 +153,7 @@ set_effects_source:
       sequence:
       - if:
         - condition: template
-          value_template: '{{ has_al }}'
+          value_template: '{{ has_al and not keep_al }}'
         then:
         - action: switch.turn_off
           alias: Adaptive Lighting off while LedFx drives the light
@@ -172,7 +181,7 @@ set_effects_source:
       sequence:
       - if:
         - condition: template
-          value_template: '{{ has_al }}'
+          value_template: '{{ has_al and not keep_al }}'
         then:
         - action: switch.turn_off
           alias: Adaptive Lighting off while HyperHDR drives the light
