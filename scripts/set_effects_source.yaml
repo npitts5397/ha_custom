@@ -96,6 +96,10 @@ set_effects_source:
       - condition: template
         value_template: '{{ source == ''Native'' }}'
       sequence:
+      - alias: Remember whether an FX engine was lighting this up (then Native should land lit)
+        variables:
+          fx_was_on: '{{ (has_ledfx and is_state(ledfx_light, ''on'')) or (has_hyperhdr and is_state(hyperhdr_light,
+            ''on'')) }}'
       - if:
         - condition: template
           value_template: '{{ has_ledfx and is_state(ledfx_light, ''on'') }}'
@@ -103,6 +107,8 @@ set_effects_source:
         - action: light.turn_off
           target:
             entity_id: '{{ ledfx_light }}'
+        - alias: Let the LedFx stream release the bulbs before Adaptive Lighting applies
+          delay: 00:00:02
       - if:
         - condition: template
           value_template: '{{ has_hyperhdr and is_state(hyperhdr_light, ''on'') }}'
@@ -145,7 +151,17 @@ set_effects_source:
             entity_id: '{{ adaptive_switch }}'
             lights:
             - '{{ base_light }}'
-            turn_on_lights: false
+            turn_on_lights: '{{ fx_was_on }}'
+            transition: 1
+        else:
+        - if:
+          - condition: template
+            value_template: '{{ fx_was_on }}'
+          then:
+          - action: light.turn_on
+            alias: 'No Adaptive Lighting: just leave the light on'
+            target:
+              entity_id: '{{ base_light }}'
     - alias: LedFx
       conditions:
       - condition: template
