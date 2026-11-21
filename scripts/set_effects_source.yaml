@@ -1,49 +1,25 @@
+# Reference copy. Live script is UI-managed (scripts.yaml), not loaded from here.
 set_effects_source:
   alias: Set Effects Source
   description: >-
-    Shared backend for the per-light FX Source selects (template selects named '<light> FX Source'). Switches
-    a light between Auto (Adaptive Lighting / room controller), a native bulb effect, LedFx and HyperHDR.
-    The select's state is derived from the real entities, so it falls back to Auto by itself when an effect
-    stops. To add a source: add a field, a branch here, and the option to the light's select.
+    Shared backend for the per-light FX Source selects (template selects named '<light> FX Source'). Native = the
+    light's default: FX off, native effect stopped, Adaptive Lighting switch on. LedFx / HyperHDR = that engine
+    drives the light and the AL switch is turned off, so the card's AL button shows the truth. A pick made by a
+    person (not an automation) sets the light's manual flag, if it has one, to pause its room controller. To add
+    a source: add a field and a branch here, and the option to the light's select.
   icon: mdi:auto-fix
   mode: parallel
   max: 10
   fields:
-    source:
-      name: Source
-      required: true
-      selector:
-        select:
-          options:
-          - Auto
-          - Bulb Effect
-          - LedFx
-          - HyperHDR
-    source_select:
-      description: The FX Source select that called this (for logging).
-      name: Source select
-      selector:
-        entity:
-          domain: select
-    base_light:
-      name: Base light
-      required: true
-      selector:
-        entity:
-          domain: light
     adaptive_switch:
       name: Adaptive Lighting switch
       selector:
         entity:
           domain: switch
           integration: adaptive_lighting
-    ledfx_light:
-      name: LedFx light
-      selector:
-        entity:
-          domain: light
-    hyperhdr_light:
-      name: HyperHDR light
+    base_light:
+      name: Base light
+      required: true
       selector:
         entity:
           domain: light
@@ -53,79 +29,102 @@ set_effects_source:
       name: HyperHDR default effect
       selector:
         text: {}
+    hyperhdr_light:
+      name: HyperHDR light
+      selector:
+        entity:
+          domain: light
+    ledfx_light:
+      name: LedFx light
+      selector:
+        entity:
+          domain: light
     manual_flag:
-      description: input_boolean a room controller honours (only for lights with a controller).
+      description: >-
+        input_boolean a room controller honours (only for lights with a controller). Set on person-made picks.
       name: Manual flag
       selector:
         entity:
           domain: input_boolean
-    controller:
-      description: Room controller to hand back to on Auto.
-      name: Controller automation
+    source:
+      name: Source
+      required: true
+      selector:
+        select:
+          options:
+          - Native
+          - LedFx
+          - HyperHDR
+    source_select:
+      description: The FX Source select that called this (for logging).
+      name: Source select
       selector:
         entity:
-          domain: automation
+          domain: select
   sequence:
   - variables:
-      has_ledfx: |-
-        {{ ledfx_light is defined and ledfx_light is string and ledfx_light | length > 0 and ledfx_light != 'none' }}
-      has_hyperhdr: |-
-        {{ hyperhdr_light is defined and hyperhdr_light is string and hyperhdr_light | length > 0 and hyperhdr_light != 'none' }}
-      has_al: '{{ adaptive_switch is defined and adaptive_switch is string and adaptive_switch | length
-        > 0 }}'
-      has_flag: '{{ manual_flag is defined and manual_flag is string and manual_flag | length > 0 }}'
-      has_controller: '{{ controller is defined and controller is string and controller | length > 0 }}'
+      by_person: '{{ context.user_id is not none }}'
+      has_al: '{{ adaptive_switch is defined and adaptive_switch is string and adaptive_switch | length > 0 and
+        adaptive_switch != ''none'' }}'
+      has_flag: '{{ manual_flag is defined and manual_flag is string and manual_flag | length > 0 and manual_flag
+        != ''none'' }}'
+      has_hyperhdr: '{{ hyperhdr_light is defined and hyperhdr_light is string and hyperhdr_light | length > 0 and
+        hyperhdr_light != ''none'' }}'
+      has_ledfx: '{{ ledfx_light is defined and ledfx_light is string and ledfx_light | length > 0 and ledfx_light
+        != ''none'' }}'
       hdr_effect: '{{ hyperhdr_default_effect | default(''Flatbuffers Server'') }}'
+  - alias: 'A person picked this: pause the room controller (if the light has one)'
+    if:
+    - condition: template
+      value_template: '{{ has_flag and by_person }}'
+    then:
+    - action: input_boolean.turn_on
+      target:
+        entity_id: '{{ manual_flag }}'
   - choose:
-    - alias: 'Auto: stop FX, hand back to Adaptive Lighting / the room controller'
+    - alias: 'Native: back to the default (FX off, effect stopped, Adaptive Lighting on)'
       conditions:
       - condition: template
-        value_template: '{{ source == ''Auto'' }}'
+        value_template: '{{ source == ''Native'' }}'
       sequence:
       - if:
         - condition: template
-          value_template: '{{ has_flag }}'
+          value_template: '{{ has_ledfx and is_state(ledfx_light, ''on'') }}'
         then:
-        - action: input_boolean.turn_off
+        - action: light.turn_off
           target:
-            entity_id: '{{ manual_flag }}'
+            entity_id: '{{ ledfx_light }}'
       - if:
         - condition: template
-          value_template: '{{ not has_controller }}'
+          value_template: '{{ has_hyperhdr and is_state(hyperhdr_light, ''on'') }}'
         then:
-        - if:
-          - condition: template
-            value_template: '{{ has_ledfx and is_state(ledfx_light, ''on'') }}'
-          then:
-          - action: light.turn_off
-            target:
-              entity_id: '{{ ledfx_light }}'
-        - if:
-          - condition: template
-            value_template: '{{ has_hyperhdr and is_state(hyperhdr_light, ''on'') }}'
-          then:
-          - action: light.turn_off
-            target:
-              entity_id: '{{ hyperhdr_light }}'
-          - delay: 00:00:02
-      - alias: Stop a native bulb effect, using whichever 'no effect' value this light offers
+        - action: light.turn_off
+          target:
+            entity_id: '{{ hyperhdr_light }}'
+        - alias: Let HyperHDR's power-off reach the strip first
+          delay: 00:00:02
+      - alias: Find this light's 'no effect' value
         variables:
-          stop_effect: |-
-            {% set l = state_attr(base_light, 'effect_list') or [] %}{% if 'Solid' in l %}Solid{% elif 'stop_effect' in l %}stop_effect{% elif 'none' in l %}none{% elif 'None' in l %}None{% endif %}
+          stop_effect: '{% set l = state_attr(base_light, ''effect_list'') or [] %}{% if ''Solid'' in l %}Solid{%
+            elif ''stop_effect'' in l %}stop_effect{% elif ''none'' in l %}none{% elif ''None'' in l %}None{% endif
+            %}'
       - if:
         - condition: template
-          value_template: |-
-            {{ is_state(base_light, 'on') and stop_effect | length > 0 and state_attr(base_light, 'effect') not in [none, stop_effect] }}
+          value_template: '{{ is_state(base_light, ''on'') and stop_effect | length > 0 and state_attr(base_light,
+            ''effect'') not in [none, stop_effect] }}'
         then:
         - action: light.turn_on
-          target:
-            entity_id: '{{ base_light }}'
           data:
             effect: '{{ stop_effect }}'
+          target:
+            entity_id: '{{ base_light }}'
       - if:
         - condition: template
           value_template: '{{ has_al }}'
         then:
+        - action: switch.turn_on
+          target:
+            entity_id: '{{ adaptive_switch }}'
         - action: adaptive_lighting.set_manual_control
           data:
             entity_id: '{{ adaptive_switch }}'
@@ -138,15 +137,6 @@ set_effects_source:
             lights:
             - '{{ base_light }}'
             turn_on_lights: false
-      - if:
-        - condition: template
-          value_template: '{{ has_controller }}'
-        then:
-        - action: automation.trigger
-          target:
-            entity_id: '{{ controller }}'
-          data:
-            skip_condition: true
     - alias: LedFx
       conditions:
       - condition: template
@@ -154,11 +144,12 @@ set_effects_source:
       sequence:
       - if:
         - condition: template
-          value_template: '{{ has_flag }}'
+          value_template: '{{ has_al }}'
         then:
-        - action: input_boolean.turn_on
+        - action: switch.turn_off
+          alias: Adaptive Lighting off while LedFx drives the light
           target:
-            entity_id: '{{ manual_flag }}'
+            entity_id: '{{ adaptive_switch }}'
       - if:
         - condition: template
           value_template: '{{ has_hyperhdr and is_state(hyperhdr_light, ''on'') }}'
@@ -168,17 +159,6 @@ set_effects_source:
             entity_id: '{{ hyperhdr_light }}'
         - alias: Let HyperHDR's power-off reach the strip first
           delay: 00:00:02
-      - if:
-        - condition: template
-          value_template: '{{ has_al }}'
-        then:
-        - alias: Pause Adaptive Lighting on this light while LedFx drives it
-          action: adaptive_lighting.set_manual_control
-          data:
-            entity_id: '{{ adaptive_switch }}'
-            lights:
-            - '{{ base_light }}'
-            manual_control: true
       - action: light.turn_on
         target:
           entity_id: '{{ base_light }}'
@@ -192,11 +172,12 @@ set_effects_source:
       sequence:
       - if:
         - condition: template
-          value_template: '{{ has_flag }}'
+          value_template: '{{ has_al }}'
         then:
-        - action: input_boolean.turn_on
+        - action: switch.turn_off
+          alias: Adaptive Lighting off while HyperHDR drives the light
           target:
-            entity_id: '{{ manual_flag }}'
+            entity_id: '{{ adaptive_switch }}'
       - if:
         - condition: template
           value_template: '{{ has_ledfx and is_state(ledfx_light, ''on'') }}'
@@ -204,26 +185,15 @@ set_effects_source:
         - action: light.turn_off
           target:
             entity_id: '{{ ledfx_light }}'
-      - if:
-        - condition: template
-          value_template: '{{ has_al }}'
-        then:
-        - action: adaptive_lighting.set_manual_control
-          data:
-            entity_id: '{{ adaptive_switch }}'
-            lights:
-            - '{{ base_light }}'
-            manual_control: true
-      - alias: Always pass an effect, so nothing turns this into a plain colour (HyperHDR's Solid priority)
-        action: light.turn_on
-        target:
-          entity_id: '{{ hyperhdr_light }}'
+      - action: light.turn_on
+        alias: Always pass an effect, so nothing turns this into a plain colour (HyperHDR's Solid priority)
         data:
           effect: '{{ state_attr(hyperhdr_light, ''effect'') or hdr_effect }}'
+        target:
+          entity_id: '{{ hyperhdr_light }}'
     default:
-    - alias: 'Bulb Effect (pick one from the native effect list) or a source this light lacks: nothing
-        to do'
-      action: logbook.log
+    - action: logbook.log
+      alias: 'A source this light doesn''t have: nothing to do'
       data:
-        name: Set Effects Source
         message: No change for source '{{ source }}' on {{ base_light }}.
+        name: Set Effects Source
