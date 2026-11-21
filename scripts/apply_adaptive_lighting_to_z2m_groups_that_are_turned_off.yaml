@@ -66,10 +66,10 @@ apply_adaptive_lighting_to_z2m_groups_that_are_turned_off:
                           "color_temp_mired": ns.sw.attributes.get('color_temp_mired'),
                           "brightness_pct": ns.sw.attributes.get('brightness_pct'),
                           "manual_control": group_entity_id in ns.sw.attributes.get('manual_control', []),
-                          "switch_active": states(ns.sw.entity_id)|bool,
-                          "adapt_brightness": states('switch.adaptive_lighting_adapt_brightness_' ~ ns.sw.entity_id.replace('switch.adaptive_lighting_', ''))|bool,
-                          "adapt_color": states('switch.adaptive_lighting_adapt_color_' ~ ns.sw.entity_id.replace('switch.adaptive_lighting_', ''))|bool,
-                          "sleep_mode": states('switch.adaptive_lighting_sleep_mode_' ~ ns.sw.entity_id.replace('switch.adaptive_lighting_', ''))|bool
+                          "switch_active": states(ns.sw.entity_id)|bool(false),
+                          "adapt_brightness": states('switch.adaptive_lighting_adapt_brightness_' ~ ns.sw.entity_id.replace('switch.adaptive_lighting_', ''))|bool(false),
+                          "adapt_color": states('switch.adaptive_lighting_adapt_color_' ~ ns.sw.entity_id.replace('switch.adaptive_lighting_', ''))|bool(false),
+                          "sleep_mode": states('switch.adaptive_lighting_sleep_mode_' ~ ns.sw.entity_id.replace('switch.adaptive_lighting_', ''))|bool(false)
                         }
                       }}
                     {% else %}
