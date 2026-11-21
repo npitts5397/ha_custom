@@ -9,6 +9,16 @@ apply_adaptive_lighting_to_z2m_groups_that_are_turned_off:
         be a single group name or a list of group names. If not provided, all
         groups will be processed.
       required: false
+    include_options:
+      description: >-
+        Optional: also (re)write the execute_if_off level/color options to the
+        group. These persist on the bulbs, so only needed after adding or
+        replacing bulbs. Defaults to false to keep routine sweeps light on the
+        coordinator.
+      required: false
+      default: false
+      selector:
+        boolean:
   sequence:
     - variables:
         z2m_groups: '{{ state_attr(''sensor.z2m_adaptive_lighting_groups'', ''groups'') or {} }}'
@@ -103,17 +113,20 @@ apply_adaptive_lighting_to_z2m_groups_that_are_turned_off:
                     data:
                       topic: zigbee2mqtt/{{ group_name }}/set
                       payload: >-
+                        {% set opts = (include_options | default(false)) | bool(false) %}
                         {% set pl = {} %}
                         {% if al_attributes.adapt_brightness %}
-                          {% set pl = dict(pl, **{
-                            'level_config': { 'execute_if_off': true, 'on_level': adaptive_brightness_255 }
-                          }) %}
+                          {% set lc = { 'on_level': adaptive_brightness_255 } %}
+                          {% if opts %}
+                            {% set lc = dict(lc, execute_if_off=true) %}
+                          {% endif %}
+                          {% set pl = dict(pl, level_config=lc) %}
                         {% endif %}
                         {% if al_attributes.adapt_color %}
-                          {% set pl = dict(pl, **{
-                            "color_options": { "execute_if_off": true },
-                            "color_temp": color_temp_mired
-                          }) %}
+                          {% set pl = dict(pl, color_temp=color_temp_mired) %}
+                          {% if opts %}
+                            {% set pl = dict(pl, color_options={ 'execute_if_off': true }) %}
+                          {% endif %}
                         {% endif %}
                         {{ pl | tojson }}
           - delay:
