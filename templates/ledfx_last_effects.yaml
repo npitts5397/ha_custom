@@ -1,0 +1,30 @@
+# Trigger-based template sensor: remembers the last effect set through HA on each
+# light.ledfx_* entity (attribute `effects`: {entity_id: effect}). Restored across
+# restarts. Read by script.set_effects_source (LedFx branch) and the Family Room
+# TV Ambilight Controller. Goes under the `template:` key in HA's config.
+- trigger:
+    - trigger: event
+      event_type: call_service
+      event_data:
+        domain: light
+        service: turn_on
+  condition:
+    - condition: template
+      value_template: >
+        {% set d = trigger.event.data.service_data %}
+        {{ d.effect is defined and d.entity_id is defined and
+          (([d.entity_id] if d.entity_id is string else d.entity_id)
+            | select('match', 'light\.ledfx_') | list | count) > 0 }}
+  sensor:
+    - name: LedFx Last Effects
+      unique_id: ledfx_last_effects
+      icon: mdi:history
+      state: "{{ trigger.event.data.service_data.effect }}"
+      attributes:
+        effects: >
+          {% set d = trigger.event.data.service_data %}
+          {% set ids = ([d.entity_id] if d.entity_id is string else d.entity_id)
+                      | select('match', 'light\.ledfx_') | list %}
+          {% set ns = namespace(m=dict(this.attributes.effects | default({}))) %}
+          {% for e in ids %}{% set ns.m = dict(ns.m, **{e: d.effect}) %}{% endfor %}
+          {{ ns.m }}

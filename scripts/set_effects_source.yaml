@@ -171,9 +171,24 @@ set_effects_source:
       - action: light.turn_on
         target:
           entity_id: '{{ base_light }}'
-      - action: light.turn_on
-        target:
-          entity_id: '{{ ledfx_light }}'
+      - alias: Resume the last effect used on this LedFx light (sensor.ledfx_last_effects), else LedFx default
+        variables:
+          last_effect: '{{ (state_attr(''sensor.ledfx_last_effects'', ''effects'') or {}).get(ledfx_light, '''')
+            }}'
+      - if:
+        - condition: template
+          value_template: '{{ last_effect | length > 0 and last_effect in (state_attr(ledfx_light, ''effect_list'')
+            or []) }}'
+        then:
+        - action: light.turn_on
+          data:
+            effect: '{{ last_effect }}'
+          target:
+            entity_id: '{{ ledfx_light }}'
+        else:
+        - action: light.turn_on
+          target:
+            entity_id: '{{ ledfx_light }}'
     - alias: HyperHDR
       conditions:
       - condition: template
