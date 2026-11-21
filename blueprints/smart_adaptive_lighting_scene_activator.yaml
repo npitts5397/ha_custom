@@ -24,6 +24,7 @@ blueprint:
     equivalent guidance.
 
     Version history:
+      * 5.0.4 - Support Z2M 2.14.3+ event format (event_type "single"/"double" + separate "button" attribute) by rebuilding "<button>_<event_type>"; legacy prefixed values unchanged.
       * 5.0.3 - Fix LED bar duration to integer for Inovelli Blue firmware compatibility.
       * 5.0.2 - Fix Adaptive Lighting application on lights-on; clarify HA control input description.
       * 5.0.1 - Fix: turn on primary lights when triggered via MQTT or HA control.
@@ -385,7 +386,9 @@ variables:
   action: >
     {%- set action = '' -%}
     {%- if trigger is defined and trigger.to_state is defined -%}
-      {%- set action = trigger.to_state.attributes.get('event_type', '') -%}
+      {%- set et = trigger.to_state.attributes.get('event_type', '') | string -%}
+      {%- set btn = trigger.to_state.attributes.get('button', '') | string -%}
+      {%- set action = (btn ~ '_' ~ et) if (btn not in ['', 'None'] and et not in ['', 'None'] and not et.startswith(btn ~ '_')) else et -%}
     {%- elif trigger is defined and trigger.id == 'mqtt' -%}
       {%- set action = trigger.payload_json.action -%}
     {%- endif -%}
