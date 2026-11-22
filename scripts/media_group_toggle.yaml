@@ -1,0 +1,58 @@
+media_group_toggle:
+  alias: Media - Toggle group member
+  description: Shared backend for the Spaces listen_watch card. Adds `member` to the Music Assistant group that `player` belongs to (joined to the current leader), or removes it if it is already in. Removing the group leader (e.g. LedFx when it started the group) moves the queue to `player` instead, so the music keeps going there.
+  fields:
+    member:
+      description: Player to add or remove
+      name: Member
+      required: true
+      selector:
+        entity:
+          domain: media_player
+          integration: music_assistant
+    player:
+      description: The room's Music Assistant player the card is for
+      name: Card player
+      required: true
+      selector:
+        entity:
+          domain: media_player
+          integration: music_assistant
+  icon: mdi:speaker-multiple
+  max: 10
+  mode: queued
+  sequence:
+  - variables:
+      members: '{{ state_attr(player, ''group_members'') or [] }}'
+      leader: '{{ members[0] if members | count > 0 else player }}'
+  - choose:
+    - alias: Removing the group leader -> move the queue to the card's player
+      conditions:
+      - condition: template
+        value_template: '{{ member == leader and member != player and member in members }}'
+      sequence:
+      - action: media_player.unjoin
+        target:
+          entity_id: '{{ player }}'
+      - action: music_assistant.transfer_queue
+        data:
+          auto_play: true
+          source_player: '{{ leader }}'
+        target:
+          entity_id: '{{ player }}'
+    - alias: Already a member -> remove it
+      conditions:
+      - condition: template
+        value_template: '{{ member in members }}'
+      sequence:
+      - action: media_player.unjoin
+        target:
+          entity_id: '{{ member }}'
+    default:
+    - action: media_player.join
+      alias: Not a member -> join it to the current leader
+      data:
+        group_members:
+        - '{{ member }}'
+      target:
+        entity_id: '{{ leader }}'

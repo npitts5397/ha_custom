@@ -1,0 +1,1433 @@
+# Spaces dashboard (dashboard-spaces) decluttering template: listen_watch
+# Reference copy. Lives in the dashboard config under decluttering_templates.listen_watch
+listen_watch:
+  default:
+  - room_name: Room
+  - volume_entity: none
+  - volume_name: Volume
+  - max_volume: 100
+  - bar: none
+  - bar_name: Soundbar
+  - listen_inputs: D_IN, BT, WIFI
+  - input_automation: none
+  - input_automations: none
+  - watch_entity: none
+  - watch_remote: none
+  - watch_name: TV
+  - watch_meta: none
+  - watch_keyboard: none
+  - tv_entity: none
+  - watch_input: SHIELD
+  - watch_meta_app: Plex
+  - remote_title: Remote
+  - listen_device_name: Player
+  - shared_inputs: none
+  - stream_input: D_IN
+  card:
+    type: vertical-stack
+    cards:
+    - type: custom:expander-card
+      gap: 0.6em
+      padding: 1em
+      clear: false
+      overlay-margin: 2em
+      child-padding: 0.5em
+      button-background: transparent
+      title-card:
+        type: vertical-stack
+        cards:
+        - type: custom:bubble-card
+          card_type: button
+          button_type: name
+          card_layout: large
+          name: Listen
+          icon: mdi:music-note-outline
+          state_content: Nothing playing
+          tap_action:
+            action: none
+          visibility:
+          - condition: template
+            value_template: '{{ not (is_state(''[[entity]]'', [''playing'', ''paused'', ''buffering'']) or ((is_state(''[[bar]]'', ''on'') and (((''[[listen_inputs]]''.split('','') | map(''trim'') | list) | select(''in'', (state_attr(''[[bar]]'', ''source'') or '''')) | list | count > 0) and (not (((''[[shared_inputs]]''.split('','') | map(''trim'') | reject(''in'', [''none'', '''']) | list) | select(''in'', (state_attr(''[[bar]]'', ''source'') or '''')) | list | count > 0)) or is_state(''[[entity]]'', [''playing'', ''paused'', ''buffering''])))) and (state_attr(''[[bar]]'', ''source'') or '''') != ''[[stream_input]]'')) }}'
+        - type: custom:bubble-card
+          card_type: media-player
+          entity: '[[entity]]'
+          card_layout: large
+          cover_background: true
+          scrolling_effect: true
+          hide:
+            power_button: true
+            volume_button: true
+          tap_action:
+            action: navigate
+            navigation_path: '#music-[[room_slug]]'
+          hold_action:
+            action: more-info
+          button_action:
+            tap_action:
+              action: more-info
+          visibility:
+          - condition: template
+            value_template: '{{ is_state(''[[entity]]'', [''playing'', ''paused'', ''buffering'']) }}'
+          styles: |-
+            .bubble-media-player-container { position: relative; }
+            .bubble-media-player-container::after { content: ''; position: absolute; top: 0; left: 0; bottom: 0; pointer-events: none; z-index: 0; border-top-left-radius: inherit; border-bottom-left-radius: inherit; border-top-right-radius: 0; border-bottom-right-radius: 0; background: var(--bubble-media-progress-color, rgba(255, 255, 255, 0.08)); transition: width 1s linear; width: calc((100% - 84px) * ${(() => { const s = hass.states['[[entity]]']; if (!s) return 0; const a = s.attributes; let p = Number(a.media_position || 0); if (s.state === 'playing' && a.media_position_updated_at) { p += (Date.now() - Date.parse(a.media_position_updated_at)) / 1000; } const d = Number(a.media_duration || 0); return d > 0 ? Math.max(0, Math.min(100, (p / d) * 100)) : 0; })()} / 100); }
+        - type: custom:bubble-card
+          card_type: button
+          button_type: name
+          card_layout: large
+          name: '{{ ''Bluetooth'' if (state_attr(''[[bar]]'', ''source'') or '''') in [''BT'', ''Bluetooth''] else ''Wi-Fi'' }}'
+          icon: '{{ ''mdi:bluetooth-audio'' if (state_attr(''[[bar]]'', ''source'') or '''') in [''BT'', ''Bluetooth''] else ''mdi:wifi'' }}'
+          state_content: '[[bar_name]]'
+          tap_action:
+            action: none
+          visibility:
+          - condition: template
+            value_template: '{{ ((is_state(''[[bar]]'', ''on'') and (((''[[listen_inputs]]''.split('','') | map(''trim'') | list) | select(''in'', (state_attr(''[[bar]]'', ''source'') or '''')) | list | count > 0) and (not (((''[[shared_inputs]]''.split('','') | map(''trim'') | reject(''in'', [''none'', '''']) | list) | select(''in'', (state_attr(''[[bar]]'', ''source'') or '''')) | list | count > 0)) or is_state(''[[entity]]'', [''playing'', ''paused'', ''buffering''])))) and (state_attr(''[[bar]]'', ''source'') or '''') != ''[[stream_input]]'') and not is_state(''[[entity]]'', [''playing'', ''paused'', ''buffering'']) }}'
+        - type: custom:bubble-card
+          card_type: button
+          button_type: slider
+          entity: '[[volume_entity]]'
+          name: '[[volume_name]]'
+          icon: mdi:volume-high
+          card_layout: large
+          min_value: 0
+          max_value: '[[max_volume]]'
+          read_only_slider: true
+          tap_to_slide: false
+          slider_live_update: false
+          state_content: '{{ ((state_attr(''[[volume_entity]]'', ''volume_level'') | float(0)) * 100) | round(0) | int }}%'
+          tap_action:
+            action: more-info
+          hold_action:
+            action: toggle
+          double_tap_action:
+            action: none
+          button_action:
+            tap_action:
+              action: more-info
+            double_tap_action:
+              action: more-info
+            hold_action:
+              action: more-info
+          visibility:
+          - condition: template
+            value_template: '{{ (is_state(''[[entity]]'', [''playing'', ''paused'', ''buffering'']) or ((is_state(''[[bar]]'', ''on'') and (((''[[listen_inputs]]''.split('','') | map(''trim'') | list) | select(''in'', (state_attr(''[[bar]]'', ''source'') or '''')) | list | count > 0) and (not (((''[[shared_inputs]]''.split('','') | map(''trim'') | reject(''in'', [''none'', '''']) | list) | select(''in'', (state_attr(''[[bar]]'', ''source'') or '''')) | list | count > 0)) or is_state(''[[entity]]'', [''playing'', ''paused'', ''buffering''])))) and (state_attr(''[[bar]]'', ''source'') or '''') != ''[[stream_input]]'')) and ''[[volume_entity]]'' not in [''none'', ''''] and ((''[[bar]]'' in [''none'', '''']) or (is_state(''[[bar]]'', ''on'') and (((''[[listen_inputs]]''.split('','') | map(''trim'') | list) | select(''in'', (state_attr(''[[bar]]'', ''source'') or '''')) | list | count > 0) and (not (((''[[shared_inputs]]''.split('','') | map(''trim'') | reject(''in'', [''none'', '''']) | list)
+              | select(''in'', (state_attr(''[[bar]]'', ''source'') or '''')) | list | count > 0)) or is_state(''[[entity]]'', [''playing'', ''paused'', ''buffering'']))))) and (''[[bar]]'' in [''none'', '''']) }}'
+          sub_button:
+            main:
+            - name: Volume down
+              icon: mdi:minus
+              show_name: false
+              show_background: true
+              state_background: false
+              css_class: lw-vol
+              tap_action:
+                action: perform-action
+                perform_action: script.media_volume_step
+                data:
+                  player: '[[volume_entity]]'
+                  step: -1
+                  max_volume: '[[max_volume]]'
+              hold_action:
+                action: perform-action
+                perform_action: script.media_volume_step
+                data:
+                  player: '[[volume_entity]]'
+                  step: -5
+                  max_volume: '[[max_volume]]'
+              double_tap_action:
+                action: none
+            - name: Volume up
+              icon: mdi:plus
+              show_name: false
+              show_background: true
+              state_background: false
+              css_class: lw-vol
+              tap_action:
+                action: perform-action
+                perform_action: script.media_volume_step
+                data:
+                  player: '[[volume_entity]]'
+                  step: 1
+                  max_volume: '[[max_volume]]'
+              hold_action:
+                action: perform-action
+                perform_action: script.media_volume_step
+                data:
+                  player: '[[volume_entity]]'
+                  step: 5
+                  max_volume: '[[max_volume]]'
+              double_tap_action:
+                action: none
+          styles: |2
+
+            .lw-vol { height: 42px !important; min-width: 42px !important; border-radius: 50% !important; }
+            .lw-vol .bubble-sub-button-icon { --mdc-icon-size: 24px !important; }
+        - type: custom:bubble-card
+          card_type: sub-buttons
+          rows: 1
+          sub_button:
+            bottom_layout: rows
+            bottom:
+            - group:
+              - entity: media_player.ledfx_squeezelite
+                show_name: true
+                state_background: false
+                tap_action:
+                  action: perform-action
+                  perform_action: script.media_group_toggle
+                  data:
+                    player: '[[entity]]'
+                    member: media_player.ledfx_squeezelite
+                hold_action:
+                  action: more-info
+                name: LedFx
+                icon: mdi:equalizer
+                css_class: lw-mode-on
+                visibility:
+                - condition: template
+                  value_template: '{{ ''media_player.ledfx_squeezelite'' in (state_attr(''[[entity]]'', ''group_members'') or []) }}'
+              - entity: media_player.ledfx_squeezelite
+                show_name: true
+                state_background: false
+                tap_action:
+                  action: perform-action
+                  perform_action: script.media_group_toggle
+                  data:
+                    player: '[[entity]]'
+                    member: media_player.ledfx_squeezelite
+                hold_action:
+                  action: more-info
+                name: LedFx
+                icon: mdi:equalizer-outline
+                css_class: lw-mode-off
+                visibility:
+                - condition: template
+                  value_template: '{{ not (''media_player.ledfx_squeezelite'' in (state_attr(''[[entity]]'', ''group_members'') or [])) }}'
+              - name: Library
+                icon: mdi:music-box-multiple
+                show_name: true
+                tap_action:
+                  action: navigate
+                  navigation_path: '#library-[[room_slug]]'
+              - name: Queue
+                icon: mdi:playlist-music
+                show_name: true
+                tap_action:
+                  action: navigate
+                  navigation_path: '#queue-[[room_slug]]'
+              - name: Speakers
+                icon: mdi:speaker-multiple
+                show_name: false
+                fill_width: false
+                state_background: false
+                css_class: lw-mode-off
+                tap_action:
+                  action: navigate
+                  navigation_path: '#speakers-[[room_slug]]'
+                visibility:
+                - condition: template
+                  value_template: '{{ not ((state_attr(''[[entity]]'', ''group_members'') or []) | reject(''eq'', ''[[entity]]'') | reject(''eq'', ''media_player.ledfx_squeezelite'') | list | count > 0) }}'
+                entity: '[[entity]]'
+              - name: Speakers grouped
+                icon: mdi:speaker-multiple
+                show_name: false
+                fill_width: false
+                state_background: false
+                css_class: lw-mode-on
+                tap_action:
+                  action: navigate
+                  navigation_path: '#speakers-[[room_slug]]'
+                visibility:
+                - condition: template
+                  value_template: '{{ (state_attr(''[[entity]]'', ''group_members'') or []) | reject(''eq'', ''[[entity]]'') | reject(''eq'', ''media_player.ledfx_squeezelite'') | list | count > 0 }}'
+                entity: '[[entity]]'
+              - entity: '[[entity]]'
+                name: Shuffle off
+                icon: mdi:shuffle-disabled
+                show_name: false
+                state_background: false
+                tap_action:
+                  action: perform-action
+                  perform_action: media_player.shuffle_set
+                  target:
+                    entity_id: '[[entity]]'
+                  data:
+                    shuffle: true
+                visibility:
+                - condition: template
+                  value_template: '{{ not state_attr(''[[entity]]'', ''shuffle'') }}'
+                fill_width: false
+                css_class: lw-mode-off
+              - entity: '[[entity]]'
+                name: Shuffle on
+                icon: mdi:shuffle-variant
+                show_name: false
+                tap_action:
+                  action: perform-action
+                  perform_action: media_player.shuffle_set
+                  target:
+                    entity_id: '[[entity]]'
+                  data:
+                    shuffle: false
+                visibility:
+                - condition: template
+                  value_template: '{{ state_attr(''[[entity]]'', ''shuffle'') == true }}'
+                fill_width: false
+                state_background: false
+                css_class: lw-mode-on
+              - entity: '[[entity]]'
+                name: Repeat off
+                icon: mdi:repeat-off
+                show_name: false
+                state_background: false
+                tap_action:
+                  action: perform-action
+                  perform_action: media_player.repeat_set
+                  target:
+                    entity_id: '[[entity]]'
+                  data:
+                    repeat: all
+                visibility:
+                - condition: template
+                  value_template: '{{ state_attr(''[[entity]]'', ''repeat'') not in [''all'', ''one''] }}'
+                fill_width: false
+                css_class: lw-mode-off
+              - entity: '[[entity]]'
+                name: Repeat all
+                icon: mdi:repeat
+                show_name: false
+                tap_action:
+                  action: perform-action
+                  perform_action: media_player.repeat_set
+                  target:
+                    entity_id: '[[entity]]'
+                  data:
+                    repeat: one
+                visibility:
+                - condition: template
+                  value_template: '{{ state_attr(''[[entity]]'', ''repeat'') == ''all'' }}'
+                fill_width: false
+                state_background: false
+                css_class: lw-mode-on
+              - entity: '[[entity]]'
+                name: Repeat one
+                icon: mdi:repeat-once
+                show_name: false
+                tap_action:
+                  action: perform-action
+                  perform_action: media_player.repeat_set
+                  target:
+                    entity_id: '[[entity]]'
+                  data:
+                    repeat: 'off'
+                visibility:
+                - condition: template
+                  value_template: '{{ state_attr(''[[entity]]'', ''repeat'') == ''one'' }}'
+                fill_width: false
+                state_background: false
+                css_class: lw-mode-on
+              buttons_layout: inline
+              justify_content: fill
+          visibility:
+          - condition: template
+            value_template: '{{ is_state(''[[entity]]'', [''playing'', ''paused'', ''buffering'']) }}'
+          styles: |2
+
+            .lw-mode-on { background-color: var(--bubble-sub-button-light-background-color, var(--bubble-accent-color, var(--accent-color))) !important; }
+            .lw-mode-on .bubble-sub-button-icon { color: var(--bubble-sub-button-dark-text-color, var(--text-primary-color, #fff)) !important; }
+      cards:
+      - type: vertical-stack
+        cards:
+        - type: custom:bubble-card
+          card_type: sub-buttons
+          rows: 1
+          sub_button:
+            bottom_layout: rows
+            bottom:
+            - group:
+              - name: Library
+                icon: mdi:music-box-multiple
+                show_name: true
+                tap_action:
+                  action: navigate
+                  navigation_path: '#library-[[room_slug]]'
+              - name: Speakers
+                icon: mdi:speaker-multiple
+                show_name: true
+                tap_action:
+                  action: navigate
+                  navigation_path: '#speakers-[[room_slug]]'
+              buttons_layout: inline
+              justify_content: fill
+          visibility:
+          - condition: template
+            value_template: '{{ not (is_state(''[[entity]]'', [''playing'', ''paused'', ''buffering'']) or ((is_state(''[[bar]]'', ''on'') and (((''[[listen_inputs]]''.split('','') | map(''trim'') | list) | select(''in'', (state_attr(''[[bar]]'', ''source'') or '''')) | list | count > 0) and (not (((''[[shared_inputs]]''.split('','') | map(''trim'') | reject(''in'', [''none'', '''']) | list) | select(''in'', (state_attr(''[[bar]]'', ''source'') or '''')) | list | count > 0)) or is_state(''[[entity]]'', [''playing'', ''paused'', ''buffering''])))) and (state_attr(''[[bar]]'', ''source'') or '''') != ''[[stream_input]]'')) }}'
+        - type: vertical-stack
+          visibility:
+          - condition: template
+            value_template: '{{ not (''[[bar]]'' in [''none'', '''']) and (not is_state(''[[bar]]'', ''on'') or (is_state(''[[bar]]'', ''on'') and (((''[[listen_inputs]]''.split('','') | map(''trim'') | list) | select(''in'', (state_attr(''[[bar]]'', ''source'') or '''')) | list | count > 0) and (not (((''[[shared_inputs]]''.split('','') | map(''trim'') | reject(''in'', [''none'', '''']) | list) | select(''in'', (state_attr(''[[bar]]'', ''source'') or '''')) | list | count > 0)) or is_state(''[[entity]]'', [''playing'', ''paused'', ''buffering'']))))) }}'
+          cards:
+          - type: custom:mushroom-title-card
+            title: '[[bar_name]]'
+          - type: custom:bubble-card
+            card_type: button
+            button_type: slider
+            entity: '[[bar]]'
+            name: Volume
+            icon: mdi:volume-high
+            card_layout: large
+            min_value: 0
+            max_value: '[[max_volume]]'
+            read_only_slider: true
+            tap_to_slide: false
+            slider_live_update: false
+            state_content: '{{ ((state_attr(''[[bar]]'', ''volume_level'') | float(0)) * 100) | round(0) | int }}%'
+            tap_action:
+              action: more-info
+            hold_action:
+              action: toggle
+            double_tap_action:
+              action: none
+            button_action:
+              tap_action:
+                action: more-info
+              double_tap_action:
+                action: more-info
+              hold_action:
+                action: more-info
+            visibility:
+            - condition: template
+              value_template: '{{ is_state(''[[bar]]'', ''on'') }}'
+            sub_button:
+              main:
+              - name: Volume down
+                icon: mdi:minus
+                show_name: false
+                show_background: true
+                state_background: false
+                css_class: lw-vol
+                tap_action:
+                  action: perform-action
+                  perform_action: script.media_volume_step
+                  data:
+                    player: '[[bar]]'
+                    step: -1
+                    max_volume: '[[max_volume]]'
+                hold_action:
+                  action: perform-action
+                  perform_action: script.media_volume_step
+                  data:
+                    player: '[[bar]]'
+                    step: -5
+                    max_volume: '[[max_volume]]'
+                double_tap_action:
+                  action: none
+              - name: Volume up
+                icon: mdi:plus
+                show_name: false
+                show_background: true
+                state_background: false
+                css_class: lw-vol
+                tap_action:
+                  action: perform-action
+                  perform_action: script.media_volume_step
+                  data:
+                    player: '[[bar]]'
+                    step: 1
+                    max_volume: '[[max_volume]]'
+                hold_action:
+                  action: perform-action
+                  perform_action: script.media_volume_step
+                  data:
+                    player: '[[bar]]'
+                    step: 5
+                    max_volume: '[[max_volume]]'
+                double_tap_action:
+                  action: none
+            styles: |2
+
+              .lw-vol { height: 42px !important; min-width: 42px !important; border-radius: 50% !important; }
+              .lw-vol .bubble-sub-button-icon { --mdc-icon-size: 24px !important; }
+          - type: custom:bubble-card
+            card_type: sub-buttons
+            rows: 1
+            sub_button:
+              bottom_layout: rows
+              bottom:
+              - group:
+                - entity: '[[bar]]'
+                  name: Turn on soundbar
+                  icon: mdi:power
+                  show_name: true
+                  tap_action:
+                    action: perform-action
+                    perform_action: media_player.turn_on
+                    target:
+                      entity_id: '[[bar]]'
+                  visibility:
+                  - condition: template
+                    value_template: '{{ not is_state(''[[bar]]'', ''on'') }}'
+                - entity: '[[bar]]'
+                  sub_button_type: select
+                  select_attribute: source_list
+                  name: Input
+                  icon: mdi:video-input-hdmi
+                  show_arrow: true
+                  state_content: source
+                  visibility:
+                  - condition: template
+                    value_template: '{{ is_state(''[[bar]]'', ''on'') }}'
+                - entity: '[[bar]]'
+                  sub_button_type: select
+                  select_attribute: sound_mode_list
+                  name: Sound
+                  icon: mdi:tune-variant
+                  show_arrow: true
+                  state_content: sound_mode
+                  visibility:
+                  - condition: template
+                    value_template: '{{ is_state(''[[bar]]'', ''on'') }}'
+                - entity: '[[input_automation]]'
+                  name: 'Input: Auto'
+                  icon: mdi:auto-mode
+                  show_name: true
+                  state_background: false
+                  css_class: lw-mode-on
+                  tap_action:
+                    action: perform-action
+                    perform_action: automation.turn_off
+                    target:
+                      entity_id: '[[input_automations]]'
+                    data:
+                      stop_actions: true
+                  hold_action:
+                    action: more-info
+                  visibility:
+                  - condition: template
+                    value_template: '{{ ''[[input_automation]]'' not in [''none'', ''''] and is_state(''[[input_automation]]'', ''on'') }}'
+                - entity: '[[input_automation]]'
+                  name: 'Input: Manual'
+                  icon: mdi:hand-back-right
+                  show_name: true
+                  state_background: false
+                  css_class: lw-mode-off
+                  tap_action:
+                    action: perform-action
+                    perform_action: automation.turn_on
+                    target:
+                      entity_id: '[[input_automations]]'
+                  hold_action:
+                    action: more-info
+                  visibility:
+                  - condition: template
+                    value_template: '{{ ''[[input_automation]]'' not in [''none'', ''''] and not is_state(''[[input_automation]]'', ''on'') }}'
+                buttons_layout: inline
+                justify_content: fill
+            visibility: []
+            styles: |2
+
+              .lw-mode-on { background-color: var(--bubble-sub-button-light-background-color, var(--bubble-accent-color, var(--accent-color))) !important; }
+              .lw-mode-on .bubble-sub-button-icon { color: var(--bubble-sub-button-dark-text-color, var(--text-primary-color, #fff)) !important; }
+        - type: vertical-stack
+          cards:
+          - type: custom:mushroom-title-card
+            title: Devices
+          - type: horizontal-stack
+            cards:
+            - type: custom:bubble-card
+              card_type: button
+              button_type: state
+              entity: '[[entity]]'
+              name: '[[listen_device_name]]'
+              icon: mdi:speaker-wireless
+              card_layout: normal
+              state_content: '{{ states(''[[entity]]'') | title }}'
+              tap_action:
+                action: more-info
+              button_action:
+                tap_action:
+                  action: more-info
+            - type: custom:bubble-card
+              card_type: button
+              button_type: state
+              entity: '[[bar]]'
+              name: '[[bar_name]]'
+              icon: mdi:soundbar
+              card_layout: normal
+              state_content: '{{ state_attr(''[[bar]]'', ''source'') or states(''[[bar]]'') | title }} · {{ ((state_attr(''[[bar]]'', ''volume_level'') | float(0)) * 100) | round(0) | int }}'
+              tap_action:
+                action: more-info
+              button_action:
+                tap_action:
+                  action: more-info
+              visibility:
+              - condition: template
+                value_template: '{{ ''[[bar]]'' not in [''none'', ''''] }}'
+    - type: custom:expander-card
+      gap: 0.6em
+      padding: 1em
+      clear: false
+      overlay-margin: 2em
+      child-padding: 0.5em
+      button-background: transparent
+      title-card:
+        type: vertical-stack
+        cards:
+        - type: custom:bubble-card
+          card_type: button
+          button_type: state
+          card_layout: large
+          name: Watch
+          icon: mdi:television-off
+          state_content: TV off
+          tap_action:
+            action: toggle
+          visibility:
+          - condition: template
+            value_template: '{{ not is_state(''[[watch_remote]]'', ''on'') }}'
+          entity: '[[watch_remote]]'
+          hold_action:
+            action: more-info
+          button_action:
+            tap_action:
+              action: more-info
+            hold_action:
+              action: more-info
+        - type: custom:bubble-card
+          card_type: button
+          button_type: state
+          card_layout: large
+          name: Watch
+          icon: mdi:television
+          state_content: '{% set app = state_attr(''[[watch_entity]]'', ''app_name'') or '''' %}{% set app = '''' if app in [''Android TV Launcher'', ''com.google.android.tvlauncher''] else app %}[[watch_name]] · {{ app or ''Home'' }}'
+          tap_action:
+            action: toggle
+          visibility:
+          - condition: template
+            value_template: '{{ is_state(''[[watch_remote]]'', ''on'') and not is_state(''[[watch_entity]]'', [''playing'', ''paused'', ''buffering'']) and not (is_state(''[[watch_meta]]'', [''playing'', ''paused'', ''buffering'']) and is_state(''[[watch_remote]]'', ''on'') and state_attr(''[[watch_entity]]'', ''app_name'') == ''[[watch_meta_app]]'') }}'
+          entity: '[[watch_remote]]'
+          hold_action:
+            action: more-info
+          button_action:
+            tap_action:
+              action: more-info
+            hold_action:
+              action: more-info
+        - type: custom:bubble-card
+          card_type: button
+          button_type: state
+          entity: '[[watch_meta]]'
+          card_layout: large
+          name: '{% set tv = ''[[tv_entity]]'' %}{% set src = (state_attr(tv, ''source'') or '''') if is_state(tv, ''on'') else '''' %}{% set dev = ''[[watch_name]]'' if src in [''[[watch_input]]'', ''''] else src %}{% set app = state_attr(''[[watch_entity]]'', ''app_name'') or '''' %}{% set app = '''' if app in [''Android TV Launcher'', ''com.google.android.tvlauncher''] else app %}{% set app = app if dev == ''[[watch_name]]'' else '''' %}{% set px = ''[[watch_meta]]'' %}{% set title = (state_attr(px, ''media_title'') or '''') if (dev == ''[[watch_name]]'' and app == ''[[watch_meta_app]]'' and is_state(px, [''playing'', ''paused'', ''buffering''])) else (state_attr(''[[watch_entity]]'', ''media_title'') or '''') %}{{ [dev, app, title] | select | join('' ◦ '') }}'
+          state_content: '{% set e = ''[[watch_meta]]'' %}{% set st = states(e) %}{% set pos = state_attr(e, ''media_position'') | int(0) %}{% set up = state_attr(e, ''media_position_updated_at'') %}{% if st == ''playing'' and up %}{% set pos = pos + ((now() - as_datetime(up)).total_seconds() | int) %}{% endif %}{% set d = state_attr(e, ''media_duration'') | int(0) %}{% set pos = [pos, d] | min if d > 0 else pos %}{% set f = (pos // 3600) ~ '':'' ~ ''%02d'' | format((pos % 3600) // 60) %}{% set t = (d // 3600) ~ '':'' ~ ''%02d'' | format((d % 3600) // 60) %}{{ st | title }} · {{ (state_attr(e, ''media_series_title'') or state_attr(e, ''media_content_type'') or '''') | title }}{{ ('' · '' ~ state_attr(e, ''media_content_rating'')) if state_attr(e, ''media_content_rating'') else '''' }}{{ ('' · '' ~ f ~ '' / '' ~ t) if d > 0 else '''' }}'
+          scrolling_effect: true
+          tap_action:
+            action: perform-action
+            perform_action: remote.toggle
+            target:
+              entity_id: '[[watch_remote]]'
+          hold_action:
+            action: more-info
+          button_action:
+            tap_action:
+              action: more-info
+          sub_button:
+            main:
+            - name: Play/Pause
+              icon: '{{ ''mdi:pause'' if is_state(''[[watch_entity]]'', ''playing'') else ''mdi:play'' }}'
+              tap_action:
+                action: perform-action
+                perform_action: media_player.media_play_pause
+                target:
+                  entity_id: '[[watch_entity]]'
+          visibility:
+          - condition: template
+            value_template: '{{ is_state(''[[watch_meta]]'', [''playing'', ''paused'', ''buffering'']) and is_state(''[[watch_remote]]'', ''on'') and state_attr(''[[watch_entity]]'', ''app_name'') == ''[[watch_meta_app]]'' }}'
+          styles: |2
+
+            .bubble-button-card-container { position: relative; }
+            .bubble-button-card-container::after { content: ''; position: absolute; top: 0; left: 0; bottom: 0; pointer-events: none; z-index: 0; border-top-left-radius: inherit; border-bottom-left-radius: inherit; border-top-right-radius: 0; border-bottom-right-radius: 0; background: var(--bubble-media-progress-color, rgba(255, 255, 255, 0.08)); transition: width 1s linear; width: calc((100% - 56px) * ${(() => { const s = hass.states['[[watch_meta]]']; if (!s) return 0; const a = s.attributes; let p = Number(a.media_position || 0); if (s.state === 'playing' && a.media_position_updated_at) { p += (Date.now() - Date.parse(a.media_position_updated_at)) / 1000; } const d = Number(a.media_duration || 0); return d > 0 ? Math.max(0, Math.min(100, (p / d) * 100)) : 0; })()} / 100); }
+        - type: custom:bubble-card
+          card_type: button
+          button_type: state
+          entity: '[[watch_entity]]'
+          card_layout: large
+          name: '{% set tv = ''[[tv_entity]]'' %}{% set src = (state_attr(tv, ''source'') or '''') if is_state(tv, ''on'') else '''' %}{% set dev = ''[[watch_name]]'' if src in [''[[watch_input]]'', ''''] else src %}{% set app = state_attr(''[[watch_entity]]'', ''app_name'') or '''' %}{% set app = '''' if app in [''Android TV Launcher'', ''com.google.android.tvlauncher''] else app %}{% set app = app if dev == ''[[watch_name]]'' else '''' %}{% set px = ''[[watch_meta]]'' %}{% set title = (state_attr(px, ''media_title'') or '''') if (dev == ''[[watch_name]]'' and app == ''[[watch_meta_app]]'' and is_state(px, [''playing'', ''paused'', ''buffering''])) else (state_attr(''[[watch_entity]]'', ''media_title'') or '''') %}{{ [dev, app, title] | select | join('' ◦ '') }}'
+          state_content: '{{ states(''[[watch_entity]]'') | title }}'
+          scrolling_effect: true
+          tap_action:
+            action: perform-action
+            perform_action: remote.toggle
+            target:
+              entity_id: '[[watch_remote]]'
+          hold_action:
+            action: more-info
+          button_action:
+            tap_action:
+              action: more-info
+          sub_button:
+            main:
+            - name: Play/Pause
+              icon: '{{ ''mdi:pause'' if is_state(''[[watch_entity]]'', ''playing'') else ''mdi:play'' }}'
+              tap_action:
+                action: perform-action
+                perform_action: media_player.media_play_pause
+                target:
+                  entity_id: '[[watch_entity]]'
+          visibility:
+          - condition: template
+            value_template: '{{ is_state(''[[watch_entity]]'', [''playing'', ''paused'', ''buffering'']) and is_state(''[[watch_remote]]'', ''on'') and not (is_state(''[[watch_meta]]'', [''playing'', ''paused'', ''buffering'']) and is_state(''[[watch_remote]]'', ''on'') and state_attr(''[[watch_entity]]'', ''app_name'') == ''[[watch_meta_app]]'') }}'
+          styles: |2
+
+            .bubble-button-card-container { position: relative; }
+            .bubble-button-card-container::after { content: ''; position: absolute; top: 0; left: 0; bottom: 0; pointer-events: none; z-index: 0; border-top-left-radius: inherit; border-bottom-left-radius: inherit; border-top-right-radius: 0; border-bottom-right-radius: 0; background: var(--bubble-media-progress-color, rgba(255, 255, 255, 0.08)); transition: width 1s linear; width: calc((100% - 56px) * ${(() => { const s = hass.states['[[watch_entity]]']; if (!s) return 0; const a = s.attributes; let p = Number(a.media_position || 0); if (s.state === 'playing' && a.media_position_updated_at) { p += (Date.now() - Date.parse(a.media_position_updated_at)) / 1000; } const d = Number(a.media_duration || 0); return d > 0 ? Math.max(0, Math.min(100, (p / d) * 100)) : 0; })()} / 100); }
+        - type: custom:bubble-card
+          card_type: sub-buttons
+          rows: 1
+          visibility:
+          - condition: template
+            value_template: '{{ is_state(''[[tv_entity]]'', ''on'') }}'
+          sub_button:
+            bottom_layout: rows
+            bottom:
+            - group:
+              - entity: '[[tv_entity]]'
+                sub_button_type: select
+                select_attribute: source_list
+                name: TV input
+                icon: mdi:television-guide
+                show_arrow: true
+                state_content: '{{ state_attr(''[[tv_entity]]'', ''source'') or (''[[remote_title]]'' if is_state(''[[watch_remote]]'', ''on'') else ''Input'') }}'
+              buttons_layout: inline
+              justify_content: fill
+      cards:
+      - type: vertical-stack
+        cards:
+        - type: vertical-stack
+          visibility:
+          - condition: template
+            value_template: '{{ is_state(''[[watch_remote]]'', ''on'') }}'
+          cards:
+          - type: custom:mushroom-title-card
+            title: '[[remote_title]]'
+          - type: custom:bubble-card
+            card_type: sub-buttons
+            rows: 1
+            sub_button:
+              bottom_layout: rows
+              bottom:
+              - group:
+                - entity: '[[watch_remote]]'
+                  name: Plex
+                  icon: mdi:plex
+                  show_name: true
+                  state_background: false
+                  css_class: lw-mode-on
+                  tap_action:
+                    action: perform-action
+                    perform_action: remote.turn_on
+                    target:
+                      entity_id: '[[watch_remote]]'
+                    data:
+                      activity: com.plexapp.android
+                  visibility:
+                  - condition: template
+                    value_template: '{{ (is_state(''[[watch_remote]]'', ''on'') and state_attr(''[[watch_remote]]'', ''current_activity'') == ''com.plexapp.android'') }}'
+                - entity: '[[watch_remote]]'
+                  name: Plex
+                  icon: mdi:plex
+                  show_name: true
+                  state_background: false
+                  css_class: lw-mode-off
+                  tap_action:
+                    action: perform-action
+                    perform_action: remote.turn_on
+                    target:
+                      entity_id: '[[watch_remote]]'
+                    data:
+                      activity: com.plexapp.android
+                  visibility:
+                  - condition: template
+                    value_template: '{{ not (is_state(''[[watch_remote]]'', ''on'') and state_attr(''[[watch_remote]]'', ''current_activity'') == ''com.plexapp.android'') }}'
+                - entity: '[[watch_remote]]'
+                  name: YouTube
+                  icon: mdi:youtube
+                  show_name: true
+                  state_background: false
+                  css_class: lw-mode-on
+                  tap_action:
+                    action: perform-action
+                    perform_action: remote.turn_on
+                    target:
+                      entity_id: '[[watch_remote]]'
+                    data:
+                      activity: com.google.android.youtube.tv
+                  visibility:
+                  - condition: template
+                    value_template: '{{ (is_state(''[[watch_remote]]'', ''on'') and state_attr(''[[watch_remote]]'', ''current_activity'') == ''com.google.android.youtube.tv'') }}'
+                - entity: '[[watch_remote]]'
+                  name: YouTube
+                  icon: mdi:youtube
+                  show_name: true
+                  state_background: false
+                  css_class: lw-mode-off
+                  tap_action:
+                    action: perform-action
+                    perform_action: remote.turn_on
+                    target:
+                      entity_id: '[[watch_remote]]'
+                    data:
+                      activity: com.google.android.youtube.tv
+                  visibility:
+                  - condition: template
+                    value_template: '{{ not (is_state(''[[watch_remote]]'', ''on'') and state_attr(''[[watch_remote]]'', ''current_activity'') == ''com.google.android.youtube.tv'') }}'
+                buttons_layout: inline
+                justify_content: fill
+            styles: |2
+
+              .lw-mode-on { background-color: var(--bubble-sub-button-light-background-color, var(--bubble-accent-color, var(--accent-color))) !important; }
+              .lw-mode-on .bubble-sub-button-icon { color: var(--bubble-sub-button-dark-text-color, var(--text-primary-color, #fff)) !important; }
+          - type: custom:universal-remote-card
+            platform: Android TV
+            remote_id: '[[watch_remote]]'
+            keyboard_id: '[[watch_keyboard]]'
+            media_player_id: '[[watch_entity]]'
+            rows:
+            - - power
+              - keyboard
+              - info
+              - home
+            - - touchpad
+            - - back
+              - rewind
+              - play_pause
+              - fast_forward
+            styles: |-
+              :host { --ha-card-background: transparent; --ha-card-box-shadow: none; --ha-card-border-width: 0; }
+              .row { justify-content: space-evenly; }
+              remote-button { --icon-size: 26px; }
+              #touchpad::part(toucharea) { height: 240px; }
+        - type: vertical-stack
+          visibility:
+          - condition: template
+            value_template: '{{ not (''[[bar]]'' in [''none'', '''']) and (not is_state(''[[bar]]'', ''on'') or not (is_state(''[[bar]]'', ''on'') and (((''[[listen_inputs]]''.split('','') | map(''trim'') | list) | select(''in'', (state_attr(''[[bar]]'', ''source'') or '''')) | list | count > 0) and (not (((''[[shared_inputs]]''.split('','') | map(''trim'') | reject(''in'', [''none'', '''']) | list) | select(''in'', (state_attr(''[[bar]]'', ''source'') or '''')) | list | count > 0)) or is_state(''[[entity]]'', [''playing'', ''paused'', ''buffering'']))))) }}'
+          cards:
+          - type: custom:mushroom-title-card
+            title: '[[bar_name]]'
+          - type: custom:bubble-card
+            card_type: button
+            button_type: slider
+            entity: '[[bar]]'
+            name: Volume
+            icon: mdi:volume-high
+            card_layout: large
+            min_value: 0
+            max_value: '[[max_volume]]'
+            read_only_slider: true
+            tap_to_slide: false
+            slider_live_update: false
+            state_content: '{{ ((state_attr(''[[bar]]'', ''volume_level'') | float(0)) * 100) | round(0) | int }}%'
+            tap_action:
+              action: more-info
+            hold_action:
+              action: toggle
+            double_tap_action:
+              action: none
+            button_action:
+              tap_action:
+                action: more-info
+              double_tap_action:
+                action: more-info
+              hold_action:
+                action: more-info
+            visibility:
+            - condition: template
+              value_template: '{{ is_state(''[[bar]]'', ''on'') }}'
+            sub_button:
+              main:
+              - name: Volume down
+                icon: mdi:minus
+                show_name: false
+                show_background: true
+                state_background: false
+                css_class: lw-vol
+                tap_action:
+                  action: perform-action
+                  perform_action: script.media_volume_step
+                  data:
+                    player: '[[bar]]'
+                    step: -1
+                    max_volume: '[[max_volume]]'
+                hold_action:
+                  action: perform-action
+                  perform_action: script.media_volume_step
+                  data:
+                    player: '[[bar]]'
+                    step: -5
+                    max_volume: '[[max_volume]]'
+                double_tap_action:
+                  action: none
+              - name: Volume up
+                icon: mdi:plus
+                show_name: false
+                show_background: true
+                state_background: false
+                css_class: lw-vol
+                tap_action:
+                  action: perform-action
+                  perform_action: script.media_volume_step
+                  data:
+                    player: '[[bar]]'
+                    step: 1
+                    max_volume: '[[max_volume]]'
+                hold_action:
+                  action: perform-action
+                  perform_action: script.media_volume_step
+                  data:
+                    player: '[[bar]]'
+                    step: 5
+                    max_volume: '[[max_volume]]'
+                double_tap_action:
+                  action: none
+            styles: |2
+
+              .lw-vol { height: 42px !important; min-width: 42px !important; border-radius: 50% !important; }
+              .lw-vol .bubble-sub-button-icon { --mdc-icon-size: 24px !important; }
+          - type: custom:bubble-card
+            card_type: sub-buttons
+            rows: 1
+            sub_button:
+              bottom_layout: rows
+              bottom:
+              - group:
+                - entity: '[[bar]]'
+                  name: Turn on soundbar
+                  icon: mdi:power
+                  show_name: true
+                  tap_action:
+                    action: perform-action
+                    perform_action: media_player.turn_on
+                    target:
+                      entity_id: '[[bar]]'
+                  visibility:
+                  - condition: template
+                    value_template: '{{ not is_state(''[[bar]]'', ''on'') }}'
+                - entity: '[[bar]]'
+                  sub_button_type: select
+                  select_attribute: source_list
+                  name: Input
+                  icon: mdi:video-input-hdmi
+                  show_arrow: true
+                  state_content: source
+                  visibility:
+                  - condition: template
+                    value_template: '{{ is_state(''[[bar]]'', ''on'') }}'
+                - entity: '[[bar]]'
+                  sub_button_type: select
+                  select_attribute: sound_mode_list
+                  name: Sound
+                  icon: mdi:tune-variant
+                  show_arrow: true
+                  state_content: sound_mode
+                  visibility:
+                  - condition: template
+                    value_template: '{{ is_state(''[[bar]]'', ''on'') }}'
+                - entity: '[[input_automation]]'
+                  name: 'Input: Auto'
+                  icon: mdi:auto-mode
+                  show_name: true
+                  state_background: false
+                  css_class: lw-mode-on
+                  tap_action:
+                    action: perform-action
+                    perform_action: automation.turn_off
+                    target:
+                      entity_id: '[[input_automations]]'
+                    data:
+                      stop_actions: true
+                  hold_action:
+                    action: more-info
+                  visibility:
+                  - condition: template
+                    value_template: '{{ ''[[input_automation]]'' not in [''none'', ''''] and is_state(''[[input_automation]]'', ''on'') }}'
+                - entity: '[[input_automation]]'
+                  name: 'Input: Manual'
+                  icon: mdi:hand-back-right
+                  show_name: true
+                  state_background: false
+                  css_class: lw-mode-off
+                  tap_action:
+                    action: perform-action
+                    perform_action: automation.turn_on
+                    target:
+                      entity_id: '[[input_automations]]'
+                  hold_action:
+                    action: more-info
+                  visibility:
+                  - condition: template
+                    value_template: '{{ ''[[input_automation]]'' not in [''none'', ''''] and not is_state(''[[input_automation]]'', ''on'') }}'
+                buttons_layout: inline
+                justify_content: fill
+            visibility: []
+            styles: |2
+
+              .lw-mode-on { background-color: var(--bubble-sub-button-light-background-color, var(--bubble-accent-color, var(--accent-color))) !important; }
+              .lw-mode-on .bubble-sub-button-icon { color: var(--bubble-sub-button-dark-text-color, var(--text-primary-color, #fff)) !important; }
+        - type: vertical-stack
+          visibility:
+          - condition: template
+            value_template: '{{ is_state(''[[watch_remote]]'', ''on'') or is_state(''[[tv_entity]]'', ''on'') }}'
+          cards:
+          - type: custom:mushroom-title-card
+            title: Devices
+          - type: horizontal-stack
+            cards:
+            - type: custom:bubble-card
+              card_type: button
+              button_type: state
+              entity: '[[tv_entity]]'
+              name: TV
+              icon: mdi:television
+              card_layout: normal
+              state_content: '{{ state_attr(''[[tv_entity]]'', ''source'') or (''[[remote_title]]'' if is_state(''[[watch_remote]]'', ''on'') else ''Input'') }}'
+              tap_action:
+                action: more-info
+              button_action:
+                tap_action:
+                  action: more-info
+            - type: custom:bubble-card
+              card_type: button
+              button_type: state
+              entity: '[[watch_entity]]'
+              name: '[[watch_name]]'
+              icon: mdi:android
+              card_layout: normal
+              state_content: app_name
+              tap_action:
+                action: more-info
+              button_action:
+                tap_action:
+                  action: more-info
+            - type: custom:bubble-card
+              card_type: button
+              button_type: state
+              entity: '[[bar]]'
+              name: '[[bar_name]]'
+              icon: mdi:soundbar
+              card_layout: normal
+              state_content: '{{ state_attr(''[[bar]]'', ''source'') or states(''[[bar]]'') | title }} · {{ ((state_attr(''[[bar]]'', ''volume_level'') | float(0)) * 100) | round(0) | int }}'
+              tap_action:
+                action: more-info
+              button_action:
+                tap_action:
+                  action: more-info
+      visibility:
+      - condition: template
+        value_template: '{{ ''[[watch_entity]]'' not in [''none'', ''''] }}'
+    - type: custom:bubble-card
+      card_type: pop-up
+      hash: '#speakers-[[room_slug]]'
+      name: '[[room_name]] · Speakers'
+      icon: mdi:speaker-multiple
+      entity: '[[entity]]'
+      cards:
+      - type: custom:bubble-card
+        card_type: sub-buttons
+        sub_button:
+          bottom_layout: rows
+          bottom:
+          - group:
+            - entity: media_player.ledfx_squeezelite
+              name: LedFx
+              icon: mdi:equalizer
+              show_name: true
+              state_content: '{{ ''Lights follow the music'' if ''media_player.ledfx_squeezelite'' in (state_attr(''[[entity]]'', ''group_members'') or []) else ''Tap to add'' }}'
+              custom_height: 48
+              state_background: false
+              tap_action:
+                action: perform-action
+                perform_action: script.media_group_toggle
+                data:
+                  player: '[[entity]]'
+                  member: media_player.ledfx_squeezelite
+              hold_action:
+                action: more-info
+              visibility:
+              - condition: template
+                value_template: '{{ ''[[entity]]'' != ''media_player.ledfx_squeezelite'' }}'
+            - name: '{{ ''Remove'' if ''media_player.ledfx_squeezelite'' in (state_attr(''[[entity]]'', ''group_members'') or []) else ''Add'' }}'
+              icon: '{{ ''mdi:check-circle'' if ''media_player.ledfx_squeezelite'' in (state_attr(''[[entity]]'', ''group_members'') or []) else ''mdi:plus-circle-outline'' }}'
+              show_name: false
+              fill_width: false
+              custom_height: 48
+              tap_action:
+                action: perform-action
+                perform_action: script.media_group_toggle
+                data:
+                  player: '[[entity]]'
+                  member: media_player.ledfx_squeezelite
+              visibility:
+              - condition: template
+                value_template: '{{ ''[[entity]]'' != ''media_player.ledfx_squeezelite'' }}'
+            buttons_layout: inline
+            justify_content: fill
+          - group:
+            - entity: media_player.family_room_family_room_wiim_pro_ma
+              name: Family Room
+              icon: mdi:sofa
+              show_name: true
+              state_content: '{{ ''Playing together'' if ''media_player.family_room_family_room_wiim_pro_ma'' in (state_attr(''[[entity]]'', ''group_members'') or []) else ''Tap to add'' }}'
+              custom_height: 48
+              state_background: false
+              tap_action:
+                action: perform-action
+                perform_action: script.media_group_toggle
+                data:
+                  player: '[[entity]]'
+                  member: media_player.family_room_family_room_wiim_pro_ma
+              hold_action:
+                action: more-info
+              visibility:
+              - condition: template
+                value_template: '{{ ''[[entity]]'' != ''media_player.family_room_family_room_wiim_pro_ma'' }}'
+            - name: '{{ ''Remove'' if ''media_player.family_room_family_room_wiim_pro_ma'' in (state_attr(''[[entity]]'', ''group_members'') or []) else ''Add'' }}'
+              icon: '{{ ''mdi:check-circle'' if ''media_player.family_room_family_room_wiim_pro_ma'' in (state_attr(''[[entity]]'', ''group_members'') or []) else ''mdi:plus-circle-outline'' }}'
+              show_name: false
+              fill_width: false
+              custom_height: 48
+              tap_action:
+                action: perform-action
+                perform_action: script.media_group_toggle
+                data:
+                  player: '[[entity]]'
+                  member: media_player.family_room_family_room_wiim_pro_ma
+              visibility:
+              - condition: template
+                value_template: '{{ ''[[entity]]'' != ''media_player.family_room_family_room_wiim_pro_ma'' }}'
+            buttons_layout: inline
+            justify_content: fill
+          - group:
+            - entity: media_player.kitchen_kitchen_wiim_sound_ma
+              name: Kitchen
+              icon: mdi:silverware-fork-knife
+              show_name: true
+              state_content: '{{ ''Playing together'' if ''media_player.kitchen_kitchen_wiim_sound_ma'' in (state_attr(''[[entity]]'', ''group_members'') or []) else ''Tap to add'' }}'
+              custom_height: 48
+              state_background: false
+              tap_action:
+                action: perform-action
+                perform_action: script.media_group_toggle
+                data:
+                  player: '[[entity]]'
+                  member: media_player.kitchen_kitchen_wiim_sound_ma
+              hold_action:
+                action: more-info
+              visibility:
+              - condition: template
+                value_template: '{{ ''[[entity]]'' != ''media_player.kitchen_kitchen_wiim_sound_ma'' }}'
+            - name: '{{ ''Remove'' if ''media_player.kitchen_kitchen_wiim_sound_ma'' in (state_attr(''[[entity]]'', ''group_members'') or []) else ''Add'' }}'
+              icon: '{{ ''mdi:check-circle'' if ''media_player.kitchen_kitchen_wiim_sound_ma'' in (state_attr(''[[entity]]'', ''group_members'') or []) else ''mdi:plus-circle-outline'' }}'
+              show_name: false
+              fill_width: false
+              custom_height: 48
+              tap_action:
+                action: perform-action
+                perform_action: script.media_group_toggle
+                data:
+                  player: '[[entity]]'
+                  member: media_player.kitchen_kitchen_wiim_sound_ma
+              visibility:
+              - condition: template
+                value_template: '{{ ''[[entity]]'' != ''media_player.kitchen_kitchen_wiim_sound_ma'' }}'
+            buttons_layout: inline
+            justify_content: fill
+          - group:
+            - entity: media_player.living_room_living_room_wiim_pro_ma
+              name: Living Room
+              icon: mdi:sofa-single
+              show_name: true
+              state_content: '{{ ''Playing together'' if ''media_player.living_room_living_room_wiim_pro_ma'' in (state_attr(''[[entity]]'', ''group_members'') or []) else ''Tap to add'' }}'
+              custom_height: 48
+              state_background: false
+              tap_action:
+                action: perform-action
+                perform_action: script.media_group_toggle
+                data:
+                  player: '[[entity]]'
+                  member: media_player.living_room_living_room_wiim_pro_ma
+              hold_action:
+                action: more-info
+              visibility:
+              - condition: template
+                value_template: '{{ ''[[entity]]'' != ''media_player.living_room_living_room_wiim_pro_ma'' }}'
+            - name: '{{ ''Remove'' if ''media_player.living_room_living_room_wiim_pro_ma'' in (state_attr(''[[entity]]'', ''group_members'') or []) else ''Add'' }}'
+              icon: '{{ ''mdi:check-circle'' if ''media_player.living_room_living_room_wiim_pro_ma'' in (state_attr(''[[entity]]'', ''group_members'') or []) else ''mdi:plus-circle-outline'' }}'
+              show_name: false
+              fill_width: false
+              custom_height: 48
+              tap_action:
+                action: perform-action
+                perform_action: script.media_group_toggle
+                data:
+                  player: '[[entity]]'
+                  member: media_player.living_room_living_room_wiim_pro_ma
+              visibility:
+              - condition: template
+                value_template: '{{ ''[[entity]]'' != ''media_player.living_room_living_room_wiim_pro_ma'' }}'
+            buttons_layout: inline
+            justify_content: fill
+          - group:
+            - entity: media_player.primary_bedroom_primary_bedroom_wiim_sound_ma
+              name: Primary Bedroom
+              icon: mdi:bed-king
+              show_name: true
+              state_content: '{{ ''Playing together'' if ''media_player.primary_bedroom_primary_bedroom_wiim_sound_ma'' in (state_attr(''[[entity]]'', ''group_members'') or []) else ''Tap to add'' }}'
+              custom_height: 48
+              state_background: false
+              tap_action:
+                action: perform-action
+                perform_action: script.media_group_toggle
+                data:
+                  player: '[[entity]]'
+                  member: media_player.primary_bedroom_primary_bedroom_wiim_sound_ma
+              hold_action:
+                action: more-info
+              visibility:
+              - condition: template
+                value_template: '{{ ''[[entity]]'' != ''media_player.primary_bedroom_primary_bedroom_wiim_sound_ma'' }}'
+            - name: '{{ ''Remove'' if ''media_player.primary_bedroom_primary_bedroom_wiim_sound_ma'' in (state_attr(''[[entity]]'', ''group_members'') or []) else ''Add'' }}'
+              icon: '{{ ''mdi:check-circle'' if ''media_player.primary_bedroom_primary_bedroom_wiim_sound_ma'' in (state_attr(''[[entity]]'', ''group_members'') or []) else ''mdi:plus-circle-outline'' }}'
+              show_name: false
+              fill_width: false
+              custom_height: 48
+              tap_action:
+                action: perform-action
+                perform_action: script.media_group_toggle
+                data:
+                  player: '[[entity]]'
+                  member: media_player.primary_bedroom_primary_bedroom_wiim_sound_ma
+              visibility:
+              - condition: template
+                value_template: '{{ ''[[entity]]'' != ''media_player.primary_bedroom_primary_bedroom_wiim_sound_ma'' }}'
+            buttons_layout: inline
+            justify_content: fill
+          - group:
+            - entity: media_player.private_bath_private_bath_wiim_sound_ma
+              name: Private Bath
+              icon: mdi:shower
+              show_name: true
+              state_content: '{{ ''Playing together'' if ''media_player.private_bath_private_bath_wiim_sound_ma'' in (state_attr(''[[entity]]'', ''group_members'') or []) else ''Tap to add'' }}'
+              custom_height: 48
+              state_background: false
+              tap_action:
+                action: perform-action
+                perform_action: script.media_group_toggle
+                data:
+                  player: '[[entity]]'
+                  member: media_player.private_bath_private_bath_wiim_sound_ma
+              hold_action:
+                action: more-info
+              visibility:
+              - condition: template
+                value_template: '{{ ''[[entity]]'' != ''media_player.private_bath_private_bath_wiim_sound_ma'' }}'
+            - name: '{{ ''Remove'' if ''media_player.private_bath_private_bath_wiim_sound_ma'' in (state_attr(''[[entity]]'', ''group_members'') or []) else ''Add'' }}'
+              icon: '{{ ''mdi:check-circle'' if ''media_player.private_bath_private_bath_wiim_sound_ma'' in (state_attr(''[[entity]]'', ''group_members'') or []) else ''mdi:plus-circle-outline'' }}'
+              show_name: false
+              fill_width: false
+              custom_height: 48
+              tap_action:
+                action: perform-action
+                perform_action: script.media_group_toggle
+                data:
+                  player: '[[entity]]'
+                  member: media_player.private_bath_private_bath_wiim_sound_ma
+              visibility:
+              - condition: template
+                value_template: '{{ ''[[entity]]'' != ''media_player.private_bath_private_bath_wiim_sound_ma'' }}'
+            buttons_layout: inline
+            justify_content: fill
+          - group:
+            - entity: media_player.nate_s_office_nate_s_office_wiim_pro_ma
+              name: Nate's Office
+              icon: mdi:desk
+              show_name: true
+              state_content: '{{ ''Playing together'' if ''media_player.nate_s_office_nate_s_office_wiim_pro_ma'' in (state_attr(''[[entity]]'', ''group_members'') or []) else ''Tap to add'' }}'
+              custom_height: 48
+              state_background: false
+              tap_action:
+                action: perform-action
+                perform_action: script.media_group_toggle
+                data:
+                  player: '[[entity]]'
+                  member: media_player.nate_s_office_nate_s_office_wiim_pro_ma
+              hold_action:
+                action: more-info
+              visibility:
+              - condition: template
+                value_template: '{{ ''[[entity]]'' != ''media_player.nate_s_office_nate_s_office_wiim_pro_ma'' }}'
+            - name: '{{ ''Remove'' if ''media_player.nate_s_office_nate_s_office_wiim_pro_ma'' in (state_attr(''[[entity]]'', ''group_members'') or []) else ''Add'' }}'
+              icon: '{{ ''mdi:check-circle'' if ''media_player.nate_s_office_nate_s_office_wiim_pro_ma'' in (state_attr(''[[entity]]'', ''group_members'') or []) else ''mdi:plus-circle-outline'' }}'
+              show_name: false
+              fill_width: false
+              custom_height: 48
+              tap_action:
+                action: perform-action
+                perform_action: script.media_group_toggle
+                data:
+                  player: '[[entity]]'
+                  member: media_player.nate_s_office_nate_s_office_wiim_pro_ma
+              visibility:
+              - condition: template
+                value_template: '{{ ''[[entity]]'' != ''media_player.nate_s_office_nate_s_office_wiim_pro_ma'' }}'
+            buttons_layout: inline
+            justify_content: fill
+          - group:
+            - entity: media_player.emily_s_office_emily_s_office_nest_max_ma
+              name: Emily's Office
+              icon: mdi:desk
+              show_name: true
+              state_content: '{{ ''Playing together'' if ''media_player.emily_s_office_emily_s_office_nest_max_ma'' in (state_attr(''[[entity]]'', ''group_members'') or []) else ''Tap to add'' }}'
+              custom_height: 48
+              state_background: false
+              tap_action:
+                action: perform-action
+                perform_action: script.media_group_toggle
+                data:
+                  player: '[[entity]]'
+                  member: media_player.emily_s_office_emily_s_office_nest_max_ma
+              hold_action:
+                action: more-info
+              visibility:
+              - condition: template
+                value_template: '{{ ''[[entity]]'' != ''media_player.emily_s_office_emily_s_office_nest_max_ma'' }}'
+            - name: '{{ ''Remove'' if ''media_player.emily_s_office_emily_s_office_nest_max_ma'' in (state_attr(''[[entity]]'', ''group_members'') or []) else ''Add'' }}'
+              icon: '{{ ''mdi:check-circle'' if ''media_player.emily_s_office_emily_s_office_nest_max_ma'' in (state_attr(''[[entity]]'', ''group_members'') or []) else ''mdi:plus-circle-outline'' }}'
+              show_name: false
+              fill_width: false
+              custom_height: 48
+              tap_action:
+                action: perform-action
+                perform_action: script.media_group_toggle
+                data:
+                  player: '[[entity]]'
+                  member: media_player.emily_s_office_emily_s_office_nest_max_ma
+              visibility:
+              - condition: template
+                value_template: '{{ ''[[entity]]'' != ''media_player.emily_s_office_emily_s_office_nest_max_ma'' }}'
+            buttons_layout: inline
+            justify_content: fill
+          - group:
+            - entity: media_player.playroom_playroom_nest_mini_ma
+              name: Playroom
+              icon: mdi:toy-brick
+              show_name: true
+              state_content: '{{ ''Playing together'' if ''media_player.playroom_playroom_nest_mini_ma'' in (state_attr(''[[entity]]'', ''group_members'') or []) else ''Tap to add'' }}'
+              custom_height: 48
+              state_background: false
+              tap_action:
+                action: perform-action
+                perform_action: script.media_group_toggle
+                data:
+                  player: '[[entity]]'
+                  member: media_player.playroom_playroom_nest_mini_ma
+              hold_action:
+                action: more-info
+              visibility:
+              - condition: template
+                value_template: '{{ ''[[entity]]'' != ''media_player.playroom_playroom_nest_mini_ma'' }}'
+            - name: '{{ ''Remove'' if ''media_player.playroom_playroom_nest_mini_ma'' in (state_attr(''[[entity]]'', ''group_members'') or []) else ''Add'' }}'
+              icon: '{{ ''mdi:check-circle'' if ''media_player.playroom_playroom_nest_mini_ma'' in (state_attr(''[[entity]]'', ''group_members'') or []) else ''mdi:plus-circle-outline'' }}'
+              show_name: false
+              fill_width: false
+              custom_height: 48
+              tap_action:
+                action: perform-action
+                perform_action: script.media_group_toggle
+                data:
+                  player: '[[entity]]'
+                  member: media_player.playroom_playroom_nest_mini_ma
+              visibility:
+              - condition: template
+                value_template: '{{ ''[[entity]]'' != ''media_player.playroom_playroom_nest_mini_ma'' }}'
+            buttons_layout: inline
+            justify_content: fill
+          - group:
+            - entity: media_player.upstairs_bath_upstairs_bath_nest_mini_ma
+              name: Upstairs Bath
+              icon: mdi:bathtub
+              show_name: true
+              state_content: '{{ ''Playing together'' if ''media_player.upstairs_bath_upstairs_bath_nest_mini_ma'' in (state_attr(''[[entity]]'', ''group_members'') or []) else ''Tap to add'' }}'
+              custom_height: 48
+              state_background: false
+              tap_action:
+                action: perform-action
+                perform_action: script.media_group_toggle
+                data:
+                  player: '[[entity]]'
+                  member: media_player.upstairs_bath_upstairs_bath_nest_mini_ma
+              hold_action:
+                action: more-info
+              visibility:
+              - condition: template
+                value_template: '{{ ''[[entity]]'' != ''media_player.upstairs_bath_upstairs_bath_nest_mini_ma'' }}'
+            - name: '{{ ''Remove'' if ''media_player.upstairs_bath_upstairs_bath_nest_mini_ma'' in (state_attr(''[[entity]]'', ''group_members'') or []) else ''Add'' }}'
+              icon: '{{ ''mdi:check-circle'' if ''media_player.upstairs_bath_upstairs_bath_nest_mini_ma'' in (state_attr(''[[entity]]'', ''group_members'') or []) else ''mdi:plus-circle-outline'' }}'
+              show_name: false
+              fill_width: false
+              custom_height: 48
+              tap_action:
+                action: perform-action
+                perform_action: script.media_group_toggle
+                data:
+                  player: '[[entity]]'
+                  member: media_player.upstairs_bath_upstairs_bath_nest_mini_ma
+              visibility:
+              - condition: template
+                value_template: '{{ ''[[entity]]'' != ''media_player.upstairs_bath_upstairs_bath_nest_mini_ma'' }}'
+            buttons_layout: inline
+            justify_content: fill
+        rows: 10
+    - type: custom:bubble-card
+      card_type: pop-up
+      hash: '#library-[[room_slug]]'
+      name: '[[room_name]] · Library'
+      icon: mdi:music-box-multiple
+      entity: '[[entity]]'
+      cards:
+      - type: custom:mass-player-card
+        expressive: true
+        default_section: media_browser
+        entities:
+        - entity_id: '[[entity]]'
+          name: '[[room_name]]'
+        player:
+          enabled: false
+        players:
+          enabled: false
+        queue:
+          enabled: false
+        media_browser:
+          enabled: true
+          default_section: favorites
+    - type: custom:bubble-card
+      card_type: pop-up
+      hash: '#queue-[[room_slug]]'
+      name: '[[room_name]] · Queue'
+      icon: mdi:playlist-music
+      entity: '[[entity]]'
+      cards:
+      - type: custom:mass-player-card
+        expressive: true
+        default_section: queue
+        entities:
+        - entity_id: '[[entity]]'
+          name: '[[room_name]]'
+        player:
+          enabled: false
+        players:
+          enabled: false
+        queue:
+          enabled: true
+        media_browser:
+          enabled: false

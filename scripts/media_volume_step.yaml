@@ -1,0 +1,42 @@
+media_volume_step:
+  alias: Media volume step
+  description: Nudges a media player's volume by a fixed number of percentage points, clamped to 0 and a per-room maximum. Used by the Spaces dashboard's -/+ volume buttons.
+  fields:
+    max_volume:
+      default: 100
+      name: Maximum volume (%)
+      selector:
+        number:
+          max: 100
+          min: 1
+          step: 1
+    player:
+      name: Player
+      required: true
+      selector:
+        entity:
+          domain: media_player
+    step:
+      default: 1
+      description: Positive to raise, negative to lower
+      name: Step (percentage points)
+      required: true
+      selector:
+        number:
+          max: 10
+          min: -10
+          step: 1
+  icon: mdi:volume-plus
+  max: 10
+  mode: queued
+  sequence:
+  - variables:
+      current: '{{ ((state_attr(player, ''volume_level'') | float(0)) * 100) | round(0) }}'
+      target: '{{ [0, [(max_volume | default(100)) | float(100), current + (step | float(0))] | min] | max }}'
+  - condition: template
+    value_template: '{{ target != current }}'
+  - action: media_player.volume_set
+    data:
+      volume_level: '{{ (target / 100) | round(2) }}'
+    target:
+      entity_id: '{{ player }}'

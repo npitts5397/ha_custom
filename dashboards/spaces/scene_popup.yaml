@@ -1,0 +1,41 @@
+# Spaces dashboard (dashboard-spaces) decluttering template: scene_popup
+# Reference copy. Lives in the dashboard config under decluttering_templates.scene_popup
+scene_popup:
+  default:
+  - title: Scenes
+  card:
+    type: custom:bubble-card
+    card_type: pop-up
+    hash: '#scenes-[[room_slug]]'
+    name: '[[room_name]] · [[title]]'
+    icon: mdi:palette
+    cards:
+    - type: custom:auto-entities
+      card:
+        type: grid
+        columns: 2
+        square: false
+      card_param: cards
+      filter:
+        include:
+        - entity_id: scene.*[[room_slug]]_*
+          options:
+            type: custom:bubble-card
+            card_type: button
+            button_type: name
+            entity: this.entity_id
+            name: '{{ state_attr(entity, ''friendly_name'') | replace(''[[room_name]] '', '''') }}'
+            show_state: false
+            tap_action:
+              action: perform-action
+              perform_action: scene.turn_on
+              target:
+                entity_id: this.entity_id
+              data:
+                transition: 2
+            hold_action:
+              action: more-info
+      show_empty: true
+      sort:
+        method: name
+        ignore_case: true
