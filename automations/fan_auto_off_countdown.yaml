@@ -1,41 +1,50 @@
 - id: '1795393349531'
   alias: Fan auto-off countdown
-  description: Runs a restart-safe countdown (timer helper) for each fan's auto-off, shows it on the dashboard, drains the matching Inovelli switch's LED bar, and turns the fan off when the countdown ends. The switch's own AutoTimerOff stays set as a backup in case Home Assistant is down. Add a fan by adding an entry to the 'fans' variable and its entities to the triggers.
+  description: Runs a restart-safe countdown (timer helper) for each fan's auto-off, shows it on the dashboard, drains the matching Inovelli switch's LED bar at the switch's normal on-brightness, and turns the fan off when the countdown ends. The switch's own AutoTimerOff stays set as a backup in case Home Assistant is down. Unavailable/unknown blips are ignored so a Zigbee2MQTT dropout doesn't cancel or restart a countdown. A once-a-minute refresh drains each LED exactly on time, redraws the whole bar every 5 minutes, and starts a countdown for a fan found on without one. Add a fan by adding an entry to the 'fans' variable and its entities to the triggers.
   mode: queued
   max: 20
+  trace:
+    stored_traces: 30
   variables:
     fans:
     - fan: fan.main_bath_switch_b_exhaust_fan
       setting: number.main_bath_switch_b_exhaust_fan_autotimeroff
       timer: timer.main_bath_exhaust_fan_auto_off
       led: Main Bath switch b- Exhaust fan
+      level: number.main_bath_switch_b_exhaust_fan_ledintensitywhenon
     - fan: fan.private_bath_switch_b_exhaust_fan
       setting: number.private_bath_switch_b_exhaust_fan_autotimeroff
       timer: timer.private_bath_exhaust_fan_auto_off
       led: Private Bath switch b- Exhaust fan
+      level: number.private_bath_switch_b_exhaust_fan_ledintensitywhenon
     - fan: fan.upstairs_bath_switch_b_exhaust_fan
       setting: number.upstairs_bath_switch_b_exhaust_fan_autotimeroff
       timer: timer.upstairs_bath_exhaust_fan_auto_off
       led: Upstairs Bath switch b- Exhaust fan
+      level: number.upstairs_bath_switch_b_exhaust_fan_ledintensitywhenon
     - fan: fan.primary_bedroom_fan_ceiling
       setting: number.primary_bedroom_fan_ceiling_autotimeroff_2
       timer: timer.primary_bedroom_ceiling_fan_auto_off
       led: ''
+      level: ''
     - fan: fan.emily_s_office_fan_ceiling
       setting: number.emily_s_office_fan_ceiling_autotimeroff_2
       timer: timer.emily_s_office_ceiling_fan_auto_off
       led: ''
+      level: ''
     - fan: fan.guest_room_fan_ceiling
       setting: number.guest_room_fan_ceiling_autotimeroff_2
       timer: timer.guest_room_ceiling_fan_auto_off
       led: ''
+      level: ''
     - fan: fan.will_s_room_fan_ceiling
       setting: number.will_s_room_fan_ceiling_autotimeroff_2
       timer: timer.will_s_room_ceiling_fan_auto_off
       led: ''
+      level: ''
   triggers:
   - trigger: state
-    entity_id:
+    entity_id: &id001
     - fan.main_bath_switch_b_exhaust_fan
     - fan.private_bath_switch_b_exhaust_fan
     - fan.upstairs_bath_switch_b_exhaust_fan
@@ -47,16 +56,10 @@
     to: 'on'
     id: fan_on
   - trigger: state
-    entity_id:
-    - fan.main_bath_switch_b_exhaust_fan
-    - fan.private_bath_switch_b_exhaust_fan
-    - fan.upstairs_bath_switch_b_exhaust_fan
-    - fan.primary_bedroom_fan_ceiling
-    - fan.emily_s_office_fan_ceiling
-    - fan.guest_room_fan_ceiling
-    - fan.will_s_room_fan_ceiling
-    from: 'on'
+    entity_id: *id001
+    to: 'off'
     id: fan_off
+    note: 'to: off (not from: on) so a dropout (on -> unavailable) no longer counts as a turn-off, and unavailable -> off still does.'
   - trigger: state
     entity_id:
     - number.main_bath_switch_b_exhaust_fan_autotimeroff
@@ -66,9 +69,16 @@
     - number.emily_s_office_fan_ceiling_autotimeroff_2
     - number.guest_room_fan_ceiling_autotimeroff_2
     - number.will_s_room_fan_ceiling_autotimeroff_2
+    not_from:
+    - unavailable
+    - unknown
+    not_to:
+    - unavailable
+    - unknown
     id: setting
+    note: Coming back from unavailable is not a setting change; that used to restart the countdown at full.
   - trigger: time_pattern
-    minutes: /5
+    minutes: /1
     id: refresh
   - trigger: homeassistant
     event: start
@@ -85,73 +95,103 @@
       - variables:
           f: '{{ repeat.item }}'
       - variables:
+          ok: '{{ states(f.fan) not in [''unavailable'', ''unknown''] and states(f.setting) not in [''unavailable'', ''unknown''] }}'
           fan_on: '{{ is_state(f.fan, ''on'') }}'
           secs: '{{ states(f.setting) | int(0) }}'
           timer_on: '{{ is_state(f.timer, ''active'') }}'
-      - choose:
-        - alias: 'Countdown finished: turn the fan off (the switch timer is only a backup)'
-          conditions:
-          - condition: template
-            value_template: '{{ trigger.id == ''finished'' }}'
-          sequence:
-          - if:
+          lvl: '{{ states(f.level) | int(50) if f.level else 50 }}'
+      - if:
+        - condition: template
+          value_template: '{{ ok }}'
+        then:
+        - choose:
+          - alias: 'Countdown finished: turn the fan off (the switch timer is only a backup)'
+            conditions:
+            - condition: trigger
+              id: finished
+            sequence:
+            - if:
+              - condition: template
+                value_template: '{{ fan_on }}'
+              then:
+              - action: fan.turn_off
+                target:
+                  entity_id: '{{ f.fan }}'
+          - alias: 'Fan off, or auto-off set to Never: stop the countdown'
+            conditions:
             - condition: template
-              value_template: '{{ fan_on }}'
-            then:
-            - action: fan.turn_off
-              target:
-                entity_id: '{{ f.fan }}'
-        - alias: 'Fan off, or auto-off set to Never: stop the countdown'
-          conditions:
-          - condition: template
-            value_template: '{{ not fan_on or secs <= 0 }}'
-          sequence:
-          - if:
+              value_template: '{{ not fan_on or secs <= 0 }}'
+            sequence:
+            - if:
+              - condition: template
+                value_template: '{{ timer_on }}'
+              then:
+              - action: timer.cancel
+                target:
+                  entity_id: '{{ f.timer }}'
+            - if:
+              - condition: template
+                value_template: '{{ timer_on or trigger.id in [''fan_off'', ''setting'', ''start''] }}'
+              then:
+              - action: script.fan_led_countdown
+                data:
+                  action: clear
+                  led_device: '{{ f.led }}'
+          - alias: 'Fan just turned on, auto-off changed, or fan found on with no countdown: (re)start the countdown'
+            conditions:
             - condition: template
-              value_template: '{{ timer_on }}'
-            then:
-            - action: timer.cancel
+              value_template: '{{ trigger.id in [''fan_on'', ''setting''] or (trigger.id in [''start'', ''refresh''] and not timer_on) }}'
+            sequence:
+            - action: timer.start
               target:
                 entity_id: '{{ f.timer }}'
-          - if:
-            - condition: template
-              value_template: '{{ timer_on or trigger.id in [''fan_off'', ''setting'', ''start''] }}'
-            then:
-            - action: script.fan_led_countdown
               data:
-                action: clear
-                led_device: '{{ f.led }}'
-        - alias: 'Fan just turned on, auto-off changed, or nothing running yet: (re)start the countdown'
-          conditions:
-          - condition: template
-            value_template: '{{ trigger.id in [''fan_on'', ''setting''] or (trigger.id == ''start'' and not timer_on) }}'
-          sequence:
-          - action: timer.start
-            target:
-              entity_id: '{{ f.timer }}'
-            data:
-              duration: '{{ secs }}'
-          - action: script.fan_led_countdown
-            data:
-              action: show
-              led_device: '{{ f.led }}'
-              remaining: '{{ secs }}'
-              total: '{{ secs }}'
-        default:
-        - alias: 'Countdown running: refresh the LED bar from the timer'
-          if:
-          - condition: template
-            value_template: '{{ timer_on }}'
-          then:
-          - variables:
-              left: '{{ ((as_datetime(state_attr(f.timer, ''finishes_at'')) - now()).total_seconds()) | round(0) | int(0) }}'
-          - if:
-            - condition: template
-              value_template: '{{ left > 0 }}'
-            then:
+                duration: '{{ secs }}'
             - action: script.fan_led_countdown
               data:
                 action: show
                 led_device: '{{ f.led }}'
-                remaining: '{{ left }}'
+                remaining: '{{ secs }}'
                 total: '{{ secs }}'
+                level: '{{ lvl }}'
+          default:
+          - alias: 'Countdown running: redraw every 5 min (or on start), and drain LEDs due in the next minute exactly on time'
+            if:
+            - condition: template
+              value_template: '{{ timer_on }}'
+            then:
+            - variables:
+                left: '{{ ((as_datetime(state_attr(f.timer, ''finishes_at'')) - now()).total_seconds()) | round(1) }}'
+                gap: '{{ secs / 7 }}'
+                finishes: '{{ state_attr(f.timer, ''finishes_at'') }}'
+            - variables:
+                full: '{{ trigger.id != ''refresh'' or now().minute % 5 == 0 }}'
+                near: '{{ left > gap and (gap <= 60 or left % gap <= 60) }}'
+            - if:
+              - condition: template
+                value_template: '{{ left > 0 and full }}'
+              then:
+              - action: script.fan_led_countdown
+                data:
+                  action: show
+                  led_device: '{{ f.led }}'
+                  remaining: '{{ left }}'
+                  total: '{{ secs }}'
+                  level: '{{ lvl }}'
+            - if:
+              - condition: template
+                value_template: '{{ near and f.led != '''' }}'
+              then:
+              - action: script.turn_on
+                target:
+                  entity_id: script.fan_led_countdown
+                data:
+                  variables:
+                    action: step
+                    led_device: '{{ f.led }}'
+                    remaining: '{{ left }}'
+                    total: '{{ secs }}'
+                    level: '{{ lvl }}'
+                    timer: '{{ f.timer }}'
+                    finishes: '{{ finishes }}'
+                note: script.turn_on so the step's wait (up to 60 s) doesn't hold up the queue, e.g. a fan_off right after.

@@ -1,6 +1,6 @@
 fan_led_countdown:
   alias: Fan LED countdown
-  description: 'Drains an Inovelli Blue switch''s 7-LED bar from top to bottom over the time left on a fan''s auto-off. Each LED gets its own timed effect, so the switch drains itself between refreshes. action: show (needs total and remaining seconds) or clear (returns the bar to normal). Called by the ''Fan auto-off countdown'' automation.'
+  description: 'Drains an Inovelli Blue switch''s 7-LED bar from top to bottom over the time left on a fan''s auto-off. action: show (needs total and remaining seconds) draws the whole bar; each LED gets its own timed effect, rounded up so it never goes dark early and still expires on its own if Home Assistant is down. action: step (also needs timer and finishes) waits for each LED due to drain within the next 60 s and turns it off exactly on time, unless that countdown was cancelled or restarted meanwhile. action: clear returns the bar to normal with one led_effect command. Called by the ''Fan auto-off countdown'' automation.'
   icon: mdi:led-strip-variant
   mode: parallel
   max: 20
@@ -18,35 +18,45 @@ fan_led_countdown:
         select:
           options:
           - show
+          - step
           - clear
     total:
       name: Total seconds
       selector:
         number:
-          max: 32767
           min: 0
+          max: 32767
           mode: box
     remaining:
       name: Remaining seconds
       selector:
         number:
-          max: 32767
           min: 0
+          max: 32767
           mode: box
+    timer:
+      name: Countdown timer (step only)
+      selector:
+        entity:
+          domain: timer
+    finishes:
+      name: Timer finishes_at when step was scheduled (step only)
+      selector:
+        text: {}
     color:
       default: 255
       name: LED colour (0-255 hue, 255 = white)
       selector:
         number:
-          max: 255
           min: 0
+          max: 255
     level:
       default: 50
-      name: LED brightness
+      name: LED brightness (the automation passes the switch's LedIntensityWhenOn)
       selector:
         number:
-          max: 100
           min: 1
+          max: 100
   sequence:
   - if:
     - condition: template
@@ -55,28 +65,15 @@ fan_led_countdown:
     - stop: No LED switch assigned to this fan
   - variables:
       col: '{{ color | default(255) | int(255) }}'
-      lvl: '{{ level | default(50) | int(50) }}'
+      lvl: '{{ [level | default(50) | int(50), 1] | max }}'
       rem: '{{ remaining | default(0) | float(0) }}'
-      topic: zigbee2mqtt/{{ led_device }}/set
       tot: '{{ total | default(0) | float(0) }}'
+      topic: zigbee2mqtt/{{ led_device }}/set
+      t0: '{{ now().timestamp() }}'
   - if:
     - condition: template
       value_template: '{{ action == ''clear'' or tot <= 0 or rem <= 0 }}'
     then:
-    - repeat:
-        for_each:
-        - 1
-        - 2
-        - 3
-        - 4
-        - 5
-        - 6
-        - 7
-        sequence:
-        - action: mqtt.publish
-          data:
-            topic: '{{ topic }}'
-            payload: '{{ {''individual_led_effect'': {''led'': repeat.item | string, ''effect'': ''clear_effect'', ''color'': col, ''level'': lvl, ''duration'': 255}} | to_json }}'
     - action: mqtt.publish
       data:
         topic: '{{ topic }}'
@@ -84,21 +81,41 @@ fan_led_countdown:
     - stop: Cleared
   - repeat:
       for_each:
-      - 1
-      - 2
-      - 3
-      - 4
-      - 5
-      - 6
       - 7
+      - 6
+      - 5
+      - 4
+      - 3
+      - 2
+      - 1
       sequence:
       - variables:
           left: '{{ rem - tot * (repeat.item - 1) / 7 }}'
       - variables:
-          secs: '{{ left if left > 0 else rem }}'
+          flip: '{{ action == ''step'' and repeat.item > 1 and 0 < left <= 60 }}'
+          secs: '{{ (rem - left) if action == ''step'' else (left if left > 0 else rem) }}'
       - variables:
-          dur: '{% set s = secs | float(0) %}{% if s <= 60 %}{{ [1, s | round(0, ''ceil'') | int] | max }}{% elif s <= 3600 %}{{ 60 + (s / 60) | round(0, ''ceil'') | int }}{% else %}255{% endif %}'
-      - action: mqtt.publish
-        data:
-          topic: '{{ topic }}'
-          payload: '{{ {''individual_led_effect'': {''led'': repeat.item | string, ''effect'': (''solid'' if left > 0 else ''off''), ''color'': col, ''level'': lvl, ''duration'': dur | int}} | to_json }}'
+          dur: '{% set s = secs | float(0) %}{% if s <= 60 %}{{ [1, s | round(0, ''ceil'') | int] | max }}{% elif s <= 3600 %}{{ 60 + (s / 60) | round(0, ''ceil'') | int }}{% else %}{{ [120 + (s / 3600) | round(0, ''ceil'') | int, 254] | min }}{% endif %}'
+      - if:
+        - condition: template
+          value_template: '{{ action == ''show'' }}'
+        then:
+        - action: mqtt.publish
+          data:
+            topic: '{{ topic }}'
+            payload: '{{ {''individual_led_effect'': {''led'': repeat.item | string, ''effect'': (''solid'' if left > 0 else ''off''), ''color'': col, ''level'': lvl, ''duration'': dur | int}} | to_json }}'
+      - if:
+        - condition: template
+          value_template: '{{ flip }}'
+        then:
+        - delay:
+            seconds: '{{ [0, left - (now().timestamp() - t0)] | max | round(1) }}'
+        - if:
+          - condition: template
+            value_template: '{{ not is_state(timer, ''active'') or (state_attr(timer, ''finishes_at'') | string) != (finishes | string) }}'
+          then:
+          - stop: Countdown cancelled or restarted while waiting
+        - action: mqtt.publish
+          data:
+            topic: '{{ topic }}'
+            payload: '{{ {''individual_led_effect'': {''led'': repeat.item | string, ''effect'': ''off'', ''color'': col, ''level'': lvl, ''duration'': dur | int}} | to_json }}'
