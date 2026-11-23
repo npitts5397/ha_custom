@@ -1,0 +1,371 @@
+# Spaces dashboard (dashboard-spaces) decluttering template: ceiling_fan
+# Reference copy. Lives in the dashboard config under decluttering_templates.ceiling_fan
+ceiling_fan:
+  default:
+  - name: Ceiling Fan
+  - light_entity: none
+  - timer_entity: none
+  - breeze_entity: none
+  - speeds: 'true'
+  - t1: 3600
+  - t1_name: 1h
+  - t2: 7200
+  - t2_name: 2h
+  - t3: 14400
+  - t3_name: 4h
+  - countdown_entity: none
+  card:
+    type: custom:expander-card
+    gap: 0.6em
+    padding: 1em
+    clear: false
+    overlay-margin: 2em
+    child-padding: 0.5em
+    button-background: transparent
+    title-card:
+      type: vertical-stack
+      cards:
+      - type: custom:bubble-card
+        card_type: button
+        button_type: state
+        entity: '[[entity]]'
+        name: '[[name]]'
+        icon: '{{ ''mdi:fan'' if is_state(''[[entity]]'', ''on'') else ''mdi:fan-off'' }}'
+        card_layout: large
+        state_content: '{% set s = ''[[entity]]'' %}{% if not is_state(s, ''on'') %}Off{% elif ''[[speeds]]'' != ''true'' %}On{% elif state_attr(s, ''preset_mode'') == ''smart'' %}Breeze{% else %}{% set p = state_attr(s, ''percentage'') | int(0) %}{{ ''Low'' if p <= 34 else (''Medium'' if p <= 67 else ''High'') }}{% endif %}{% set tm = ''[[countdown_entity]]'' %}{% if is_state(''[[entity]]'', ''on'') and is_state(tm, ''active'') and state_attr(tm, ''finishes_at'') %}{% set l = ((as_datetime(state_attr(tm, ''finishes_at'')) - now()).total_seconds() / 60) | round(0, ''ceil'') | int %}{% if l > 0 %} · {{ (l // 60 ~ ''h '' ~ (l % 60) ~ ''m'') if l >= 60 else (l ~ ''m'') }} left{% endif %}{% endif %}'
+        tap_action:
+          action: toggle
+        hold_action:
+          action: more-info
+        button_action:
+          tap_action:
+            action: more-info
+        styles: |
+          .bubble-icon { animation: ${(() => { const s = hass.states['[[entity]]']; if (!s || s.state !== 'on') return 'none'; const a = s.attributes; const p = Number(a.percentage || 0); const d = a.preset_mode === 'smart' ? 1.6 : (p <= 34 ? 2 : (p <= 67 ? 1.2 : 0.7)); return 'lw-fan-spin ' + d + 's linear infinite'; })()}; }
+          @keyframes lw-fan-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+          .bubble-button-card-container { position: relative; }
+          .bubble-button-card-container::after { content: ''; position: absolute; top: 0; left: 0; bottom: 0; pointer-events: none; z-index: 0; border-top-left-radius: inherit; border-bottom-left-radius: inherit; border-top-right-radius: 0; border-bottom-right-radius: 0; background: var(--bubble-media-progress-color, rgba(255, 255, 255, 0.08)); transition: width 1s linear; width: ${(() => { const t = hass.states['[[countdown_entity]]']; const f = hass.states['[[entity]]']; if (!f || f.state !== 'on') return 0; if (!t || t.state !== 'active' || !t.attributes.finishes_at) return 100; const p = String(t.attributes.duration || '0:0:0').split(':').map(Number); const tot = (p[0] || 0) * 3600 + (p[1] || 0) * 60 + (p[2] || 0); if (tot <= 0) return 0; const left = (Date.parse(t.attributes.finishes_at) - Date.now()) / 1000; return Math.max(0, Math.min(100, (left / tot) * 100)); })()}%; }
+      - type: custom:bubble-card
+        card_type: sub-buttons
+        rows: 1
+        sub_button:
+          bottom_layout: rows
+          bottom:
+          - group:
+            - entity: '[[entity]]'
+              name: Low
+              icon: mdi:fan-speed-1
+              show_name: true
+              state_background: false
+              css_class: lw-mode-on
+              tap_action:
+                action: perform-action
+                perform_action: fan.set_percentage
+                target:
+                  entity_id: '[[entity]]'
+                data:
+                  percentage: 33
+              visibility:
+              - condition: template
+                value_template: '{{ ''[[speeds]]'' == ''true'' and (is_state(''[[entity]]'', ''on'') and state_attr(''[[entity]]'', ''preset_mode'') != ''smart'' and (state_attr(''[[entity]]'', ''percentage'') | int(0)) <= 34) }}'
+            - entity: '[[entity]]'
+              name: Low
+              icon: mdi:fan-speed-1
+              show_name: true
+              state_background: false
+              css_class: lw-mode-off
+              tap_action:
+                action: perform-action
+                perform_action: fan.set_percentage
+                target:
+                  entity_id: '[[entity]]'
+                data:
+                  percentage: 33
+              visibility:
+              - condition: template
+                value_template: '{{ ''[[speeds]]'' == ''true'' and (not (is_state(''[[entity]]'', ''on'') and state_attr(''[[entity]]'', ''preset_mode'') != ''smart'' and (state_attr(''[[entity]]'', ''percentage'') | int(0)) <= 34)) }}'
+            - entity: '[[entity]]'
+              name: Medium
+              icon: mdi:fan-speed-2
+              show_name: true
+              state_background: false
+              css_class: lw-mode-on
+              tap_action:
+                action: perform-action
+                perform_action: fan.set_percentage
+                target:
+                  entity_id: '[[entity]]'
+                data:
+                  percentage: 66
+              visibility:
+              - condition: template
+                value_template: '{{ ''[[speeds]]'' == ''true'' and (is_state(''[[entity]]'', ''on'') and state_attr(''[[entity]]'', ''preset_mode'') != ''smart'' and 34 < (state_attr(''[[entity]]'', ''percentage'') | int(0)) <= 67) }}'
+            - entity: '[[entity]]'
+              name: Medium
+              icon: mdi:fan-speed-2
+              show_name: true
+              state_background: false
+              css_class: lw-mode-off
+              tap_action:
+                action: perform-action
+                perform_action: fan.set_percentage
+                target:
+                  entity_id: '[[entity]]'
+                data:
+                  percentage: 66
+              visibility:
+              - condition: template
+                value_template: '{{ ''[[speeds]]'' == ''true'' and (not (is_state(''[[entity]]'', ''on'') and state_attr(''[[entity]]'', ''preset_mode'') != ''smart'' and 34 < (state_attr(''[[entity]]'', ''percentage'') | int(0)) <= 67)) }}'
+            - entity: '[[entity]]'
+              name: High
+              icon: mdi:fan-speed-3
+              show_name: true
+              state_background: false
+              css_class: lw-mode-on
+              tap_action:
+                action: perform-action
+                perform_action: fan.set_percentage
+                target:
+                  entity_id: '[[entity]]'
+                data:
+                  percentage: 100
+              visibility:
+              - condition: template
+                value_template: '{{ ''[[speeds]]'' == ''true'' and (is_state(''[[entity]]'', ''on'') and state_attr(''[[entity]]'', ''preset_mode'') != ''smart'' and (state_attr(''[[entity]]'', ''percentage'') | int(0)) > 67) }}'
+            - entity: '[[entity]]'
+              name: High
+              icon: mdi:fan-speed-3
+              show_name: true
+              state_background: false
+              css_class: lw-mode-off
+              tap_action:
+                action: perform-action
+                perform_action: fan.set_percentage
+                target:
+                  entity_id: '[[entity]]'
+                data:
+                  percentage: 100
+              visibility:
+              - condition: template
+                value_template: '{{ ''[[speeds]]'' == ''true'' and (not (is_state(''[[entity]]'', ''on'') and state_attr(''[[entity]]'', ''preset_mode'') != ''smart'' and (state_attr(''[[entity]]'', ''percentage'') | int(0)) > 67)) }}'
+            - entity: '[[entity]]'
+              name: Breeze on
+              icon: mdi:weather-windy
+              show_name: false
+              fill_width: false
+              state_background: false
+              css_class: lw-mode-on
+              tap_action:
+                action: perform-action
+                perform_action: fan.set_percentage
+                target:
+                  entity_id: '[[entity]]'
+                data:
+                  percentage: 66
+              visibility:
+              - condition: template
+                value_template: '{{ ''[[speeds]]'' == ''true'' and (state_attr(''[[entity]]'', ''preset_mode'') == ''smart'') }}'
+            - entity: '[[entity]]'
+              name: Breeze off
+              icon: mdi:weather-windy
+              show_name: false
+              fill_width: false
+              state_background: false
+              css_class: lw-mode-off
+              tap_action:
+                action: perform-action
+                perform_action: fan.set_preset_mode
+                target:
+                  entity_id: '[[entity]]'
+                data:
+                  preset_mode: smart
+              visibility:
+              - condition: template
+                value_template: '{{ ''[[speeds]]'' == ''true'' and ((states(''[[breeze_entity]]'') not in ['''', ''unknown'', ''unavailable'', ''none'']) and state_attr(''[[entity]]'', ''preset_mode'') != ''smart'') }}'
+            - entity: '[[light_entity]]'
+              name: Fan light on
+              icon: mdi:ceiling-fan-light
+              show_name: false
+              fill_width: false
+              state_background: false
+              css_class: lw-mode-on
+              tap_action:
+                action: toggle
+              hold_action:
+                action: more-info
+              visibility:
+              - condition: template
+                value_template: '{{ ''[[light_entity]]'' not in [''none'', ''''] and is_state(''[[light_entity]]'', ''on'') }}'
+            - entity: '[[light_entity]]'
+              name: Fan light off
+              icon: mdi:ceiling-fan-light
+              show_name: false
+              fill_width: false
+              state_background: false
+              css_class: lw-mode-off
+              tap_action:
+                action: toggle
+              hold_action:
+                action: more-info
+              visibility:
+              - condition: template
+                value_template: '{{ ''[[light_entity]]'' not in [''none'', ''''] and not is_state(''[[light_entity]]'', ''on'') }}'
+            buttons_layout: inline
+            justify_content: fill
+        styles: |2
+
+          .lw-mode-on { background-color: var(--bubble-sub-button-light-background-color, var(--bubble-accent-color, var(--accent-color))) !important; }
+          .lw-mode-on .bubble-sub-button-icon { color: var(--bubble-sub-button-dark-text-color, var(--text-primary-color, #fff)) !important; }
+        visibility:
+        - condition: template
+          value_template: '{{ is_state(''[[entity]]'', ''on'') and (''[[speeds]]'' == ''true'' or ''[[light_entity]]'' not in [''none'', '''']) }}'
+    cards:
+    - type: vertical-stack
+      visibility:
+      - condition: template
+        value_template: '{{ ''[[timer_entity]]'' not in [''none'', ''''] }}'
+      cards:
+      - type: custom:mushroom-title-card
+        title: Auto-off
+      - type: custom:bubble-card
+        card_type: sub-buttons
+        rows: 1
+        sub_button:
+          bottom_layout: rows
+          bottom:
+          - group:
+            - entity: '[[timer_entity]]'
+              name: Never
+              icon: mdi:timer-off-outline
+              show_name: true
+              state_background: false
+              css_class: lw-mode-on
+              tap_action:
+                action: perform-action
+                perform_action: number.set_value
+                target:
+                  entity_id: '[[timer_entity]]'
+                data:
+                  value: '0'
+              visibility:
+              - condition: template
+                value_template: '{{ (states(''[[timer_entity]]'') | int(-1)) == (0) }}'
+            - entity: '[[timer_entity]]'
+              name: Never
+              icon: mdi:timer-off-outline
+              show_name: true
+              state_background: false
+              css_class: lw-mode-off
+              tap_action:
+                action: perform-action
+                perform_action: number.set_value
+                target:
+                  entity_id: '[[timer_entity]]'
+                data:
+                  value: '0'
+              visibility:
+              - condition: template
+                value_template: '{{ not ((states(''[[timer_entity]]'') | int(-1)) == (0)) }}'
+            - entity: '[[timer_entity]]'
+              name: '[[t1_name]]'
+              icon: mdi:timer-outline
+              show_name: true
+              state_background: false
+              css_class: lw-mode-on
+              tap_action:
+                action: perform-action
+                perform_action: number.set_value
+                target:
+                  entity_id: '[[timer_entity]]'
+                data:
+                  value: '[[t1]]'
+              visibility:
+              - condition: template
+                value_template: '{{ (states(''[[timer_entity]]'') | int(-1)) == ([[t1]]) }}'
+            - entity: '[[timer_entity]]'
+              name: '[[t1_name]]'
+              icon: mdi:timer-outline
+              show_name: true
+              state_background: false
+              css_class: lw-mode-off
+              tap_action:
+                action: perform-action
+                perform_action: number.set_value
+                target:
+                  entity_id: '[[timer_entity]]'
+                data:
+                  value: '[[t1]]'
+              visibility:
+              - condition: template
+                value_template: '{{ not ((states(''[[timer_entity]]'') | int(-1)) == ([[t1]])) }}'
+            - entity: '[[timer_entity]]'
+              name: '[[t2_name]]'
+              icon: mdi:timer-outline
+              show_name: true
+              state_background: false
+              css_class: lw-mode-on
+              tap_action:
+                action: perform-action
+                perform_action: number.set_value
+                target:
+                  entity_id: '[[timer_entity]]'
+                data:
+                  value: '[[t2]]'
+              visibility:
+              - condition: template
+                value_template: '{{ (states(''[[timer_entity]]'') | int(-1)) == ([[t2]]) }}'
+            - entity: '[[timer_entity]]'
+              name: '[[t2_name]]'
+              icon: mdi:timer-outline
+              show_name: true
+              state_background: false
+              css_class: lw-mode-off
+              tap_action:
+                action: perform-action
+                perform_action: number.set_value
+                target:
+                  entity_id: '[[timer_entity]]'
+                data:
+                  value: '[[t2]]'
+              visibility:
+              - condition: template
+                value_template: '{{ not ((states(''[[timer_entity]]'') | int(-1)) == ([[t2]])) }}'
+            - entity: '[[timer_entity]]'
+              name: '[[t3_name]]'
+              icon: mdi:timer-outline
+              show_name: true
+              state_background: false
+              css_class: lw-mode-on
+              tap_action:
+                action: perform-action
+                perform_action: number.set_value
+                target:
+                  entity_id: '[[timer_entity]]'
+                data:
+                  value: '[[t3]]'
+              visibility:
+              - condition: template
+                value_template: '{{ (states(''[[timer_entity]]'') | int(-1)) == ([[t3]]) }}'
+            - entity: '[[timer_entity]]'
+              name: '[[t3_name]]'
+              icon: mdi:timer-outline
+              show_name: true
+              state_background: false
+              css_class: lw-mode-off
+              tap_action:
+                action: perform-action
+                perform_action: number.set_value
+                target:
+                  entity_id: '[[timer_entity]]'
+                data:
+                  value: '[[t3]]'
+              visibility:
+              - condition: template
+                value_template: '{{ not ((states(''[[timer_entity]]'') | int(-1)) == ([[t3]])) }}'
+            buttons_layout: inline
+            justify_content: fill
+        styles: |2
+
+          .lw-mode-on { background-color: var(--bubble-sub-button-light-background-color, var(--bubble-accent-color, var(--accent-color))) !important; }
+          .lw-mode-on .bubble-sub-button-icon { color: var(--bubble-sub-button-dark-text-color, var(--text-primary-color, #fff)) !important; }

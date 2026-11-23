@@ -1,0 +1,499 @@
+# Spaces dashboard (dashboard-spaces) decluttering template: humidifier
+# Reference copy. Lives in the dashboard config under decluttering_templates.humidifier
+humidifier:
+  default:
+  - name: Humidifier
+  - display_entity: none
+  - mist_entity: none
+  - auto_off_entity: none
+  - low_water_entity: none
+  - tank_entity: none
+  card:
+    type: custom:expander-card
+    gap: 0.6em
+    padding: 1em
+    clear: false
+    overlay-margin: 2em
+    child-padding: 0.5em
+    button-background: transparent
+    title-card:
+      type: vertical-stack
+      cards:
+      - type: custom:bubble-card
+        card_type: button
+        button_type: state
+        entity: '[[entity]]'
+        name: '[[name]]'
+        icon: '{{ ''mdi:water-alert'' if (is_state(''[[low_water_entity]]'', ''on'') or is_state(''[[tank_entity]]'', ''on'')) else (''mdi:air-humidifier'' if is_state(''[[entity]]'', ''on'') else ''mdi:air-humidifier-off'') }}'
+        card_layout: large
+        state_content: '{% set s = ''[[entity]]'' %}{% set cur = state_attr(s, ''current_humidity'') %}{% set tgt = state_attr(s, ''humidity'') %}{% set warn = ''Low water'' if is_state(''[[low_water_entity]]'', ''on'') else (''Tank removed'' if is_state(''[[tank_entity]]'', ''on'') else '''') %}{% if not is_state(s, ''on'') %}{% set head = ''Off'' %}{% set hum = (cur ~ ''%'') if cur is not none else '''' %}{% else %}{% set head = (state_attr(s, ''mode'') or ''On'') | title %}{% set hum = ((cur ~ ''% → '') if cur is not none else '''') ~ (tgt ~ ''%'' if tgt is not none else '''') %}{% endif %}{{ [warn, head, hum] | select | join('' · '') }}'
+        tap_action:
+          action: toggle
+        hold_action:
+          action: more-info
+        button_action:
+          tap_action:
+            action: more-info
+        styles: |
+          .bubble-button-card-container { position: relative; }
+          .bubble-button-card-container::after { content: ''; position: absolute; top: 0; left: 0; bottom: 0; pointer-events: none; z-index: 0; border-top-left-radius: inherit; border-bottom-left-radius: inherit; border-top-right-radius: 0; border-bottom-right-radius: 0; background: var(--bubble-media-progress-color, rgba(255, 255, 255, 0.08)); transition: width 1s linear; width: ${(() => { const s = hass.states['[[entity]]']; if (!s || s.state !== 'on') return 0; const c = Number(s.attributes.current_humidity), t = Number(s.attributes.humidity); if (!(c >= 0) || !(t > 0)) return 0; return Math.max(0, Math.min(100, (c / t) * 100)); })()}%; }
+      - type: custom:bubble-card
+        card_type: sub-buttons
+        rows: 1
+        sub_button:
+          bottom_layout: rows
+          bottom:
+          - group:
+            - entity: '[[entity]]'
+              name: Auto
+              icon: mdi:auto-mode
+              show_name: true
+              state_background: false
+              css_class: lw-mode-on
+              tap_action:
+                action: perform-action
+                perform_action: humidifier.set_mode
+                target:
+                  entity_id: '[[entity]]'
+                data:
+                  mode: auto
+              visibility:
+              - condition: template
+                value_template: '{{ ''auto'' in (state_attr(''[[entity]]'', ''available_modes'') or []) and state_attr(''[[entity]]'', ''mode'') == ''auto'' }}'
+            - entity: '[[entity]]'
+              name: Auto
+              icon: mdi:auto-mode
+              show_name: true
+              state_background: false
+              css_class: lw-mode-off
+              tap_action:
+                action: perform-action
+                perform_action: humidifier.set_mode
+                target:
+                  entity_id: '[[entity]]'
+                data:
+                  mode: auto
+              visibility:
+              - condition: template
+                value_template: '{{ ''auto'' in (state_attr(''[[entity]]'', ''available_modes'') or []) and not (state_attr(''[[entity]]'', ''mode'') == ''auto'') }}'
+            - entity: '[[entity]]'
+              name: Normal
+              icon: mdi:water
+              show_name: true
+              state_background: false
+              css_class: lw-mode-on
+              tap_action:
+                action: perform-action
+                perform_action: humidifier.set_mode
+                target:
+                  entity_id: '[[entity]]'
+                data:
+                  mode: normal
+              visibility:
+              - condition: template
+                value_template: '{{ ''normal'' in (state_attr(''[[entity]]'', ''available_modes'') or []) and state_attr(''[[entity]]'', ''mode'') == ''normal'' }}'
+            - entity: '[[entity]]'
+              name: Normal
+              icon: mdi:water
+              show_name: true
+              state_background: false
+              css_class: lw-mode-off
+              tap_action:
+                action: perform-action
+                perform_action: humidifier.set_mode
+                target:
+                  entity_id: '[[entity]]'
+                data:
+                  mode: normal
+              visibility:
+              - condition: template
+                value_template: '{{ ''normal'' in (state_attr(''[[entity]]'', ''available_modes'') or []) and not (state_attr(''[[entity]]'', ''mode'') == ''normal'') }}'
+            - entity: '[[entity]]'
+              name: Sleep
+              icon: mdi:power-sleep
+              show_name: true
+              state_background: false
+              css_class: lw-mode-on
+              tap_action:
+                action: perform-action
+                perform_action: humidifier.set_mode
+                target:
+                  entity_id: '[[entity]]'
+                data:
+                  mode: sleep
+              visibility:
+              - condition: template
+                value_template: '{{ ''sleep'' in (state_attr(''[[entity]]'', ''available_modes'') or []) and state_attr(''[[entity]]'', ''mode'') == ''sleep'' }}'
+            - entity: '[[entity]]'
+              name: Sleep
+              icon: mdi:power-sleep
+              show_name: true
+              state_background: false
+              css_class: lw-mode-off
+              tap_action:
+                action: perform-action
+                perform_action: humidifier.set_mode
+                target:
+                  entity_id: '[[entity]]'
+                data:
+                  mode: sleep
+              visibility:
+              - condition: template
+                value_template: '{{ ''sleep'' in (state_attr(''[[entity]]'', ''available_modes'') or []) and not (state_attr(''[[entity]]'', ''mode'') == ''sleep'') }}'
+            - entity: '[[display_entity]]'
+              name: Display
+              icon: mdi:lightbulb-on-outline
+              show_name: false
+              state_background: false
+              css_class: lw-mode-on
+              tap_action:
+                action: toggle
+              visibility:
+              - condition: template
+                value_template: '{{ ''[[display_entity]]'' not in [''none'', ''''] and is_state(''[[display_entity]]'', ''on'') }}'
+              fill_width: false
+            - entity: '[[display_entity]]'
+              name: Display
+              icon: mdi:lightbulb-on-outline
+              show_name: false
+              state_background: false
+              css_class: lw-mode-off
+              tap_action:
+                action: toggle
+              visibility:
+              - condition: template
+                value_template: '{{ ''[[display_entity]]'' not in [''none'', ''''] and not (is_state(''[[display_entity]]'', ''on'')) }}'
+              fill_width: false
+            buttons_layout: inline
+            justify_content: fill
+        styles: |2
+
+          .lw-mode-on { background-color: var(--bubble-sub-button-light-background-color, var(--bubble-accent-color, var(--accent-color))) !important; }
+          .lw-mode-on .bubble-sub-button-icon { color: var(--bubble-sub-button-dark-text-color, var(--text-primary-color, #fff)) !important; }
+        visibility:
+        - condition: template
+          value_template: '{{ is_state(''[[entity]]'', ''on'') }}'
+    cards:
+    - type: vertical-stack
+      cards:
+      - type: custom:mushroom-title-card
+        title: Target humidity
+      - type: custom:bubble-card
+        card_type: sub-buttons
+        rows: 1
+        sub_button:
+          bottom_layout: rows
+          bottom:
+          - group:
+            - entity: '[[entity]]'
+              name: 40%
+              icon: mdi:water-percent
+              show_name: true
+              state_background: false
+              css_class: lw-mode-on
+              tap_action:
+                action: perform-action
+                perform_action: humidifier.set_humidity
+                target:
+                  entity_id: '[[entity]]'
+                data:
+                  humidity: 40
+              visibility:
+              - condition: template
+                value_template: '{{ (state_attr(''[[entity]]'', ''humidity'') | int(0)) == 40 }}'
+            - entity: '[[entity]]'
+              name: 40%
+              icon: mdi:water-percent
+              show_name: true
+              state_background: false
+              css_class: lw-mode-off
+              tap_action:
+                action: perform-action
+                perform_action: humidifier.set_humidity
+                target:
+                  entity_id: '[[entity]]'
+                data:
+                  humidity: 40
+              visibility:
+              - condition: template
+                value_template: '{{ not ((state_attr(''[[entity]]'', ''humidity'') | int(0)) == 40) }}'
+            - entity: '[[entity]]'
+              name: 45%
+              icon: mdi:water-percent
+              show_name: true
+              state_background: false
+              css_class: lw-mode-on
+              tap_action:
+                action: perform-action
+                perform_action: humidifier.set_humidity
+                target:
+                  entity_id: '[[entity]]'
+                data:
+                  humidity: 45
+              visibility:
+              - condition: template
+                value_template: '{{ (state_attr(''[[entity]]'', ''humidity'') | int(0)) == 45 }}'
+            - entity: '[[entity]]'
+              name: 45%
+              icon: mdi:water-percent
+              show_name: true
+              state_background: false
+              css_class: lw-mode-off
+              tap_action:
+                action: perform-action
+                perform_action: humidifier.set_humidity
+                target:
+                  entity_id: '[[entity]]'
+                data:
+                  humidity: 45
+              visibility:
+              - condition: template
+                value_template: '{{ not ((state_attr(''[[entity]]'', ''humidity'') | int(0)) == 45) }}'
+            - entity: '[[entity]]'
+              name: 50%
+              icon: mdi:water-percent
+              show_name: true
+              state_background: false
+              css_class: lw-mode-on
+              tap_action:
+                action: perform-action
+                perform_action: humidifier.set_humidity
+                target:
+                  entity_id: '[[entity]]'
+                data:
+                  humidity: 50
+              visibility:
+              - condition: template
+                value_template: '{{ (state_attr(''[[entity]]'', ''humidity'') | int(0)) == 50 }}'
+            - entity: '[[entity]]'
+              name: 50%
+              icon: mdi:water-percent
+              show_name: true
+              state_background: false
+              css_class: lw-mode-off
+              tap_action:
+                action: perform-action
+                perform_action: humidifier.set_humidity
+                target:
+                  entity_id: '[[entity]]'
+                data:
+                  humidity: 50
+              visibility:
+              - condition: template
+                value_template: '{{ not ((state_attr(''[[entity]]'', ''humidity'') | int(0)) == 50) }}'
+            - entity: '[[entity]]'
+              name: 55%
+              icon: mdi:water-percent
+              show_name: true
+              state_background: false
+              css_class: lw-mode-on
+              tap_action:
+                action: perform-action
+                perform_action: humidifier.set_humidity
+                target:
+                  entity_id: '[[entity]]'
+                data:
+                  humidity: 55
+              visibility:
+              - condition: template
+                value_template: '{{ (state_attr(''[[entity]]'', ''humidity'') | int(0)) == 55 }}'
+            - entity: '[[entity]]'
+              name: 55%
+              icon: mdi:water-percent
+              show_name: true
+              state_background: false
+              css_class: lw-mode-off
+              tap_action:
+                action: perform-action
+                perform_action: humidifier.set_humidity
+                target:
+                  entity_id: '[[entity]]'
+                data:
+                  humidity: 55
+              visibility:
+              - condition: template
+                value_template: '{{ not ((state_attr(''[[entity]]'', ''humidity'') | int(0)) == 55) }}'
+            - entity: '[[entity]]'
+              name: 60%
+              icon: mdi:water-percent
+              show_name: true
+              state_background: false
+              css_class: lw-mode-on
+              tap_action:
+                action: perform-action
+                perform_action: humidifier.set_humidity
+                target:
+                  entity_id: '[[entity]]'
+                data:
+                  humidity: 60
+              visibility:
+              - condition: template
+                value_template: '{{ (state_attr(''[[entity]]'', ''humidity'') | int(0)) == 60 }}'
+            - entity: '[[entity]]'
+              name: 60%
+              icon: mdi:water-percent
+              show_name: true
+              state_background: false
+              css_class: lw-mode-off
+              tap_action:
+                action: perform-action
+                perform_action: humidifier.set_humidity
+                target:
+                  entity_id: '[[entity]]'
+                data:
+                  humidity: 60
+              visibility:
+              - condition: template
+                value_template: '{{ not ((state_attr(''[[entity]]'', ''humidity'') | int(0)) == 60) }}'
+            buttons_layout: inline
+            justify_content: fill
+        styles: |2
+
+          .lw-mode-on { background-color: var(--bubble-sub-button-light-background-color, var(--bubble-accent-color, var(--accent-color))) !important; }
+          .lw-mode-on .bubble-sub-button-icon { color: var(--bubble-sub-button-dark-text-color, var(--text-primary-color, #fff)) !important; }
+      - type: custom:mushroom-title-card
+        title: Mist
+      - type: custom:bubble-card
+        card_type: sub-buttons
+        rows: 1
+        sub_button:
+          bottom_layout: rows
+          bottom:
+          - group:
+            - entity: '[[mist_entity]]'
+              name: Low
+              icon: mdi:weather-fog
+              show_name: true
+              state_background: false
+              css_class: lw-mode-on
+              tap_action:
+                action: perform-action
+                perform_action: number.set_value
+                target:
+                  entity_id: '[[mist_entity]]'
+                data:
+                  value: '3'
+              visibility:
+              - condition: template
+                value_template: '{{ ''[[mist_entity]]'' not in [''none'', ''''] and 0 < (states(''[[mist_entity]]'') | int(0)) <= 3 }}'
+            - entity: '[[mist_entity]]'
+              name: Low
+              icon: mdi:weather-fog
+              show_name: true
+              state_background: false
+              css_class: lw-mode-off
+              tap_action:
+                action: perform-action
+                perform_action: number.set_value
+                target:
+                  entity_id: '[[mist_entity]]'
+                data:
+                  value: '3'
+              visibility:
+              - condition: template
+                value_template: '{{ ''[[mist_entity]]'' not in [''none'', ''''] and not (0 < (states(''[[mist_entity]]'') | int(0)) <= 3) }}'
+            - entity: '[[mist_entity]]'
+              name: Medium
+              icon: mdi:weather-fog
+              show_name: true
+              state_background: false
+              css_class: lw-mode-on
+              tap_action:
+                action: perform-action
+                perform_action: number.set_value
+                target:
+                  entity_id: '[[mist_entity]]'
+                data:
+                  value: '6'
+              visibility:
+              - condition: template
+                value_template: '{{ ''[[mist_entity]]'' not in [''none'', ''''] and 3 < (states(''[[mist_entity]]'') | int(0)) <= 6 }}'
+            - entity: '[[mist_entity]]'
+              name: Medium
+              icon: mdi:weather-fog
+              show_name: true
+              state_background: false
+              css_class: lw-mode-off
+              tap_action:
+                action: perform-action
+                perform_action: number.set_value
+                target:
+                  entity_id: '[[mist_entity]]'
+                data:
+                  value: '6'
+              visibility:
+              - condition: template
+                value_template: '{{ ''[[mist_entity]]'' not in [''none'', ''''] and not (3 < (states(''[[mist_entity]]'') | int(0)) <= 6) }}'
+            - entity: '[[mist_entity]]'
+              name: High
+              icon: mdi:weather-fog
+              show_name: true
+              state_background: false
+              css_class: lw-mode-on
+              tap_action:
+                action: perform-action
+                perform_action: number.set_value
+                target:
+                  entity_id: '[[mist_entity]]'
+                data:
+                  value: '9'
+              visibility:
+              - condition: template
+                value_template: '{{ ''[[mist_entity]]'' not in [''none'', ''''] and 6 < (states(''[[mist_entity]]'') | int(0)) <= 9 }}'
+            - entity: '[[mist_entity]]'
+              name: High
+              icon: mdi:weather-fog
+              show_name: true
+              state_background: false
+              css_class: lw-mode-off
+              tap_action:
+                action: perform-action
+                perform_action: number.set_value
+                target:
+                  entity_id: '[[mist_entity]]'
+                data:
+                  value: '9'
+              visibility:
+              - condition: template
+                value_template: '{{ ''[[mist_entity]]'' not in [''none'', ''''] and not (6 < (states(''[[mist_entity]]'') | int(0)) <= 9) }}'
+            buttons_layout: inline
+            justify_content: fill
+        styles: |2
+
+          .lw-mode-on { background-color: var(--bubble-sub-button-light-background-color, var(--bubble-accent-color, var(--accent-color))) !important; }
+          .lw-mode-on .bubble-sub-button-icon { color: var(--bubble-sub-button-dark-text-color, var(--text-primary-color, #fff)) !important; }
+      - type: custom:bubble-card
+        card_type: sub-buttons
+        rows: 1
+        sub_button:
+          bottom_layout: rows
+          bottom:
+          - group:
+            - entity: '[[auto_off_entity]]'
+              name: Turn off at target
+              icon: mdi:power-settings
+              show_name: true
+              state_background: false
+              css_class: lw-mode-on
+              tap_action:
+                action: toggle
+              visibility:
+              - condition: template
+                value_template: '{{ ''[[auto_off_entity]]'' not in [''none'', ''''] and is_state(''[[auto_off_entity]]'', ''on'') }}'
+            - entity: '[[auto_off_entity]]'
+              name: Turn off at target
+              icon: mdi:power-settings
+              show_name: true
+              state_background: false
+              css_class: lw-mode-off
+              tap_action:
+                action: toggle
+              visibility:
+              - condition: template
+                value_template: '{{ ''[[auto_off_entity]]'' not in [''none'', ''''] and not (is_state(''[[auto_off_entity]]'', ''on'')) }}'
+            buttons_layout: inline
+            justify_content: fill
+        styles: |2
+
+          .lw-mode-on { background-color: var(--bubble-sub-button-light-background-color, var(--bubble-accent-color, var(--accent-color))) !important; }
+          .lw-mode-on .bubble-sub-button-icon { color: var(--bubble-sub-button-dark-text-color, var(--text-primary-color, #fff)) !important; }

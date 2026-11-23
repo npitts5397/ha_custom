@@ -1,0 +1,157 @@
+- id: '1795393349531'
+  alias: Fan auto-off countdown
+  description: Runs a restart-safe countdown (timer helper) for each fan's auto-off, shows it on the dashboard, drains the matching Inovelli switch's LED bar, and turns the fan off when the countdown ends. The switch's own AutoTimerOff stays set as a backup in case Home Assistant is down. Add a fan by adding an entry to the 'fans' variable and its entities to the triggers.
+  mode: queued
+  max: 20
+  variables:
+    fans:
+    - fan: fan.main_bath_switch_b_exhaust_fan
+      setting: number.main_bath_switch_b_exhaust_fan_autotimeroff
+      timer: timer.main_bath_exhaust_fan_auto_off
+      led: Main Bath switch b- Exhaust fan
+    - fan: fan.private_bath_switch_b_exhaust_fan
+      setting: number.private_bath_switch_b_exhaust_fan_autotimeroff
+      timer: timer.private_bath_exhaust_fan_auto_off
+      led: Private Bath switch b- Exhaust fan
+    - fan: fan.upstairs_bath_switch_b_exhaust_fan
+      setting: number.upstairs_bath_switch_b_exhaust_fan_autotimeroff
+      timer: timer.upstairs_bath_exhaust_fan_auto_off
+      led: Upstairs Bath switch b- Exhaust fan
+    - fan: fan.primary_bedroom_fan_ceiling
+      setting: number.primary_bedroom_fan_ceiling_autotimeroff_2
+      timer: timer.primary_bedroom_ceiling_fan_auto_off
+      led: ''
+    - fan: fan.emily_s_office_fan_ceiling
+      setting: number.emily_s_office_fan_ceiling_autotimeroff_2
+      timer: timer.emily_s_office_ceiling_fan_auto_off
+      led: ''
+    - fan: fan.guest_room_fan_ceiling
+      setting: number.guest_room_fan_ceiling_autotimeroff_2
+      timer: timer.guest_room_ceiling_fan_auto_off
+      led: ''
+    - fan: fan.will_s_room_fan_ceiling
+      setting: number.will_s_room_fan_ceiling_autotimeroff_2
+      timer: timer.will_s_room_ceiling_fan_auto_off
+      led: ''
+  triggers:
+  - trigger: state
+    entity_id:
+    - fan.main_bath_switch_b_exhaust_fan
+    - fan.private_bath_switch_b_exhaust_fan
+    - fan.upstairs_bath_switch_b_exhaust_fan
+    - fan.primary_bedroom_fan_ceiling
+    - fan.emily_s_office_fan_ceiling
+    - fan.guest_room_fan_ceiling
+    - fan.will_s_room_fan_ceiling
+    from: 'off'
+    to: 'on'
+    id: fan_on
+  - trigger: state
+    entity_id:
+    - fan.main_bath_switch_b_exhaust_fan
+    - fan.private_bath_switch_b_exhaust_fan
+    - fan.upstairs_bath_switch_b_exhaust_fan
+    - fan.primary_bedroom_fan_ceiling
+    - fan.emily_s_office_fan_ceiling
+    - fan.guest_room_fan_ceiling
+    - fan.will_s_room_fan_ceiling
+    from: 'on'
+    id: fan_off
+  - trigger: state
+    entity_id:
+    - number.main_bath_switch_b_exhaust_fan_autotimeroff
+    - number.private_bath_switch_b_exhaust_fan_autotimeroff
+    - number.upstairs_bath_switch_b_exhaust_fan_autotimeroff
+    - number.primary_bedroom_fan_ceiling_autotimeroff_2
+    - number.emily_s_office_fan_ceiling_autotimeroff_2
+    - number.guest_room_fan_ceiling_autotimeroff_2
+    - number.will_s_room_fan_ceiling_autotimeroff_2
+    id: setting
+  - trigger: time_pattern
+    minutes: /5
+    id: refresh
+  - trigger: homeassistant
+    event: start
+    id: start
+  - trigger: event
+    event_type: timer.finished
+    id: finished
+  actions:
+  - variables:
+      hit: '{% if trigger.id == ''finished'' %}{{ fans | selectattr(''timer'', ''eq'', trigger.event.data.entity_id) | list }}{% else %}{% set e = trigger.entity_id | default('''') %}{% if e %}{{ fans | selectattr(''fan'', ''eq'', e) | list + fans | selectattr(''setting'', ''eq'', e) | list }}{% else %}{{ fans }}{% endif %}{% endif %}'
+  - repeat:
+      for_each: '{{ hit }}'
+      sequence:
+      - variables:
+          f: '{{ repeat.item }}'
+      - variables:
+          fan_on: '{{ is_state(f.fan, ''on'') }}'
+          secs: '{{ states(f.setting) | int(0) }}'
+          timer_on: '{{ is_state(f.timer, ''active'') }}'
+      - choose:
+        - alias: 'Countdown finished: turn the fan off (the switch timer is only a backup)'
+          conditions:
+          - condition: template
+            value_template: '{{ trigger.id == ''finished'' }}'
+          sequence:
+          - if:
+            - condition: template
+              value_template: '{{ fan_on }}'
+            then:
+            - action: fan.turn_off
+              target:
+                entity_id: '{{ f.fan }}'
+        - alias: 'Fan off, or auto-off set to Never: stop the countdown'
+          conditions:
+          - condition: template
+            value_template: '{{ not fan_on or secs <= 0 }}'
+          sequence:
+          - if:
+            - condition: template
+              value_template: '{{ timer_on }}'
+            then:
+            - action: timer.cancel
+              target:
+                entity_id: '{{ f.timer }}'
+          - if:
+            - condition: template
+              value_template: '{{ timer_on or trigger.id in [''fan_off'', ''setting'', ''start''] }}'
+            then:
+            - action: script.fan_led_countdown
+              data:
+                action: clear
+                led_device: '{{ f.led }}'
+        - alias: 'Fan just turned on, auto-off changed, or nothing running yet: (re)start the countdown'
+          conditions:
+          - condition: template
+            value_template: '{{ trigger.id in [''fan_on'', ''setting''] or (trigger.id == ''start'' and not timer_on) }}'
+          sequence:
+          - action: timer.start
+            target:
+              entity_id: '{{ f.timer }}'
+            data:
+              duration: '{{ secs }}'
+          - action: script.fan_led_countdown
+            data:
+              action: show
+              led_device: '{{ f.led }}'
+              remaining: '{{ secs }}'
+              total: '{{ secs }}'
+        default:
+        - alias: 'Countdown running: refresh the LED bar from the timer'
+          if:
+          - condition: template
+            value_template: '{{ timer_on }}'
+          then:
+          - variables:
+              left: '{{ ((as_datetime(state_attr(f.timer, ''finishes_at'')) - now()).total_seconds()) | round(0) | int(0) }}'
+          - if:
+            - condition: template
+              value_template: '{{ left > 0 }}'
+            then:
+            - action: script.fan_led_countdown
+              data:
+                action: show
+                led_device: '{{ f.led }}'
+                remaining: '{{ left }}'
+                total: '{{ secs }}'

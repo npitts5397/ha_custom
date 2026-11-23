@@ -1,0 +1,104 @@
+fan_led_countdown:
+  alias: Fan LED countdown
+  description: 'Drains an Inovelli Blue switch''s 7-LED bar from top to bottom over the time left on a fan''s auto-off. Each LED gets its own timed effect, so the switch drains itself between refreshes. action: show (needs total and remaining seconds) or clear (returns the bar to normal). Called by the ''Fan auto-off countdown'' automation.'
+  icon: mdi:led-strip-variant
+  mode: parallel
+  max: 20
+  fields:
+    led_device:
+      name: Switch (Zigbee2MQTT friendly name)
+      required: true
+      selector:
+        text: {}
+    action:
+      default: show
+      name: Action
+      required: true
+      selector:
+        select:
+          options:
+          - show
+          - clear
+    total:
+      name: Total seconds
+      selector:
+        number:
+          max: 32767
+          min: 0
+          mode: box
+    remaining:
+      name: Remaining seconds
+      selector:
+        number:
+          max: 32767
+          min: 0
+          mode: box
+    color:
+      default: 255
+      name: LED colour (0-255 hue, 255 = white)
+      selector:
+        number:
+          max: 255
+          min: 0
+    level:
+      default: 50
+      name: LED brightness
+      selector:
+        number:
+          max: 100
+          min: 1
+  sequence:
+  - if:
+    - condition: template
+      value_template: '{{ (led_device | default('''') | string | trim) in ['''', ''none''] }}'
+    then:
+    - stop: No LED switch assigned to this fan
+  - variables:
+      col: '{{ color | default(255) | int(255) }}'
+      lvl: '{{ level | default(50) | int(50) }}'
+      rem: '{{ remaining | default(0) | float(0) }}'
+      topic: zigbee2mqtt/{{ led_device }}/set
+      tot: '{{ total | default(0) | float(0) }}'
+  - if:
+    - condition: template
+      value_template: '{{ action == ''clear'' or tot <= 0 or rem <= 0 }}'
+    then:
+    - repeat:
+        for_each:
+        - 1
+        - 2
+        - 3
+        - 4
+        - 5
+        - 6
+        - 7
+        sequence:
+        - action: mqtt.publish
+          data:
+            topic: '{{ topic }}'
+            payload: '{{ {''individual_led_effect'': {''led'': repeat.item | string, ''effect'': ''clear_effect'', ''color'': col, ''level'': lvl, ''duration'': 255}} | to_json }}'
+    - action: mqtt.publish
+      data:
+        topic: '{{ topic }}'
+        payload: '{{ {''led_effect'': {''effect'': ''clear_effect'', ''color'': col, ''level'': lvl, ''duration'': 255}} | to_json }}'
+    - stop: Cleared
+  - repeat:
+      for_each:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      - 6
+      - 7
+      sequence:
+      - variables:
+          left: '{{ rem - tot * (repeat.item - 1) / 7 }}'
+      - variables:
+          secs: '{{ left if left > 0 else rem }}'
+      - variables:
+          dur: '{% set s = secs | float(0) %}{% if s <= 60 %}{{ [1, s | round(0, ''ceil'') | int] | max }}{% elif s <= 3600 %}{{ 60 + (s / 60) | round(0, ''ceil'') | int }}{% else %}255{% endif %}'
+      - action: mqtt.publish
+        data:
+          topic: '{{ topic }}'
+          payload: '{{ {''individual_led_effect'': {''led'': repeat.item | string, ''effect'': (''solid'' if left > 0 else ''off''), ''color'': col, ''level'': lvl, ''duration'': dur | int}} | to_json }}'
