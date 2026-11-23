@@ -1,0 +1,12 @@
+# HyperHDR instance start/stop, used by script.set_effects_source.
+# Paste under configuration.yaml (merge into an existing `rest_command:` key if you have one),
+# run Check configuration, then reload "REST commands" (YAML tab) or restart.
+# Host and instance are passed by the script (derived from the HyperHDR light's config entry
+# and device), so one definition covers hyperhdr01/02/03.
+rest_command:
+  hyperhdr_instance:
+    url: "http://{{ host }}:8090/json-rpc"
+    method: post
+    content_type: "application/json"
+    payload: '{"command":"instance","subcommand":"{{ subcommand }}","instance":{{ instance | int }}}'
+    timeout: 10
