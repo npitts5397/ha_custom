@@ -24,6 +24,7 @@ blueprint:
     equivalent guidance.
 
     Version history:
+      * 5.1.0 - Add optional Priming Script, called after a room mode change (once Adaptive Lighting settings and sleep mode switches are updated) so off lights are primed with the new values (e.g. sleep brightness/color temp) before they turn on, instead of transitioning after turn-on.
       * 5.0.4 - Support Z2M 2.14.3+ event format (event_type "single"/"double" + separate "button" attribute) by rebuilding "<button>_<event_type>"; legacy prefixed values unchanged.
       * 5.0.3 - Fix LED bar duration to integer for Inovelli Blue firmware compatibility.
       * 5.0.2 - Fix Adaptive Lighting application on lights-on; clarify HA control input description.
@@ -346,6 +347,19 @@ blueprint:
               filter:
                 domain: light
               multiple: true
+        priming_script:
+          name: Priming Script
+          description: >-
+            Optional. Script that primes lights while they are off (e.g. Z2M `execute_if_off`) with
+            the current Adaptive Lighting values. Called after a `mode_helper` change, once the
+            Adaptive Lighting settings and sleep mode switches have been updated, with a `group_name`
+            field holding the friendly names of the primary, secondary, and additional sleep mode lights.
+            Phase changes are not primed here (the phase-triggered primer handles those).
+          default: {}
+          selector:
+            entity:
+              filter:
+                domain: script
         scene_helper:
           name: Scene Helper
           description: Optional. Helper that holds a scene to set. When helper has no value, lights behave normally, but when helper has a value, that scene is applied instead. Scene helper updates apply immediately if light is on.
@@ -463,6 +477,7 @@ variables:
   sleep_modes: !input sleep_modes
   sleep_modes_list: "{{ (sleep_modes.strip() | lower).split('\n') }}"
   sleep_mode_additional_lights: !input sleep_mode_additional_lights
+  priming_script: !input priming_script
   # TODO: `sleep_mode_switches` should be updated to use the adaptive_lighting switch entities instead of lights to generate sleep switch list
   sleep_mode_switches: >
     {%- set data = namespace(switches=[]) %}
@@ -530,6 +545,7 @@ action:
                   entity_id: "{{ primary_lights_adaptive_lighting_switches.entity_id }}"
                   adapt_brightness: true
                   adapt_color: true
+                  # apply defaults prefer_rgb_color to false rather than the switch setting, so pass it explicitly
                   prefer_rgb_color: "{{ enable_rgb_color }}"
                   turn_on_lights: true
       - alias: action is in off_actions
@@ -741,3 +757,22 @@ action:
                 target:
                   entity_id:
                     "{{ sleep_mode_switches }}"
+          - alias: Prime off lights with the new Adaptive Lighting values after a mode change
+            if:
+              - condition: template
+                value_template: "{{ trigger.id == 'mode_helper_updated' and (priming_script | length > 0) }}"
+            then:
+              # give Adaptive Lighting a moment to recompute its attributes after the sleep switch change
+              - delay: "00:00:01"
+              - action: script.turn_on
+                target:
+                  entity_id: "{{ priming_script }}"
+                data:
+                  variables:
+                    group_name: >
+                      {%- set ids = (primary_lights.entity_id if primary_lights.entity_id is not string else [primary_lights.entity_id]) %}
+                      {%- if secondary_lights.entity_id is defined %}
+                        {%- set ids = ids + (secondary_lights.entity_id if secondary_lights.entity_id is not string else [secondary_lights.entity_id]) %}
+                      {%- endif %}
+                      {%- set ids = ids + (sleep_mode_additional_lights or []) %}
+                      {{ ids | unique | map('state_attr', 'friendly_name') | reject('none') | list }}
