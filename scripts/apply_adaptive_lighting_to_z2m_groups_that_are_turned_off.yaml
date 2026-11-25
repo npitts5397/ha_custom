@@ -64,6 +64,9 @@ apply_adaptive_lighting_to_z2m_groups_that_are_turned_off:
                         {
                           "switch_id": ns.sw.entity_id,
                           "color_temp_mired": ns.sw.attributes.get('color_temp_mired'),
+                          "xy_color": ns.sw.attributes.get('xy_color'),
+                          "prefer_rgb_color": ns.sw.attributes.get('configuration', {}).get('prefer_rgb_color', false),
+                          "sleep_rgb": ns.sw.attributes.get('configuration', {}).get('sleep_rgb_or_color_temp') == 'rgb_color',
                           "brightness_pct": ns.sw.attributes.get('brightness_pct'),
                           "manual_control": group_entity_id in ns.sw.attributes.get('manual_control', []),
                           "switch_active": states(ns.sw.entity_id)|bool(false),
@@ -85,6 +88,13 @@ apply_adaptive_lighting_to_z2m_groups_that_are_turned_off:
                       adaptive_brightness_255: >-
                         {{ (al_attributes.brightness_pct | int(100) * 2.55) | round(0) | int }}
                       color_temp_mired: '{{ al_attributes.color_temp_mired | int(250) }}'
+                      # Mirror what AL will send at turn-on: in sleep mode the sleep_rgb_or_color_temp
+                      # setting decides; otherwise prefer_rgb_color does. AL's xy_color attribute is
+                      # only meaningful when one of those says RGB (it shows sleep RGB even in CT sleep).
+                      use_rgb: >-
+                        {{ al_attributes.xy_color is not none and
+                           ((al_attributes.sleep_mode and al_attributes.sleep_rgb) or
+                            (not al_attributes.sleep_mode and al_attributes.prefer_rgb_color)) }}
                   - variables:
                       dimmer_friendly_names: >-
                         {% set ns = namespace(dimmers=[]) %}
@@ -132,7 +142,12 @@ apply_adaptive_lighting_to_z2m_groups_that_are_turned_off:
                           {% set pl = dict(pl, level_config=lc) %}
                         {% endif %}
                         {% if al_attributes.adapt_color %}
-                          {% set pl = dict(pl, color_temp=color_temp_mired) %}
+                          {% if use_rgb | bool(false) %}
+                            {% set xy = al_attributes.xy_color %}
+                            {% set pl = dict(pl, color={ 'x': xy[0], 'y': xy[1] }) %}
+                          {% else %}
+                            {% set pl = dict(pl, color_temp=color_temp_mired) %}
+                          {% endif %}
                           {% if opts %}
                             {% set pl = dict(pl, color_options={ 'execute_if_off': true }) %}
                           {% endif %}
