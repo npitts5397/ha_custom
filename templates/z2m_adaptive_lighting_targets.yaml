@@ -1,0 +1,45 @@
+  # Quantized Adaptive Lighting targets for every Z2M group, used by the primer to write only
+  # the groups whose target actually moved. Include it as a `template:` list entry, for example
+  # `template: !include_dir_merge_list templates/`, or paste it under `template:`.
+  #
+  # state      = short hash of the whole set, so it changes only when some group crosses a step
+  # attributes = values: {group friendly name: "<color_temp_mired>/<brightness_pct>"}
+  # The primer compares trigger.from_state.attributes.values with trigger.to_state.attributes.values.
+  # Steps are 5 mireds (color temperature) and 5 percent (brightness). Only attributes a group
+  # actually adapts (its adapt-color and adapt-brightness switches) are included.
+  # The sensor is sampled every 10 minutes (minutes: /10), so a group is primed at most once per
+  # 10 minutes: the primer's group writes can never exceed the old every-10-minute sweep. Because
+  # of that cap the step is only a dead zone (movement smaller than a step is not written), so keep
+  # it small: a larger step makes the correction on turn-on staler without saving any peak traffic.
+  - triggers:
+      - trigger: time_pattern
+        minutes: /10
+      - trigger: homeassistant
+        event: start
+    variables:
+      targets: >-
+        {% set groups = state_attr('sensor.z2m_adaptive_lighting_groups', 'groups') or {} %}
+        {% set switches = expand(integration_entities('adaptive_lighting'))
+          | selectattr('attributes.configuration', 'defined') | list %}
+        {% set ns = namespace(v={}) %}
+        {% for name in groups.keys() %}
+          {% set gid = 'light.' ~ (name | string | slugify) %}
+          {% set sw = switches | selectattr('attributes.configuration.lights', 'contains', gid)
+            | first | default(none) %}
+          {% if sw is not none and sw.state == 'on'
+            and gid not in sw.attributes.get('manual_control', []) %}
+            {% set suffix = sw.entity_id | replace('switch.adaptive_lighting_', '') %}
+            {% set adapt_c = is_state('switch.adaptive_lighting_adapt_color_' ~ suffix, 'on') %}
+            {% set adapt_b = is_state('switch.adaptive_lighting_adapt_brightness_' ~ suffix, 'on') %}
+            {% set ct = (((sw.attributes.get('color_temp_mired') | int(250)) / 5) | round(0) | int * 5) if adapt_c else '-' %}
+            {% set br = (((sw.attributes.get('brightness_pct') | int(100)) / 5) | round(0) | int * 5) if adapt_b else '-' %}
+            {% set ns.v = dict(ns.v, **{name: ct ~ '/' ~ br}) %}
+          {% endif %}
+        {% endfor %}
+        {{ ns.v }}
+    sensor:
+      - name: Z2M Adaptive Lighting Targets
+        unique_id: 6b0d2f3e-8c5a-4e1b-a7d9-2f4c9e1b7a35
+        state: '{{ targets | tojson | sha1 }}'
+        attributes:
+          values: '{{ targets }}'

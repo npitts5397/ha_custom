@@ -103,6 +103,15 @@ apply_adaptive_lighting_to_z2m_groups_that_are_turned_off:
                         - if:
                             - condition: template
                               value_template: '{{ al_attributes.adapt_brightness }}'
+                            - alias: Skip when the dimmer already has this default level
+                              condition: template
+                              value_template: >-
+                                {% set slug = repeat.item | slugify ~ '_defaultlevellocal' %}
+                                {% set cur = states('number.' ~ slug) %}
+                                {% if cur in ['unknown', 'unavailable'] %}
+                                  {% set cur = states('number.' ~ slug ~ '_2') %}
+                                {% endif %}
+                                {{ cur | int(-1) != adaptive_brightness_255 }}
                           then:
                             - action: mqtt.publish
                               data:
