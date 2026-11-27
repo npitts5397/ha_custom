@@ -24,6 +24,7 @@ blueprint:
     equivalent guidance.
 
     Version history:
+      * 5.2.2 - LedFx LED defaults: Small to Big, Purple, 25% brightness.
       * 5.2.1 - LedFx LED sync now re-applies when the LED colour or brightness changes, not only the effect.
       * 5.2.0 - Add optional LedFx support: while the LedFx light is on, the switch LED bars show an indefinite LED effect (cleared when it turns off, re-applied after secondary-lights notifications); LedFx on/off switch actions (default up_quintuple/down_quintuple), routed through an optional Effects Source Script.
       * 5.1.0 - Add optional Priming Script, called after a room mode change (once Adaptive Lighting settings and sleep mode switches are updated) so off lights are primed with the new values (e.g. sleep brightness/color temp) before they turn on, instead of transitioning after turn-on.
@@ -424,8 +425,8 @@ blueprint:
               multiline: true
         ledfx_led_effect:
           name: LedFx LED Effect
-          description: Optional. LED bar effect shown while the LedFx light is on. Runs until cleared. Aurora is Inovelli's colour-cycling (rainbow) effect.
-          default: Aurora
+          description: Optional. LED bar effect shown while the LedFx light is on. Runs until cleared. Aurora is Inovelli's colour-cycling (rainbow) effect. Defaults to Small to Big.
+          default: Small to Big
           selector:
             select:
               options:
@@ -450,7 +451,7 @@ blueprint:
                 - Fast Siren
         ledfx_led_color:
           name: LedFx LED Color
-          description: Optional. LED bar colour for the LedFx effect. Not used by colour-cycling effects such as Aurora.
+          description: Optional. LED bar colour for the LedFx effect. Not used by colour-cycling effects such as Aurora. Defaults to Purple.
           default: Purple
           selector:
             select:
@@ -468,8 +469,8 @@ blueprint:
                 - White
         ledfx_led_level:
           name: LedFx LED Brightness
-          description: Optional. LED bar brightness for the LedFx effect. `0` (default) uses each switch's own LED brightness when on (LedIntensityWhenOn).
-          default: 0
+          description: Optional. LED bar brightness for the LedFx effect. `0` uses each switch's own LED brightness when on (LedIntensityWhenOn). Defaults to 25%.
+          default: 25
           selector:
             number:
               min: 0
