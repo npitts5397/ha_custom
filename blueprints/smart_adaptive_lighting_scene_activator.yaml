@@ -24,6 +24,7 @@ blueprint:
     equivalent guidance.
 
     Version history:
+      * 5.2.0 - Add optional LedFx support: while the LedFx light is on, the switch LED bars show an indefinite LED effect (cleared when it turns off, re-applied after secondary-lights notifications); LedFx on/off switch actions (default up_quintuple/down_quintuple), routed through an optional Effects Source Script.
       * 5.1.0 - Add optional Priming Script, called after a room mode change (once Adaptive Lighting settings and sleep mode switches are updated) so off lights are primed with the new values (e.g. sleep brightness/color temp) before they turn on, instead of transitioning after turn-on.
       * 5.0.4 - Support Z2M 2.14.3+ event format (event_type "single"/"double" + separate "button" attribute) by rebuilding "<button>_<event_type>"; legacy prefixed values unchanged.
       * 5.0.3 - Fix LED bar duration to integer for Inovelli Blue firmware compatibility.
@@ -368,6 +369,112 @@ blueprint:
             entity:
               filter:
                 domain: input_text
+    ledfx:
+      name: LedFx (Optional)
+      icon: mdi:music-circle-outline
+      description: Optional LedFx integration. Leave LedFx Light empty to disable everything in this section.
+      collapsed: true
+      input:
+        ledfx_entity:
+          name: LedFx Light
+          description: Optional. The LedFx light that streams to the primary lights (e.g. a Hue Entertainment group). While it is on, the switches behind the Action Entities can't control the lights, so their LED bars show the LedFx LED effect; it is cleared when the LedFx light turns off. The LED effect needs `LED Notification Script`.
+          default: {}
+          selector:
+            entity:
+              filter:
+                domain: light
+        ledfx_effects_source_script:
+          name: Effects Source Script
+          description: Optional. Script that switches the primary lights between effect sources, called with `source` (`LedFx` / `Native`), `base_light` (first primary light), `ledfx_light` and `adaptive_switch` (first primary Adaptive Lighting switch), e.g. Set Effects Source. Used by the LedFx on/off actions so Adaptive Lighting is handled the same way as from the dashboard. Without it, those actions only turn the LedFx light on or off.
+          default: {}
+          selector:
+            entity:
+              filter:
+                domain: script
+        ledfx_on_actions:
+          name: "'LedFx on' Actions"
+          description: |
+            Optional. Action values that turn the LedFx light on. Each supported action should be on its own line. Clear to disable.
+
+            Default:
+
+            ```
+            up_quintuple
+            ```
+          default: |
+            up_quintuple
+          selector:
+            text:
+              multiline: true
+        ledfx_off_actions:
+          name: "'LedFx off' Actions"
+          description: |
+            Optional. Action values that turn the LedFx light off (back to Native). Each supported action should be on its own line. Clear to disable.
+
+            Default:
+
+            ```
+            down_quintuple
+            ```
+          default: |
+            down_quintuple
+          selector:
+            text:
+              multiline: true
+        ledfx_led_effect:
+          name: LedFx LED Effect
+          description: Optional. LED bar effect shown while the LedFx light is on. Runs until cleared. Aurora is Inovelli's colour-cycling (rainbow) effect.
+          default: Aurora
+          selector:
+            select:
+              options:
+                - Solid
+                - Aurora
+                - Slow Chase
+                - Chase
+                - Fast Chase
+                - Slow Blink
+                - Medium Blink
+                - Fast Blink
+                - Pulse
+                - Open/Close
+                - Small to Big
+                - Slow Falling
+                - Medium Falling
+                - Fast Falling
+                - Slow Rising
+                - Medium Rising
+                - Fast Rising
+                - Slow Siren
+                - Fast Siren
+        ledfx_led_color:
+          name: LedFx LED Color
+          description: Optional. LED bar colour for the LedFx effect. Not used by colour-cycling effects such as Aurora.
+          default: Purple
+          selector:
+            select:
+              options:
+                - Red
+                - Orange
+                - Yellow
+                - Green
+                - Cyan
+                - Teal
+                - Blue
+                - Purple
+                - Light Pink
+                - Pink
+                - White
+        ledfx_led_level:
+          name: LedFx LED Brightness
+          description: Optional. LED bar brightness for the LedFx effect. `0` (default) uses each switch's own LED brightness when on (LedIntensityWhenOn).
+          default: 0
+          selector:
+            number:
+              min: 0
+              max: 100
+              step: 1
+              unit_of_measurement: "%"
 mode: restart
 trigger:
   - alias: action entity state change
@@ -396,6 +503,12 @@ trigger:
     id: mqtt
     platform: mqtt
     topic: !input mqtt_topic
+  - alias: LedFx light turned on or off
+    trigger: state
+    entity_id: !input ledfx_entity
+    to:
+      - "on"
+      - "off"
 variables:
   action: >
     {%- set action = '' -%}
@@ -512,8 +625,65 @@ variables:
       {%- endif -%}
     {%- endif -%}
     {{ scene }}
+  ledfx_entity: !input ledfx_entity
+  ledfx_configured: "{{ ledfx_entity is string and ledfx_entity | length > 0 }}"
+  ledfx_effects_source_script: !input ledfx_effects_source_script
+  ledfx_on_actions: !input ledfx_on_actions
+  ledfx_on_actions_list: "{{ ledfx_on_actions.split() }}"
+  ledfx_off_actions: !input ledfx_off_actions
+  ledfx_off_actions_list: "{{ ledfx_off_actions.split() }}"
+  ledfx_led_effect: !input ledfx_led_effect
+  ledfx_led_color: !input ledfx_led_color
+  ledfx_led_level: !input ledfx_led_level
+  ledfx_base_light: >
+    {%- set ids = primary_lights.entity_id if (primary_lights is mapping and primary_lights.entity_id is defined) else [] %}
+    {%- set ids = [ids] if ids is string else ids %}
+    {{ ids[0] if ids | length > 0 else '' }}
+  ledfx_adaptive_switch: >
+    {%- set al = primary_lights_adaptive_lighting_switches %}
+    {%- set ids = al.entity_id if (al is mapping and al.entity_id is defined) else [] %}
+    {%- set ids = [ids] if ids is string else ids %}
+    {{ ids[0] if ids | length > 0 else '' }}
 action:
   - choose:
+      - alias: action is in ledfx_on_actions
+        conditions: "{{ ledfx_configured and action | length > 0 and action in ledfx_on_actions_list }}"
+        sequence:
+          - if: "{{ ledfx_effects_source_script | length > 0 and ledfx_base_light | length > 0 }}"
+            then:
+              - alias: Hand off to the effects source script (runs on its own, so a restart here can't cut it short)
+                action: script.turn_on
+                target:
+                  entity_id: "{{ ledfx_effects_source_script }}"
+                data:
+                  variables:
+                    source: LedFx
+                    base_light: "{{ ledfx_base_light }}"
+                    ledfx_light: "{{ ledfx_entity }}"
+                    adaptive_switch: "{{ ledfx_adaptive_switch }}"
+            else:
+              - action: light.turn_on
+                target:
+                  entity_id: "{{ ledfx_entity }}"
+      - alias: action is in ledfx_off_actions
+        conditions: "{{ ledfx_configured and action | length > 0 and action in ledfx_off_actions_list }}"
+        sequence:
+          - if: "{{ ledfx_effects_source_script | length > 0 and ledfx_base_light | length > 0 }}"
+            then:
+              - alias: Hand off to the effects source script (runs on its own, so a restart here can't cut it short)
+                action: script.turn_on
+                target:
+                  entity_id: "{{ ledfx_effects_source_script }}"
+                data:
+                  variables:
+                    source: Native
+                    base_light: "{{ ledfx_base_light }}"
+                    ledfx_light: "{{ ledfx_entity }}"
+                    adaptive_switch: "{{ ledfx_adaptive_switch }}"
+            else:
+              - action: light.turn_off
+                target:
+                  entity_id: "{{ ledfx_entity }}"
       - alias: action is in on_actions or scene_helper updated
         conditions:
           - condition: template
@@ -776,3 +946,59 @@ action:
                       {%- endif %}
                       {%- set ids = ids + (sleep_mode_additional_lights or []) %}
                       {{ ids | unique | map('state_attr', 'friendly_name') | reject('none') | list }}
+  - alias: Keep the switch LED bars in step with the LedFx light
+    if:
+      - condition: template
+        value_template: >
+          {{ ledfx_configured and (led_notification_script | length > 0)
+             and states(ledfx_entity) in ['on', 'off']
+             and (action | length == 0 or action in secondary_on_actions_list + secondary_off_actions_list) }}
+    then:
+      - if:
+          - condition: template
+            value_template: "{{ action | length > 0 }}"
+        then:
+          - alias: Let the secondary-lights LED notification finish first
+            delay:
+              seconds: "{{ secondary_lights_switch_led_duration | int(3) + 1 }}"
+      - variables:
+          ledfx_is_on: "{{ is_state(ledfx_entity, 'on') }}"
+          ledfx_led_effect_slug: "{{ ledfx_led_effect | lower | replace(' ', '_') | replace('/', '_') }}"
+      - alias: Read each switch's LED brightness and whether it already shows the LedFx effect
+        variables:
+          ledfx_led_targets: >
+            {%- set ns = namespace(t=[]) %}
+            {%- for light in switch_light_entities %}
+              {%- set ents = device_entities(device_id(light)) %}
+              {%- set lvl = ents | select('match', '^number\\..*_ledintensitywhenon$') | first | default('') %}
+              {%- set fx = ents | select('match', '^sensor\\..*_led_effect$') | reject('match', '.*_individual_led_effect$') | first | default('') %}
+              {%- set s = states(fx) if fx else '' %}
+              {%- set shown = none if s in ['', 'unknown', 'unavailable'] else (("'effect': '" ~ ledfx_led_effect_slug ~ "'") in s and "'duration': 255" in s) %}
+              {%- set level = (ledfx_led_level | int(0)) if (ledfx_led_level | int(0)) > 0 else ((states(lvl) | int(33)) if lvl else 33) %}
+              {%- set ns.t = ns.t + [{'light': light, 'level': level, 'shown': shown}] %}
+            {%- endfor %}
+            {{ ns.t }}
+      - alias: Apply or clear the LedFx LED effect only where it isn't already that way
+        repeat:
+          for_each: "{{ ledfx_led_targets }}"
+          sequence:
+            - choose:
+                - conditions: "{{ ledfx_is_on and repeat.item.shown != true }}"
+                  sequence:
+                    - action: "{{ led_notification_script }}"
+                      data:
+                        led: All
+                        color: "{{ ledfx_led_color }}"
+                        level: "{{ repeat.item.level }}"
+                        effect: "{{ ledfx_led_effect }}"
+                        duration: Indefinitely
+                        target:
+                          entity_id: "{{ repeat.item.light }}"
+                - conditions: "{{ not ledfx_is_on and repeat.item.shown != false }}"
+                  sequence:
+                    - action: "{{ led_notification_script }}"
+                      data:
+                        led: All
+                        effect: Clear
+                        target:
+                          entity_id: "{{ repeat.item.light }}"
