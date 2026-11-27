@@ -24,6 +24,7 @@ blueprint:
     equivalent guidance.
 
     Version history:
+      * 5.2.1 - LedFx LED sync now re-applies when the LED colour or brightness changes, not only the effect.
       * 5.2.0 - Add optional LedFx support: while the LedFx light is on, the switch LED bars show an indefinite LED effect (cleared when it turns off, re-applied after secondary-lights notifications); LedFx on/off switch actions (default up_quintuple/down_quintuple), routed through an optional Effects Source Script.
       * 5.1.0 - Add optional Priming Script, called after a room mode change (once Adaptive Lighting settings and sleep mode switches are updated) so off lights are primed with the new values (e.g. sleep brightness/color temp) before they turn on, instead of transitioning after turn-on.
       * 5.0.4 - Support Z2M 2.14.3+ event format (event_type "single"/"double" + separate "button" attribute) by rebuilding "<button>_<event_type>"; legacy prefixed values unchanged.
@@ -964,6 +965,10 @@ action:
       - variables:
           ledfx_is_on: "{{ is_state(ledfx_entity, 'on') }}"
           ledfx_led_effect_slug: "{{ ledfx_led_effect | lower | replace(' ', '_') | replace('/', '_') }}"
+          # same colour numbers the Inovelli Blue LED (Zigbee2MQTT) script sends
+          ledfx_led_color_value: >
+            {%- set colors = {'red': 1, 'orange': 21, 'yellow': 42, 'green': 85, 'cyan': 127, 'teal': 145, 'blue': 170, 'purple': 195, 'light pink': 220, 'pink': 234, 'white': 255} %}
+            {{ colors.get(ledfx_led_color | lower, 1) }}
       - alias: Read each switch's LED brightness and whether it already shows the LedFx effect
         variables:
           ledfx_led_targets: >
@@ -973,8 +978,14 @@ action:
               {%- set lvl = ents | select('match', '^number\\..*_ledintensitywhenon$') | first | default('') %}
               {%- set fx = ents | select('match', '^sensor\\..*_led_effect$') | reject('match', '.*_individual_led_effect$') | first | default('') %}
               {%- set s = states(fx) if fx else '' %}
-              {%- set shown = none if s in ['', 'unknown', 'unavailable'] else (("'effect': '" ~ ledfx_led_effect_slug ~ "'") in s and "'duration': 255" in s) %}
               {%- set level = (ledfx_led_level | int(0)) if (ledfx_led_level | int(0)) > 0 else ((states(lvl) | int(33)) if lvl else 33) %}
+              {#- Compare effect, colour, level and duration with what Z2M reports, in any key order #}
+              {%- set t = s | replace('}', ',') %}
+              {%- set shown = none if s in ['', 'unknown', 'unavailable'] else (
+                    ("'effect': '" ~ ledfx_led_effect_slug ~ "'") in t
+                    and "'duration': 255," in t
+                    and ("'color': " ~ ledfx_led_color_value ~ ",") in t
+                    and ("'level': " ~ level ~ ",") in t) %}
               {%- set ns.t = ns.t + [{'light': light, 'level': level, 'shown': shown}] %}
             {%- endfor %}
             {{ ns.t }}
